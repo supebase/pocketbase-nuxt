@@ -341,8 +341,8 @@ packages:
   '@floating-ui/vue@1.1.9':
     resolution: {integrity: sha512-BfNqNW6KA83Nexspgb9DZuz578R7HT8MZw1CfK9I6Ah4QReNWEJsXWHN+SdmOVLNGmTPDi+fDT535Df5PzMLbQ==}
 
-  '@iconify/collections@1.0.621':
-    resolution: {integrity: sha512-md55k0SUK3ICEsqh9lEUVuu2upGCgzT0AqtLCq/74lE8Jp7G1wl8BtyDBls+YqpSFUeIyN082qmVFqFF6a0KYA==}
+  '@iconify/collections@1.0.622':
+    resolution: {integrity: sha512-HMTAEh/0GdZe3XoDeelIH6St5LxmPzaWIXCBVhOXUVC6XdWILOCafimpp2SkDqDmpoqZBk9CwDHR3IPf/fXyQQ==}
 
   '@iconify/types@2.0.0':
     resolution: {integrity: sha512-+wluvCrRhXrhyOmRDJ3q8mux9JkKy5SJ/v8ol2tu4FVjyYvtEzkc/3pK15ET6RKg4b4w4BmTk1+gsCUhf21Ykg==}
@@ -3962,7 +3962,7 @@ snapshots:
       - '@vue/composition-api'
       - vue
 
-  '@iconify/collections@1.0.621':
+  '@iconify/collections@1.0.622':
     dependencies:
       '@iconify/types': 2.0.0
 
@@ -4213,7 +4213,7 @@ snapshots:
 
   '@nuxt/icon@2.1.0(magicast@0.5.1)(vite@7.2.4(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.1)(yaml@2.8.1))(vue@3.5.25(typescript@5.9.3))':
     dependencies:
-      '@iconify/collections': 1.0.621
+      '@iconify/collections': 1.0.622
       '@iconify/types': 2.0.0
       '@iconify/utils': 3.1.0
       '@iconify/vue': 5.0.0(vue@3.5.25(typescript@5.9.3))

@@ -1,7 +1,16 @@
 <template>
   <UApp>
-    <NuxtLayout>
-      <NuxtPage />
-    </NuxtLayout>
+    <UHeader
+      title="PocketBase 认证示例"
+      :toggle="false">
+      <template #right>
+        <UColorModeButton />
+      </template>
+    </UHeader>
+    <UMain>
+      <NuxtLayout>
+        <NuxtPage />
+      </NuxtLayout>
+    </UMain>
   </UApp>
 </template>
