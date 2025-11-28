@@ -4,18 +4,27 @@ export default defineNuxtConfig({
   devtools: { enabled: false },
   ssr: false,
 
-  modules: ["@nuxt/ui"],
+  modules: ["@nuxt/ui", "@vueuse/nuxt"],
 
-  ui: {
-    fonts: false,
-  },
-
-  css: ["~/assets/css/app.css"],
-
-  // Runtime configuration
   runtimeConfig: {
     public: {
       pocketbaseUrl: process.env.POCKETBASE_URL,
     },
   },
+
+  ui: {
+    fonts: false,
+  },
+
+  icon: {
+    serverBundle: {
+      collections: ["hugeicons"],
+      externalizeIconsJson: true,
+    },
+    clientBundle: {
+      scan: true,
+    },
+  },
+
+  css: ["~/assets/css/app.css"],
 });

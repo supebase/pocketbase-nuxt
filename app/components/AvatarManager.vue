@@ -5,7 +5,7 @@
       <div class="relative w-24 h-24 rounded-full overflow-hidden">
         <UAvatar
           :src="avatarUrl"
-          icon="ri:image-2-line"
+          icon="hugeicons:image-02"
           size="3xl"
           class="w-full h-full object-cover" />
       </div>
@@ -22,7 +22,7 @@
           class="hidden"
           @change="handleFileChange" />
         <UButton
-          icon="ri:image-circle-line"
+          icon="hugeicons:image-add-02"
           @click="fileInput?.click()"
           color="neutral"
           variant="soft"
@@ -31,7 +31,7 @@
         </UButton>
         <UButton
           v-if="selectedFile"
-          icon="ri:upload-cloud-2-line"
+          icon="hugeicons:image-upload"
           @click="handleUploadAvatar"
           color="success"
           variant="soft"
@@ -40,7 +40,7 @@
         </UButton>
         <UButton
           v-if="avatarUrl"
-          icon="ri:delete-bin-2-line"
+          icon="hugeicons:image-delete-02"
           @click="handleDeleteAvatar"
           color="error"
           variant="soft"
@@ -52,7 +52,7 @@
       <!-- 错误信息 -->
       <UAlert
         v-if="avatarError"
-        icon="i-heroicons-x-circle"
+        icon="hugeicons:alert-02"
         color="error"
         variant="soft"
         :title="avatarError"
@@ -72,6 +72,7 @@ const props = defineProps<{
 // 导入头像管理功能
 const { uploadAvatar, deleteAvatar, getAvatarUrl } = useAvatar();
 // 导入错误处理功能
+// eslint-disable-next-line no-undef
 const { formatErrorMessage } = useErrorHandler();
 
 // 状态管理

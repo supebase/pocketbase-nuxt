@@ -1,244 +1,127 @@
 <template>
-  <div class="flex flex-col items-center justify-center min-h-screen p-4">
-    <UCard class="w-full max-w-md mb-8">
-      <div
-        v-if="isAuthenticated"
-        class="text-center space-y-4">
-        <AvatarManager :user="currentUser" />
-        <UAlert
-          color="neutral"
-          variant="soft"
-          :title="currentUser.verified ? '已认证' : '未认证'"
-          :description="`欢迎您，${currentUser.email}!`"
-          class="mb-4" />
-        <UButton
-          icon="ri:logout-circle-line"
-          @click="logout"
-          color="neutral"
-          variant="soft">
-          安全退出
-        </UButton>
-      </div>
-
-      <div v-else>
-        <p class="mb-4">请登录或注册以继续。</p>
-
-        <h3 class="font-semibold mb-3">快速登录</h3>
-        <UForm
-          @submit="handleLogin"
-          class="space-y-4 mb-8">
-          <div class="flex items-center justify-between">
-            <UInput
-              v-model="loginEmail"
-              type="email"
-              placeholder="邮箱"
-              required
-              label="邮箱" />
-            <UInput
-              v-model="loginPassword"
-              type="password"
-              placeholder="密码"
-              required
-              label="密码" />
-          </div>
-
-          <UAlert
-            v-if="loginError"
-            icon="i-heroicons-x-circle"
-            color="error"
-            variant="soft"
-            :title="loginError" />
-
-          <UButton
-            type="submit"
-            block
-            :loading="isLoggingIn">
-            登录
-          </UButton>
-        </UForm>
-
-        <USeparator />
-
-        <h3 class="font-semibold mb-3 pt-4">快速注册</h3>
-        <UForm
-          @submit="handleRegister"
-          class="space-y-4">
-          <div class="flex items-center justify-between">
-            <UInput
-              v-model="registerEmail"
-              type="email"
-              placeholder="邮箱"
-              required
-              label="邮箱"
-              :color="getFieldError('email') ? 'red' : 'primary'"
-              :description="getFieldError('email')" />
-
-            <UInput
-              v-model="registerName"
-              type="text"
-              placeholder="用户名"
-              required
-              label="用户名"
-              :color="getFieldError('name') ? 'red' : 'primary'"
-              :description="getFieldError('name')" />
-          </div>
-
-          <div class="flex items-center justify-between">
-            <UInput
-              v-model="registerPassword"
-              type="password"
-              placeholder="密码"
-              required
-              label="密码"
-              :color="getFieldError('password') ? 'red' : 'primary'"
-              :description="getFieldError('password')" />
-
-            <UInput
-              v-model="registerPasswordConfirm"
-              type="password"
-              placeholder="确认密码"
-              required
-              label="确认密码"
-              :color="getFieldError('passwordConfirm') ? 'red' : 'primary'"
-              :description="getFieldError('passwordConfirm')" />
-          </div>
-
-          <UAlert
-            v-if="registerError"
-            icon="i-heroicons-exclamation-triangle"
-            color="error"
-            variant="soft"
-            :title="registerError"
-            class="mt-4" />
-
-          <UButton
-            type="submit"
-            block
-            variant="soft"
-            :loading="isRegistering"
-            color="neutral">
-            注册新账号
-          </UButton>
-        </UForm>
+  <div class="home-page max-w-7xl mx-auto px-4 py-8">
+    <!-- 英雄区域 -->
+    <UCard class="mb-8 overflow-hidden">
+      <div class="bg-linear-to-r from-primary-500 to-primary-600 text-white p-8">
+        <h1 class="text-3xl font-bold mb-3">欢迎来到我们的社区</h1>
+        <p class="text-lg mb-6 opacity-90">分享你的想法，交流你的经验，与志同道合的人一起成长</p>
+        <div class="flex gap-4 flex-wrap">
+          <NuxtLink to="/posts">
+            <UButton color="primary" variant="solid" size="lg">
+              浏览文章
+            </UButton>
+          </NuxtLink>
+          <NuxtLink v-if="currentUser && currentUser.verified" to="/posts/create">
+            <UButton color="secondary" variant="solid" size="lg">
+              发布文章
+            </UButton>
+          </NuxtLink>
+        </div>
       </div>
     </UCard>
+
+    <!-- 文章列表 -->
+    <div class="posts-section mb-8">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold">最新文章</h2>
+        <NuxtLink to="/posts" class="text-primary-600 hover:text-primary-800 font-medium">
+          查看全部 →
+        </NuxtLink>
+      </div>
+
+      <!-- 加载状态 -->
+      <UCard v-if="isLoading" class="p-8 text-center">
+        <UProgress size="lg" class="mx-auto mb-4" />
+        <p class="text-gray-500">加载中...</p>
+      </UCard>
+
+      <!-- 错误信息 -->
+      <UCard v-else-if="error" class="p-8">
+        <UAlert
+          color="error"
+          variant="soft"
+          :title="error"
+          class="mb-4"
+        />
+        <UButton @click="fetchPosts" color="secondary" variant="outline">
+          重试
+        </UButton>
+      </UCard>
+
+      <!-- 文章列表 -->
+      <div v-else-if="posts.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <PostCard
+          v-for="post in posts"
+          :key="post.id"
+          :post="post"
+          @delete="handleDeletePost"
+        />
+      </div>
+
+      <!-- 空状态 -->
+      <UCard v-else class="p-8 text-center">
+        <h3 class="text-xl font-semibold mb-2">暂无文章</h3>
+        <p class="text-gray-500 mb-6">快来发布第一篇文章吧！</p>
+        <NuxtLink
+          v-if="currentUser && currentUser.verified"
+          to="/posts/create"
+        >
+          <UButton color="primary">
+            发布文章
+          </UButton>
+        </NuxtLink>
+      </UCard>
+    </div>
   </div>
 </template>
 
-<script setup>
-const { isAuthenticated, currentUser, login, logout, register } = useAuth();
+<script setup lang="ts">
+import type { PostModel } from "~/types/post";
 
-// --- 状态管理 ---
-const isLoggingIn = ref(false);
-const isRegistering = ref(false);
+// Composables
+const { getPosts, deletePost } = usePosts();
+const { currentUser } = useAuth();
 
-// --- 登录状态 ---
-const loginEmail = ref("new@example.com");
-const loginPassword = ref("12345678");
-const loginError = ref("");
+// State
+const posts = ref<PostModel[]>([]);
+const isLoading = ref(true);
+const error = ref<string | null>(null);
 
-// --- 注册状态 ---
-const registerEmail = ref("");
-const registerName = ref("");
-const registerPassword = ref("");
-const registerPasswordConfirm = ref("");
-const registerError = ref(""); // 用于顶部通用/汇总错误提示
-
-// 存储 PocketBase 返回的所有字段错误信息
-const formErrors = ref({});
-
-/**
- * 辅助函数：根据字段名获取错误信息
- * 🌟 格式：[CODE] MESSAGE
- */
-const getFieldError = (fieldName) => {
-  const error = formErrors.value[fieldName];
-
-  if (!error) {
-    return null;
+// Methods
+const fetchPosts = async () => {
+  try {
+    isLoading.value = true;
+    error.value = null;
+    const result = await getPosts();
+    if ("isError" in result) {
+      error.value = result.message;
+    } else {
+      // 只显示最新的6篇文章
+      posts.value = result.slice(0, 6);
+    }
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : "获取文章列表失败";
+  } finally {
+    isLoading.value = false;
   }
-
-  // 直接返回 PocketBase 原始的 code 和 message
-  return `[${error.code}] ${error.message}`;
 };
 
-// --- 核心方法 ---
-
-async function handleLogin() {
-  isLoggingIn.value = true;
-  loginError.value = "";
-  formErrors.value = {}; // 清除字段错误
-
+const handleDeletePost = async (postId: string) => {
   try {
-    const result = await login(loginEmail.value, loginPassword.value);
-
-    if (result && result.isError) {
-      // 登录失败，result 是 AuthError
-      loginError.value = result.message;
+    const result = await deletePost(postId);
+    if (typeof result === 'object' && result !== null && "isError" in result) {
+      error.value = result.message;
+    } else {
+      // 从列表中移除删除的文章
+      posts.value = posts.value.filter(post => post.id !== postId);
     }
-    // 成功时 result 为 void
-  } catch (error) {
-    // 捕获非 AuthError 的通用错误 (如网络问题)
-    loginError.value = error.message || "登录过程中发生未知错误。";
-  } finally {
-    isLoggingIn.value = false;
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : "删除文章失败";
   }
-}
+};
 
-async function handleRegister() {
-  isRegistering.value = true;
-  registerError.value = "";
-  formErrors.value = {}; // 重置字段错误
-
-  try {
-    const result = await register(
-      registerEmail.value,
-      registerPassword.value,
-      registerPasswordConfirm.value,
-      { name: registerName.value }
-    );
-
-    if (result && result.isError) {
-      // 捕获到 AuthError
-      if (result.errors) {
-        // 结构化验证错误 (400)
-        formErrors.value = result.errors;
-
-        // 🌟 遍历字段错误，在顶部的 registerError 中显示所有错误信息
-        let combinedErrorMessage = "注册验证失败。详细错误：\n";
-
-        // 确保错误按注册表单字段顺序显示（可选）
-        const fieldOrder = ["email", "name", "password", "passwordConfirm"];
-
-        fieldOrder.forEach((key) => {
-          const error = result.errors[key];
-          if (error) {
-            // 将 [CODE] MESSAGE 格式放入顶部提示
-            combinedErrorMessage += `- ${key}: [${error.code}] ${error.message}\n`;
-          }
-        });
-
-        // 如果有其他未列出的错误字段
-        for (const key in result.errors) {
-          if (!fieldOrder.includes(key)) {
-            const error = result.errors[key];
-            combinedErrorMessage += `- ${key}: [${error.code}] ${error.message}\n`;
-          }
-        }
-
-        // 移除末尾换行并设置
-        registerError.value = combinedErrorMessage.trim();
-      } else {
-        // 通用注册错误（非 400，如 500）
-        registerError.value = result.message;
-      }
-    }
-    // 成功时 result 是 BaseModel，状态已自动更新
-  } catch (error) {
-    // 捕获非 AuthError 的通用错误 (如网络问题)
-    registerError.value = error.message || "注册过程中发生未知错误。";
-  } finally {
-    isRegistering.value = false;
-  }
-}
+// Lifecycle
+onMounted(() => {
+  fetchPosts();
+});
 </script>

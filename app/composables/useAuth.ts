@@ -1,9 +1,6 @@
 import type { ClientResponseError } from "pocketbase"; // 导入 ClientResponseError 类型用于错误捕获
 import type { UserModel, ApiResponse } from "~/types/user"; // 导入统一的类型定义
 
-// 使用 useState 来存储全局响应式的认证用户数据
-const user = useState<UserModel | null>("pocketbase_auth_user", () => null);
-
 /**
  * PocketBase 认证 Composable
  */
@@ -12,6 +9,8 @@ export const useAuth = () => {
   const { pbClient } = usePocketbase();
   // 获取错误处理函数
   const { handlePbError } = useErrorHandler();
+  // 使用 useState 来存储全局响应式的认证用户数据
+  const user = useState<UserModel | null>("pocketbase_auth_user", () => null);
 
   // --- 认证状态初始化和监听 ---
 

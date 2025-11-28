@@ -12,8 +12,8 @@ export interface UserModel extends BaseModel {
   // 自定义用户字段
   name?: string;
   avatar?: string;
-  createdAt: string;
-  updatedAt: string;
+  created: string;
+  updated: string;
 }
 
 /**
