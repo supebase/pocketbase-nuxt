@@ -126,8 +126,6 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
-// 确保 useAuth 已经被正确导入或自动导入
 const { isAuthenticated, currentUser, login, logout, register } = useAuth();
 
 // --- 状态管理 ---

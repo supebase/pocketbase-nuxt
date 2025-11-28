@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@nuxt/ui": "^4.2.1",
+    "@types/node": "^24.10.1",
     "nuxt": "^4.2.1",
     "pocketbase": "^0.26.3",
     "vue": "^3.5.25",

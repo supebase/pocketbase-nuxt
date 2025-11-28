@@ -1,16 +1,21 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-  compatibilityDate: '2025-07-15',
+  compatibilityDate: "2025-07-15",
   devtools: { enabled: false },
   ssr: false,
 
-  modules: ['@nuxt/ui'],
+  modules: ["@nuxt/ui"],
 
   ui: {
     fonts: false,
   },
 
-  css: [
-    '~/assets/css/app.css',
-  ],
-})
+  css: ["~/assets/css/app.css"],
+
+  // Runtime configuration
+  runtimeConfig: {
+    public: {
+      pocketbaseUrl: process.env.POCKETBASE_URL,
+    },
+  },
+});

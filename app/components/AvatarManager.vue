@@ -49,13 +49,6 @@
         </UButton>
       </div>
 
-      <!-- 文件名显示 -->
-      <div
-        v-if="selectedFile"
-        class="text-sm text-gray-600 dark:text-gray-400">
-        已选择: {{ selectedFile.name }}
-      </div>
-
       <!-- 错误信息 -->
       <UAlert
         v-if="avatarError"
@@ -69,15 +62,17 @@
 </template>
 
 <script setup lang="ts">
-import type { BaseModel } from "pocketbase";
+import type { UserModel, ApiError } from "~/types/user"; // 导入用户模型和错误类型
 
 // 定义组件属性
 const props = defineProps<{
-  user: BaseModel | null;
+  user: UserModel | null;
 }>();
 
 // 导入头像管理功能
 const { uploadAvatar, deleteAvatar, getAvatarUrl } = useAvatar();
+// 导入错误处理功能
+const { formatErrorMessage } = useErrorHandler();
 
 // 状态管理
 const selectedFile = ref<File | null>(null);
@@ -119,34 +114,11 @@ const handleUploadAvatar = async () => {
     const result = await uploadAvatar(selectedFile.value);
 
     if ("isError" in result && result.isError) {
-      if (result.errors) {
-        // 结构化验证错误
-        formErrors.value = result.errors;
-        
-        // 遍历字段错误，组合成完整的错误信息
-        let combinedErrorMessage = "头像上传验证失败。详细错误：\n";
-        const fieldOrder = ["avatar"];
-        
-        fieldOrder.forEach((key) => {
-          const error = result.errors[key];
-          if (error) {
-            combinedErrorMessage += `- ${key}: [${error.code}] ${error.message}\n`;
-          }
-        });
-        
-        // 处理其他未列出的错误字段
-        for (const key in result.errors) {
-          if (!fieldOrder.includes(key)) {
-            const error = result.errors[key];
-            combinedErrorMessage += `- ${key}: [${error.code}] ${error.message}\n`;
-          }
-        }
-        
-        avatarError.value = combinedErrorMessage.trim();
-      } else {
-        // 通用错误
-        avatarError.value = result.message;
-      }
+      // 结构化验证错误
+      formErrors.value = result.errors || {};
+      
+      // 使用统一的错误格式化函数
+      avatarError.value = formatErrorMessage(result as ApiError);
     } else {
       // 上传成功，重置选择的文件
       selectedFile.value = null;
@@ -173,34 +145,11 @@ const handleDeleteAvatar = async () => {
     const result = await deleteAvatar();
 
     if ("isError" in result && result.isError) {
-      if (result.errors) {
-        // 结构化验证错误
-        formErrors.value = result.errors;
-        
-        // 遍历字段错误，组合成完整的错误信息
-        let combinedErrorMessage = "头像删除验证失败。详细错误：\n";
-        const fieldOrder = ["avatar"];
-        
-        fieldOrder.forEach((key) => {
-          const error = result.errors[key];
-          if (error) {
-            combinedErrorMessage += `- ${key}: [${error.code}] ${error.message}\n`;
-          }
-        });
-        
-        // 处理其他未列出的错误字段
-        for (const key in result.errors) {
-          if (!fieldOrder.includes(key)) {
-            const error = result.errors[key];
-            combinedErrorMessage += `- ${key}: [${error.code}] ${error.message}\n`;
-          }
-        }
-        
-        avatarError.value = combinedErrorMessage.trim();
-      } else {
-        // 通用错误
-        avatarError.value = result.message;
-      }
+      // 结构化验证错误
+      formErrors.value = result.errors || {};
+      
+      // 使用统一的错误格式化函数
+      avatarError.value = formatErrorMessage(result as ApiError);
     }
   } catch (error) {
     avatarError.value = error instanceof Error ? error.message : "头像删除过程中发生未知错误";
