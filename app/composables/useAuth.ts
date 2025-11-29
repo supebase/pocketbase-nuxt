@@ -16,7 +16,7 @@ export const useAuth = () => {
 
   pbClient.authStore.onChange(() => {
     // 将新的认证模型同步到全局状态
-    user.value = pbClient.authStore.record as unknown as UserModel | null;
+    user.value = pbClient.authStore.record as UserModel | null;
   }, true); // true 表示立即执行一次监听器
 
   // --- Computed 属性 ---
@@ -41,7 +41,7 @@ export const useAuth = () => {
   ): Promise<ApiResponse<UserModel>> => {
     try {
       // 创建用户
-      const newUser = await pbClient.collection("users").create({
+      const newUser = await pbClient.collection("users").create<UserModel>({
         email,
         password,
         passwordConfirm,
@@ -52,7 +52,7 @@ export const useAuth = () => {
       // login 可能会返回 ApiError，但在此处通常是成功的
       await login(email, password);
 
-      return newUser as unknown as UserModel;
+      return newUser;
     } catch (e) {
       const error = e as ClientResponseError;
       return handlePbError(error, "注册验证失败，请检查输入。");
@@ -66,7 +66,7 @@ export const useAuth = () => {
   const login = async (email: string, password: string): Promise<ApiResponse<void>> => {
     try {
       // PocketBase 的 authWithPassword 会自动存储 token 和 model
-      await pbClient.collection("users").authWithPassword(email, password);
+      await pbClient.collection("users").authWithPassword<UserModel>(email, password);
     } catch (e) {
       const error = e as ClientResponseError;
       return handlePbError(error, "登录失败，请检查您的凭证。");
@@ -82,10 +82,18 @@ export const useAuth = () => {
 
   /**
    * 刷新用户的认证 token
+   * @returns {Promise<ApiResponse<boolean>>} 成功返回true，失败返回错误对象
    */
-  const refreshAuth = async () => {
-    if (pbClient.authStore.isValid) {
-      await pbClient.collection("users").authRefresh();
+  const refreshAuth = async (): Promise<ApiResponse<boolean>> => {
+    try {
+      // 只有当令牌有效时才刷新
+      if (pbClient.authStore.isValid) {
+        await pbClient.collection("users").authRefresh<UserModel>();
+      }
+      return true;
+    } catch (e) {
+      const error = e as ClientResponseError;
+      return handlePbError(error, "刷新认证失败");
     }
   };
 

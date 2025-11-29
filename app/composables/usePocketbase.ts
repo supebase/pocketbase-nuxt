@@ -7,5 +7,10 @@ export const usePocketbase = () => {
 
     return {
         pbClient,
+        // 提供 Auth Store 的便捷访问
+        authStore: pbClient.authStore,
+        // 提供常用的 Auth Store 方法
+        isAuthenticated: computed(() => !!pbClient.authStore.record),
+        isValidToken: computed(() => pbClient.authStore.isValid),
     };
 };

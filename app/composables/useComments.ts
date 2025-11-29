@@ -17,21 +17,21 @@ export const useComments = () => {
    */
   const createComment = async (data: CreateCommentRequest): Promise<ApiResponse<CommentModel>> => {
     try {
-      // 检查用户是否已登录且已验证
-      if (!currentUser.value || !currentUser.value.verified) {
+      // 检查用户是否已登录
+      if (!currentUser.value) {
         return {
           isError: true,
-          message: "只有已验证的用户才能发布评论"
+          message: "请先登录"
         };
       }
 
       // 创建评论
-      const comment = await pbClient.collection("comments").create({
+      const comment = await pbClient.collection("comments").create<CommentModel>({
         ...data,
         user: currentUser.value.id
       });
 
-      return comment as unknown as CommentModel;
+      return comment;
     } catch (e) {
       const error = e as ClientResponseError;
       return handlePbError(error, "发布评论失败");
@@ -46,13 +46,14 @@ export const useComments = () => {
   const getCommentsByPostId = async (postId: string): Promise<ApiResponse<CommentModel[]>> => {
     try {
       // 获取评论列表，包含用户信息
-      const comments = await pbClient.collection("comments").getFullList({
-        filter: `post = "${postId}"`,
+      const comments = await pbClient.collection("comments").getFullList<CommentModel>({
+        // 使用官方推荐的 pb.filter() 方法安全绑定参数
+        filter: pbClient.filter('post = {:postId}', { postId }),
         expand: "user",
         sort: "-created"
       });
 
-      return comments as unknown as CommentModel[];
+      return comments;
     } catch (e) {
       const error = e as ClientResponseError;
       return handlePbError(error, "获取评论列表失败");
@@ -75,16 +76,15 @@ export const useComments = () => {
       }
 
       // 获取评论详情
-      const comment = await pbClient.collection("comments").getOne(id, {
+      const comment = await pbClient.collection("comments").getOne<CommentModel>(id, {
         expand: "user"
       });
 
-      // 检查是否是评论作者或已验证用户
-      // comment.user 现在是字符串ID，直接比较
-      if (comment.user !== currentUser.value.id && !currentUser.value.verified) {
+      // 检查是否是评论作者
+      if (comment.user !== currentUser.value.id) {
         return {
           isError: true,
-          message: "只有评论作者或已验证用户才能删除评论"
+          message: "只有评论作者才能删除评论"
         };
       }
 

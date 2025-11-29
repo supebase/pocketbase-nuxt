@@ -1,10 +1,10 @@
-import type { BaseModel } from "pocketbase";
+import type { RecordModel } from "pocketbase";
 import type { UserModel } from "./user";
 
 /**
  * 文章模型类型定义
  */
-export interface PostModel extends BaseModel {
+export interface PostModel extends RecordModel {
   // 文章标题
   title: string;
   // 文章内容

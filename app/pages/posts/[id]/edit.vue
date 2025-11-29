@@ -1,49 +1,47 @@
 <template>
-  <div class="edit-post-page">
-    <h1>编辑文章</h1>
+  <div class="max-w-4xl mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold mb-8">编辑文章</h1>
 
     <!-- 加载状态 -->
-    <div
-      v-if="isLoading"
-      class="loading-state">
-      加载中...
-    </div>
+    <UCard v-if="isLoading" class="p-8 text-center">
+      <UProgress size="lg" class="mx-auto mb-4" />
+      <p class="text-muted-foreground">加载中...</p>
+    </UCard>
 
     <!-- 错误信息 -->
-    <div
-      v-else-if="error"
-      class="error-state">
-      <p>{{ error }}</p>
-      <NuxtLink
-        to="/posts"
-        class="button primary">
-        返回文章列表
+    <UCard v-else-if="error" class="p-8">
+      <UAlert
+        color="error"
+        variant="soft"
+        :title="error"
+        class="mb-4" />
+      <NuxtLink to="/posts">
+        <UButton color="primary"> 返回文章列表 </UButton>
       </NuxtLink>
-    </div>
+    </UCard>
 
     <!-- 未授权状态 -->
-    <div
-      v-else-if="!canManagePost(post || ({} as PostModel))"
-      class="unauthorized-state">
-      <h2>您没有权限编辑这篇文章</h2>
-      <p>只有文章作者才能编辑文章</p>
-      <NuxtLink
-        :to="`/posts/${post?.id}`"
-        class="button primary">
-        返回文章详情
+    <UCard v-else-if="!canManagePost(post || ({} as PostModel))" class="p-8 text-center">
+      <h2 class="text-xl font-semibold mb-2 text-error">您没有权限编辑这篇文章</h2>
+      <p class="text-muted-foreground mb-6">只有文章作者才能编辑文章</p>
+      <NuxtLink :to="`/posts/${post?.id}`">
+        <UButton color="primary">
+          返回文章详情
+        </UButton>
       </NuxtLink>
-    </div>
+    </UCard>
 
     <!-- 编辑文章表单 -->
-    <PostForm
-      v-else
-      :initial-data="{
-        title: post?.title ?? '',
-        content: post?.content ?? '',
-      }"
-      submit-button-text="更新文章"
-      @submit="handleSubmit"
-      :error="formError" />
+    <UCard v-else class="overflow-hidden">
+      <PostForm
+        :initial-data="{
+          title: post?.title ?? '',
+          content: post?.content ?? '',
+        }"
+        submit-button-text="更新文章"
+        @submit="handleSubmit"
+        :error="formError" />
+    </UCard>
   </div>
 </template>
 

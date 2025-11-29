@@ -1,30 +1,12 @@
 <template>
   <div class="home-page max-w-7xl mx-auto px-4 py-8">
-    <!-- 英雄区域 -->
-    <UCard class="mb-8 overflow-hidden">
-      <div class="bg-linear-to-r from-primary-500 to-primary-600 text-white p-8">
-        <h1 class="text-3xl font-bold mb-3">欢迎来到我们的社区</h1>
-        <p class="text-lg mb-6 opacity-90">分享你的想法，交流你的经验，与志同道合的人一起成长</p>
-        <div class="flex gap-4 flex-wrap">
-          <NuxtLink to="/posts">
-            <UButton color="primary" variant="solid" size="lg">
-              浏览文章
-            </UButton>
-          </NuxtLink>
-          <NuxtLink v-if="currentUser && currentUser.verified" to="/posts/create">
-            <UButton color="secondary" variant="solid" size="lg">
-              发布文章
-            </UButton>
-          </NuxtLink>
-        </div>
-      </div>
-    </UCard>
+
 
     <!-- 文章列表 -->
     <div class="posts-section mb-8">
       <div class="flex justify-between items-center mb-6">
         <h2 class="text-2xl font-bold">最新文章</h2>
-        <NuxtLink to="/posts" class="text-primary-600 hover:text-primary-800 font-medium">
+        <NuxtLink to="/posts" class="text-primary hover:text-primary-600 font-medium">
           查看全部 →
         </NuxtLink>
       </div>
@@ -32,7 +14,7 @@
       <!-- 加载状态 -->
       <UCard v-if="isLoading" class="p-8 text-center">
         <UProgress size="lg" class="mx-auto mb-4" />
-        <p class="text-gray-500">加载中...</p>
+        <p class="text-muted-foreground">加载中...</p>
       </UCard>
 
       <!-- 错误信息 -->
@@ -49,28 +31,31 @@
       </UCard>
 
       <!-- 文章列表 -->
-      <div v-else-if="posts.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <UPageColumns v-else-if="posts.length > 0">
         <PostCard
           v-for="post in posts"
           :key="post.id"
           :post="post"
           @delete="handleDeletePost"
         />
-      </div>
+      </UPageColumns>
 
       <!-- 空状态 -->
-      <UCard v-else class="p-8 text-center">
-        <h3 class="text-xl font-semibold mb-2">暂无文章</h3>
-        <p class="text-gray-500 mb-6">快来发布第一篇文章吧！</p>
-        <NuxtLink
-          v-if="currentUser && currentUser.verified"
-          to="/posts/create"
-        >
-          <UButton color="primary">
-            发布文章
-          </UButton>
-        </NuxtLink>
-      </UCard>
+      <UEmpty
+        v-else
+        icon="i-lucide-file-text"
+        title="暂无文章"
+        description="登录并验证邮箱后即可发布文章，分享你的想法和经验！"
+        :actions="currentUser && currentUser.verified ? [
+          {
+            icon: 'i-lucide-plus',
+            label: '发布文章',
+            color: 'primary',
+            variant: 'solid',
+            to: '/posts/create'
+          }
+        ] : []"
+      />
     </div>
   </div>
 </template>

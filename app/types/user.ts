@@ -1,9 +1,9 @@
-import type { BaseModel } from "pocketbase";
+import type { RecordModel } from "pocketbase";
 
 /**
  * 用户模型类型定义
  */
-export interface UserModel extends BaseModel {
+export interface UserModel extends RecordModel {
   // 基础用户字段
   email: string;
   emailVisibility: boolean;

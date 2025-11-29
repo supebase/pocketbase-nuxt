@@ -1,8 +1,12 @@
 <template>
-  <UCard class="w-full hover:shadow-lg transition-shadow">
-    <NuxtLink :to="`/posts/${post.id}`" class="block p-4">
-      <h2 class="text-xl font-bold mb-2 text-primary-600 hover:text-primary-800 transition-colors">{{ post.title }}</h2>
-      <div class="flex flex-wrap gap-2 text-sm text-gray-600 mb-3">
+  <UPageCard
+    :to="`/posts/${post.id}`"
+    variant="subtle"
+    class="w-full"
+  >
+    <template #header>
+      <h2 class="text-xl font-bold text-primary-600 hover:text-primary-800 transition-colors">{{ post.title }}</h2>
+      <div class="flex flex-wrap gap-2 text-sm text-gray-600 mt-1">
         <div class="flex items-center gap-1">
           <span class="font-medium">作者：</span>
           {{ getPostAuthorName(post) }}
@@ -12,25 +16,29 @@
           {{ formatDate(post.created) }}
         </div>
       </div>
-      <p class="text-gray-700 line-clamp-3 mb-4">{{ getPostExcerpt(post.content) }}</p>
-    </NuxtLink>
-    <div v-if="canManagePost(post)" class="px-4 pb-4 flex gap-2 border-t pt-4">
-      <NuxtLink :to="`/posts/${post.id}/edit`">
-        <UButton size="sm" color="primary" variant="outline">
-          编辑
+    </template>
+    <template #body>
+      <p class="text-gray-700 line-clamp-3">{{ getPostExcerpt(post.content) }}</p>
+    </template>
+    <template #footer>
+      <div v-if="canManagePost(post)" class="flex gap-2">
+        <NuxtLink :to="`/posts/${post.id}/edit`">
+          <UButton size="sm" color="primary" variant="outline">
+            编辑
+          </UButton>
+        </NuxtLink>
+        <UButton 
+          size="sm" 
+          color="error" 
+          variant="outline" 
+          @click="handleDeletePost(post.id)"
+          :loading="isDeleting"
+        >
+          删除
         </UButton>
-      </NuxtLink>
-      <UButton 
-        size="sm" 
-        color="error" 
-        variant="outline" 
-        @click="handleDeletePost(post.id)"
-        :loading="isDeleting"
-      >
-        删除
-      </UButton>
-    </div>
-  </UCard>
+      </div>
+    </template>
+  </UPageCard>
 </template>
 
 <script setup lang="ts">

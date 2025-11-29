@@ -82,7 +82,7 @@
 
         <!-- 发布评论表单 -->
         <CommentForm
-          v-if="currentUser && currentUser.verified"
+          v-if="currentUser"
           :post-id="post?.id || ''"
           @submit="handleSubmitComment" />
         <UAlert

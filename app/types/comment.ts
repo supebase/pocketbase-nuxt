@@ -1,11 +1,11 @@
-import type { BaseModel } from "pocketbase";
+import type { RecordModel } from "pocketbase";
 import type { UserModel } from "./user";
 import type { PostModel } from "./post";
 
 /**
  * 评论模型类型定义
  */
-export interface CommentModel extends BaseModel {
+export interface CommentModel extends RecordModel {
   // 评论内容
   comment: string;
   // 关联的用户ID

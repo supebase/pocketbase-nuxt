@@ -3,19 +3,19 @@
     <template #header>
       <h3 class="text-lg font-semibold">评论 ({{ comments.length }})</h3>
     </template>
-    <div v-if="comments.length === 0" class="py-8 text-center text-gray-500">
+    <div v-if="comments.length === 0" class="py-8 text-center text-muted-foreground">
       暂无评论，快来发表第一条评论吧！
     </div>
     <div v-else class="space-y-4">
       <UCard
         v-for="comment in comments"
         :key="comment.id"
-        class="border"
+        variant="subtle"
       >
         <div class="flex justify-between items-start mb-3">
-          <div class="font-semibold text-gray-800">{{ getCommentAuthorName(comment) }}</div>
+          <div class="font-semibold">{{ getCommentAuthorName(comment) }}</div>
           <div class="flex items-center gap-2">
-            <span class="text-sm text-gray-500 italic">{{ formatDate(comment.created) }}</span>
+            <span class="text-sm text-muted-foreground italic">{{ formatDate(comment.created) }}</span>
             <UButton
               v-if="canDeleteComment(comment)"
               size="sm"
@@ -28,7 +28,7 @@
             </UButton>
           </div>
         </div>
-        <div class="text-gray-700">{{ comment.comment }}</div>
+        <div>{{ comment.comment }}</div>
       </UCard>
     </div>
   </UCard>
