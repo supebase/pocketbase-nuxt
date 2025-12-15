@@ -8,7 +8,7 @@ export default defineEventHandler(async (event) => {
   if (!email || !password) {
     throw createError({
       statusCode: 400,
-      statusMessage: "请输入邮箱和密码",
+      statusMessage: "请输入电子邮件和登录密码",
     });
   }
 
@@ -20,6 +20,6 @@ export default defineEventHandler(async (event) => {
     // pbUser 的类型现在是 PocketBaseUserRecord，自动传入 handleAuthSuccess
     return handleAuthSuccess(event, pbUser, "登录成功");
   } catch (error) {
-    handlePocketBaseError(error, "邮箱或密码错误");
+    handlePocketBaseError(error, "电子邮件或登录密码错误");
   }
 });

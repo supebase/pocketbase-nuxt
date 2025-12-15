@@ -5,8 +5,8 @@ import { ClientResponseError } from "pocketbase";
  * 仅用于非字段级的通用错误，例如认证失败
  */
 const GLOBAL_ERROR_CODE_MAP: Record<string, string> = {
-  "Something went wrong.": "服务器内部错误",
-  "Failed to authenticate.": "邮箱或密码错误",
+  "Something went wrong.": "发生错误，请稍后再试。",
+  "Failed to authenticate.": "登录失败，请检查电子邮件或密码。",
 };
 
 /**
@@ -15,10 +15,10 @@ const GLOBAL_ERROR_CODE_MAP: Record<string, string> = {
  */
 const FIELD_ERROR_CODE_MAP: Record<string, string> = {
   "Cannot be blank.": "请填写完整的注册信息",
-  "Must be a valid email address.": "请输入有效的邮箱地址",
+  "Must be a valid email address.": "请输入有效的电子邮件地址",
   "Must be at least 8 character(s).": "密码至少 8 个字符",
   "Values don't match.": "两次输入的密码不一致",
-  "Value must be unique.": "邮箱已被注册",
+  "Value must be unique.": "电子邮件已被注册，请更换后重试。",
 };
 
 /**

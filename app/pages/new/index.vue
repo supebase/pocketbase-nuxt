@@ -117,6 +117,8 @@ const handleSubmit = async () => {
       body: form,
     });
 
+    form.content = "";
+    form.allow_comment = true;
     // 跳转到首页
     await navigateTo("/");
   } catch (error: any) {

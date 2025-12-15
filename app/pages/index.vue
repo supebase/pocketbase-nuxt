@@ -1,82 +1,90 @@
 <template>
-  <div>
-    <div class="posts-container">
-      <h2>文章列表</h2>
+  <div class="flex flex-col items-center justify-center">
+    <div class="flex items-center gap-2 text-xl font-semibold">
+      <AnimateNumber :value="totalItems" /> 条贴文
+      <UIcon
+        v-if="isRefreshing"
+        name="hugeicons:reload"
+        class="size-5 text-muted animate-spin" />
+    </div>
 
-      <div
-        v-if="pending"
-        class="loading">
-        加载中...
-      </div>
+    <div
+      v-if="status === 'pending' && !isRefreshing"
+      class="fixed inset-0 flex justify-center items-center">
+      <UIcon
+        name="svg-spinners:ring-resize"
+        class="size-7 text-primary-500" />
+    </div>
 
-      <div
-        v-else-if="error"
-        class="error">
-        加载失败：{{ error.message }}
-      </div>
+    <UAlert
+      v-else-if="error"
+      :title="error.message"
+      variant="soft"
+      color="error"
+      class="mt-4" />
 
-      <div
-        v-else-if="posts.length === 0"
-        class="empty">
-        暂无文章
-      </div>
+    <div
+      v-else-if="!posts || posts.length === 0"
+      class="flex flex-col items-center justify-center space-y-4 min-h-[calc(100vh-14rem)] pt-16">
+      <UIcon
+        name="hugeicons:file-empty-02"
+        class="text-4xl text-neutral-300 dark:text-neutral-700" />
+      <p class="text-neutral-400 dark:text-neutral-700 text-sm font-medium">信息矩阵仍处待填充态</p>
+    </div>
 
-      <div
-        v-else
-        class="posts-list">
-        <div
-          v-for="post in posts"
-          :key="post.id"
-          class="post-item">
-          <div class="post-header">
-            <h3 class="post-title">{{ post.content }}</h3>
-            <div class="space-x-3">
-              <span class="post-author">{{ post.expand?.user?.name }}</span>
-              <span class="post-date">{{ formatDate(post.created) }}</span>
-              <span v-if="post.allow_comment" class="text-green-500">允许评论</span>
-            </div>
-          </div>
-        </div>
-      </div>
+    <div
+      v-else
+      class="mt-8 space-y-4">
+      <UBlogPost
+        v-for="post in posts"
+        :key="post.id"
+        :description="post.content"
+        :date="post.created"
+        :authors="[
+          {
+            name: post.expand?.user?.name,
+            avatar: {
+              src: `https://gravatar.loli.net/avatar/${post.expand?.user?.avatar}?s=64&r=G`,
+            },
+          },
+        ]"
+        class="w-96" />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-// 定义 Post 类型
-interface Post {
-  id: string;
-  content: string;
-  allow_comment: boolean;
-  created: string;
-  expand?: {
-    user?: {
-      name?: string;
-    };
-  };
-}
+import type { PocketBasePostRecord } from "~/types/auth.d";
 
-const { data, pending, error } = await useFetch<{
+const isRefreshing = ref(false);
+
+const {
+  data,
+  status,
+  error,
+  refresh: refreshPosts,
+} = await useLazyFetch<{
   message: string;
   data: {
-    posts: Post[];
+    posts: PocketBasePostRecord[];
     totalItems: number;
     page: number;
     perPage: number;
   };
-}>("/api/posts/records");
+}>("/api/posts/records", {
+  server: true,
+  dedupe: "cancel",
+});
 
-const posts = computed(() => data.value?.data?.posts || []);
+const posts = computed(() => data.value?.data.posts || []);
+const totalItems = computed(() => data.value?.data.totalItems || 0);
 
-// 格式化日期
-const formatDate = (dateString: string) => {
-  const date = new Date(dateString);
-  return date.toLocaleString("zh-CN", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-};
+onActivated(async () => {
+  try {
+    isRefreshing.value = true;
+    await refreshPosts();
+  } finally {
+    isRefreshing.value = false;
+  }
+});
 </script>

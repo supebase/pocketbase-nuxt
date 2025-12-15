@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div>
+    <div class="flex items-center gap-3">
       <!-- 未登录状态 -->
       <UButton
         to="/auth"
@@ -32,8 +32,8 @@
           class="rounded-full"
           v-if="user?.verified" />
         <LogoutButton />
-        <ColorModeButton />
       </div>
+      <ColorModeButton />
     </div>
   </div>
 </template>

@@ -7,7 +7,7 @@ export default defineEventHandler(async (event) => {
     // 这里使用 page=1, perPage=50 获取前 50 条记录
     const { items: posts, totalItems, page, perPage } = await pb.collection('posts').getList(
       1, // page
-      50, // perPage
+      10, // perPage
       {
         // 可以添加排序、过滤等选项
         sort: '-created', // 按创建时间倒序

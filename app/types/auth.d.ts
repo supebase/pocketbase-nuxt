@@ -14,6 +14,20 @@ export interface PocketBaseUserRecord {
   // ... 其他 PocketBase 记录字段，如有需要
 }
 
+export interface PocketBasePostRecord {
+  id: string;
+  content: string;
+  allow_comment: boolean;
+  created: string;
+  expand?: {
+    user?: {
+      name?: string;
+      verified?: boolean;
+      avatar?: string;
+    };
+  };
+}
+
 declare module "#auth-utils" {
   /**
    * UserSession 中的 User 接口继承自 PocketBaseUserRecord，
@@ -32,4 +46,4 @@ declare module "#auth-utils" {
 }
 
 // 导出空对象以确保文件被视为模块
-export {};
+export { };
