@@ -1,27 +1,14 @@
 import PocketBase from 'pocketbase';
 import { createHash } from "node:crypto";
 
-// 运行时配置，获取在 nuxt.config.ts 中定义的 public.POCKETBASE_URL
 const config = useRuntimeConfig();
 const POCKETBASE_URL = config.public.POCKETBASE_URL;
 
-// 创建 PocketBase 实例
-// 确保 POCKETBASE_URL 已在 .env 文件中设置
 if (!POCKETBASE_URL) {
     throw new Error('POCKETBASE_URL is not set in runtimeConfig');
 }
 
 export const pb = new PocketBase(POCKETBASE_URL as string);
-
-// 可选：定义 Record 模型以获得更强的类型提示
-// 假设您的 users collection 至少有 id, email, name
-export interface PocketbaseUser {
-    id: string;
-    email: string;
-    name: string;
-    avatar?: string;
-    // ... 其他字段
-}
 
 // 可选：确保服务端 PB 客户端始终处于非认证状态
 // pb.authStore.clear(); 

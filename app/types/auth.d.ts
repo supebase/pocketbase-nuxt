@@ -1,16 +1,34 @@
-import 'nuxt-auth-utils';
-import type { PocketbaseUser } from '../../server/utils/pocketbase'; // 根据您的路径调整
+import "nuxt-auth-utils";
 
-declare module '#auth-utils' {
-    interface User extends PocketbaseUser {
-        // 扩展或覆盖 User 类型
-    }
-
-    interface UserSession {
-        user: User;
-        // 可以添加 PocketBase 的 token 等信息，但为了安全和遵循 nuxt-auth-utils 最佳实践，
-        // 建议只存储在前端显示所需的**非敏感**信息。
-    }
+/**
+ * 基础 PocketBase 用户记录类型 (可被服务器端模块引用)
+ * 注意：通常 PocketBase 记录包含 created/updated/collectionId 等字段，
+ * 但这里只保留了业务所需的字段，作为 UserSession 载荷的来源。
+ */
+export interface PocketBaseUserRecord {
+  id: string;
+  email?: string;
+  name?: string; // 允许 name 字段可选
+  avatar?: string;
+  // ... 其他 PocketBase 记录字段，如有需要
 }
 
-export { };
+declare module "#auth-utils" {
+  /**
+   * UserSession 中的 User 接口继承自 PocketBaseUserRecord，
+   * 确保类型一致性。
+   */
+  interface User extends PocketBaseUserRecord {
+    // 这里不再重复 id/email/name/avatar 的定义，继承即可
+    // 如果您需要确保 name 字段在 UserSession 中是必填的，则可以再次定义：
+    // name: string;
+  }
+
+  interface UserSession {
+    user: User;
+    // ...
+  }
+}
+
+// 导出空对象以确保文件被视为模块
+export {};
