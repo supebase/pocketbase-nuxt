@@ -1,5 +1,10 @@
 <template>
-  <button @click="handleLogout">退出登录</button>
+  <UButton
+    @click="handleLogout"
+    color="neutral"
+    variant="link"
+    icon="hugeicons:door-01"
+    class="rounded-full cursor-pointer" />
 </template>
 
 <script setup lang="ts">

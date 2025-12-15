@@ -1,6 +1,6 @@
 import { pb } from "../../utils/pocketbase";
-import { handlePocketBaseError } from "../../utils/error-handler";
-import { handleAuthSuccess } from "../../utils/auth-helpers";
+import { handlePocketBaseError } from "../../utils/errorHandler";
+import { handleAuthSuccess } from "../../utils/authHelpers";
 
 export default defineEventHandler(async (event) => {
   const { email, password } = await readBody(event);

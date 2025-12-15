@@ -1,6 +1,18 @@
 <template>
-  <div>
+  <UApp>
     <NuxtLoadingIndicator />
-    <NuxtPage />
-  </div>
+    <UHeader :toggle="false">
+      <template #right>
+        <Header />
+      </template>
+    </UHeader>
+
+    <UMain>
+      <UContainer>
+        <NuxtLayout>
+          <NuxtPage />
+        </NuxtLayout>
+      </UContainer>
+    </UMain>
+  </UApp>
 </template>

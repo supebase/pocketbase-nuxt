@@ -22,6 +22,7 @@ export async function handleAuthSuccess(
     email: pbUser.email,
     name: pbUser.name,
     avatar: pbUser.avatar,
+    verified: pbUser.verified,
   };
 
   // setUserSession 是 nuxt-auth-utils 提供的函数，依赖 Nuxt/Nitro 自动导入

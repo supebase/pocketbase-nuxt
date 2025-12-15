@@ -10,6 +10,7 @@ export interface PocketBaseUserRecord {
   email?: string;
   name?: string; // 允许 name 字段可选
   avatar?: string;
+  verified?: boolean; // 用户是否已验证
   // ... 其他 PocketBase 记录字段，如有需要
 }
 

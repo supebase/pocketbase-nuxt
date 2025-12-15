@@ -10,11 +10,16 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
-    "@types/node": "^25.0.2",
+    "@nuxt/ui": "^4.2.1",
     "nuxt": "^4.2.2",
     "nuxt-auth-utils": "0.5.26",
     "pocketbase": "^0.26.5",
     "vue": "^3.5.25",
     "vue-router": "^4.6.3"
+  },
+  "devDependencies": {
+    "@iconify-json/hugeicons": "^1.2.20",
+    "@iconify-json/svg-spinners": "^1.2.4",
+    "@types/node": "^25.0.2"
   }
 }
