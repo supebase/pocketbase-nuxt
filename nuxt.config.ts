@@ -2,7 +2,7 @@
 export default defineNuxtConfig({
   compatibilityDate: "2025-07-15",
   devtools: { enabled: false },
-  modules: ["nuxt-auth-utils", "@nuxt/ui"],
+  modules: ["nuxt-auth-utils", "@nuxt/ui", "@nuxtjs/mdc"],
   runtimeConfig: {
     session: {
       name: "pb-session",
@@ -32,6 +32,17 @@ export default defineNuxtConfig({
     },
     clientBundle: {
       scan: true,
+    },
+  },
+  mdc: {
+    headings: {
+      anchorLinks: false,
+    },
+    highlight: {
+      theme: {
+        default: "github-light",
+        dark: "github-dark",
+      },
     },
   },
   colorMode: {

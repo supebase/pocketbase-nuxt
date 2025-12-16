@@ -11,7 +11,7 @@
         color="neutral"
         placeholder="请输入评论内容"
         size="lg"
-        :rows="10"
+        :rows="3"
         :disabled="isSubmitting"
         class="w-full" />
       <div

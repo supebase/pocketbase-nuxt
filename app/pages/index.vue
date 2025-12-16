@@ -73,7 +73,7 @@
         </template>
 
         <template #description="{ item }">
-          <ULink :to="`/${item.id}`">{{ item.description }}</ULink>
+          <ULink :to="`/${item.id}`">{{ cleanMarkdown(item.description) }}</ULink>
           <div
             v-if="!item.allowComment"
             class="flex items-center gap-2 text-sm mt-2 text-neutral-300 dark:text-neutral-600">
@@ -82,18 +82,8 @@
               class="size-5" />
             评论已关闭
           </div>
-          <UAvatarGroup
-            :max="3"
-            size="xs"
-            class="flex mt-2"
-            v-else>
-            <UAvatar src="https://github.com/benjamincanac.png" />
-            <UAvatar src="https://github.com/romhml.png" />
-            <UAvatar src="https://github.com/noook.png" />
-            <UAvatar src="https://github.com/benjamincanac.png" />
-            <UAvatar src="https://github.com/romhml.png" />
-            <UAvatar src="https://github.com/noook.png" />
-          </UAvatarGroup>
+          
+          <CommentUsers :post-id="item.id" v-if="item.allowComment" />
         </template>
       </UTimeline>
     </div>
@@ -134,4 +124,29 @@ onActivated(async () => {
     isRefreshing.value = false;
   }
 });
+
+/**
+   * 清理 Markdown 语法，返回纯文本
+   * @param text - 包含 Markdown 语法的文本
+   * @returns 清理后的纯文本
+   */
+  const cleanMarkdown = (text: string): string => {
+    // 类型和边界检查：只处理字符串类型
+    if (typeof text !== "string" || !text) return "";
+
+    const cleaned = text
+      .replace(/#{1,6}\s/g, "")
+      .replace(/\*\*(.+?)\*\*/g, "$1")
+      .replace(/\*(.+?)\*/g, "$1")
+      .replace(/\[(.+?)\]\(.+?\)({target=_blank})?/g, "$1") // 处理带有 target=_blank 的链接
+      .replace(/`(.+?)`/g, "$1")
+      .replace(/~~(.+?)~~/g, "$1")
+      .replace(/>\s(.+)/g, "$1")
+      .replace(/\n\s*[-*+]\s/g, "\n")
+      .replace(/\n\s*\d+\.\s/g, "\n")
+      .replace(/::.*?::/gs, "")
+      .replace(/`.*?`/gs, "");
+
+    return cleaned;
+  };
 </script>

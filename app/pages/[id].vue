@@ -24,8 +24,14 @@
         <span>{{ useRelativeTime(post.created).value }}</span>
       </div>
       <div class="mt-8">
-        {{ post.content }}
+        <MDC :value="post.content" />
       </div>
+
+      <CommentForm
+        v-if="loggedIn && post"
+        :post-id="post.id"
+        @comment-created="handleCommentCreated"
+        class="mt-8" />
 
       <div class="flex items-center text-2xl font-bold mt-6 space-x-2">
         <div>评论</div>
@@ -53,22 +59,25 @@
         <transition-group
           name="comment-fade"
           tag="div"
-          class="relative">
-          <div
+          class="relative space-y-4">
+          <UCard
+            variant="soft"
             v-for="comment in comments"
-            :key="comment.id"
-            class="mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+            :key="comment.id">
             <div class="flex items-center gap-2 text-gray-500 mb-2">
+              <UAvatar
+                :src="`https://gravatar.loli.net/avatar/${comment.expand?.user?.avatar}?s=64&r=G`"
+                class="size-5" />
               <span class="font-medium text-gray-800 dark:text-gray-200">{{
                 comment.expand?.user?.name
               }}</span>
               <span>•</span>
               <span>{{ useRelativeTime(comment.created).value }}</span>
             </div>
-            <div class="text-gray-700 dark:text-gray-300">
+            <div class="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
               {{ comment.comment }}
             </div>
-          </div>
+          </UCard>
         </transition-group>
       </div>
 
@@ -87,12 +96,6 @@
         class="text-4xl text-neutral-300 dark:text-neutral-700" />
       <p class="text-neutral-400 dark:text-neutral-700 text-sm font-medium">文章不存在或已被删除</p>
     </div>
-
-    <CommentForm
-      v-if="loggedIn && post"
-      :post-id="post.id"
-      @comment-created="handleCommentCreated"
-      class="mt-8" />
   </div>
 </template>
 
