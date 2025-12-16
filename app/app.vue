@@ -2,12 +2,15 @@
   <UApp>
     <NuxtLoadingIndicator />
     <UHeader :toggle="false">
+      <template #title>
+        <Logo />
+      </template>
       <template #right>
         <Header />
       </template>
     </UHeader>
 
-    <UMain>
+    <UMain class="max-w-md mx-auto">
       <UContainer>
         <NuxtLayout>
           <NuxtPage />

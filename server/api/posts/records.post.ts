@@ -14,7 +14,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // 读取请求体
- const { content, allow_comment } = await readBody(event);
+ const { content, allow_comment, icon, action } = await readBody(event);
 
   // 参数验证
   if (!content || typeof content !== 'string') {
@@ -38,6 +38,8 @@ export default defineEventHandler(async (event) => {
       content: content,
       user: user.id, // 关联当前登录用户
       allow_comment: allow_comment,
+      icon: icon,
+      action: action,
     });
 
     return {

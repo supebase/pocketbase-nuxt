@@ -165,6 +165,10 @@ async function handleAuth() {
       body,
     });
 
+    email.value = "";
+    password.value = "";
+    passwordConfirm.value = "";
+
     // 刷新会话并跳转
     await fetchSession();
     // 成功后跳转到首页

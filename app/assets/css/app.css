@@ -1,6 +1,20 @@
 @import "tailwindcss";
 @import "@nuxt/ui";
 
+@theme static {
+  --ui-primary: oklch(90.1% 0.076 70.697);
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::-webkit-scrollbar {
+  width: 0;
+  background: transparent;
+}
+
 ::view-transition-old(root),
 ::view-transition-new(root) {
   animation: none;
@@ -36,4 +50,63 @@
   padding: 0 0.1em;
   height: 1.25em;
   line-height: 1.25em;
+}
+
+.eric svg {
+  width: 32px;
+  height: auto;
+  will-change: transform;
+}
+
+/* 添加减少动画的媒体查询 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .eric path {
+    animation: none !important;
+    stroke-dasharray: unset !important;
+  }
+}
+
+@keyframes write {
+  0% {
+    stroke-dashoffset: 1000px;
+    opacity: 0;
+  }
+
+  10% {
+    opacity: 1;
+  }
+
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* 只在 .eric 类下的路径应用动画 */
+.eric path:nth-child(1) {
+  stroke-dasharray: 1000px;
+  stroke-dashoffset: 1000px;
+  animation: write 5s ease forwards;
+}
+
+.eric path:nth-child(2) {
+  stroke-dasharray: 1000px;
+  stroke-dashoffset: 1000px;
+  animation: write 5s ease forwards;
+  animation-delay: 1.5s;
+}
+
+.eric path:nth-child(3) {
+  stroke-dasharray: 1000px;
+  stroke-dashoffset: 1000px;
+  animation: write 5s ease forwards;
+  animation-delay: 2s;
 }

@@ -18,8 +18,27 @@ export interface PocketBasePostRecord {
   id: string;
   content: string;
   allow_comment: boolean;
+  icon?: string;
+  action?: string;
   created: string;
   expand?: {
+    user?: {
+      name?: string;
+      verified?: boolean;
+      avatar?: string;
+    };
+  };
+}
+
+export interface PocketBaseCommentRecord {
+  id: string;
+  comment: string;
+  created: string;
+  expand?: {
+    post?: {
+      id?: string;
+      content?: string;
+    };
     user?: {
       name?: string;
       verified?: boolean;

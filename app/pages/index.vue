@@ -13,7 +13,7 @@
       class="fixed inset-0 flex justify-center items-center">
       <UIcon
         name="svg-spinners:ring-resize"
-        class="size-7 text-primary-500" />
+        class="size-7 text-primary" />
     </div>
 
     <UAlert
@@ -35,20 +35,67 @@
     <div
       v-else
       class="mt-8 space-y-4">
-      <UBlogPost
-        v-for="post in posts"
-        :key="post.id"
-        :description="post.content"
-        :date="post.created"
-        :authors="[
-          {
-            name: post.expand?.user?.name,
-            avatar: {
-              src: `https://gravatar.loli.net/avatar/${post.expand?.user?.avatar}?s=64&r=G`,
-            },
-          },
-        ]"
-        class="w-96" />
+      <UTimeline
+        :items="
+          posts.map((item) => ({
+            id: item.id,
+            title: item.expand?.user?.name,
+            date: useRelativeTime(item.created).value,
+            description: item.content,
+            action: item.action,
+            ...(item.icon && { icon: item.icon }),
+            ...(!item.icon && {
+              avatar: {
+                src: `https://gravatar.loli.net/avatar/${item.expand?.user?.avatar}?s=64&r=G`,
+              },
+            }),
+            allowComment: item.allow_comment,
+            verified: item.expand?.user?.verified,
+          }))
+        "
+        :default-value="1"
+        :ui="{
+          title: '-mt-0.5',
+          date: 'float-end ms-1 text-sm',
+          description: 'mt-2 text-base',
+        }">
+        <template #title="{ item }">
+          <span class="text-base mr-2">{{ item.title }}</span>
+          <span
+            v-if="item.action === 'partager'"
+            class="text-sm text-neutral-400 dark:text-neutral-700"
+            >和大家分享</span
+          >
+        </template>
+
+        <template #date="{ item }">
+          {{ item.date }}
+        </template>
+
+        <template #description="{ item }">
+          <ULink :to="`/${item.id}`">{{ item.description }}</ULink>
+          <div
+            v-if="!item.allowComment"
+            class="flex items-center gap-2 text-sm mt-2 text-neutral-300 dark:text-neutral-600">
+            <UIcon
+              name="hugeicons:comment-block-02"
+              class="size-5" />
+            评论已关闭
+          </div>
+          <UAvatarGroup
+            :max="3"
+            size="xs"
+            class="flex mt-2"
+            v-else>
+            <UAvatar src="https://github.com/benjamincanac.png" />
+            <UAvatar src="https://github.com/romhml.png" />
+            <UAvatar src="https://github.com/noook.png" />
+            <UAvatar src="https://github.com/benjamincanac.png" />
+            <UAvatar src="https://github.com/romhml.png" />
+            <UAvatar src="https://github.com/noook.png" />
+          </UAvatarGroup>
+        </template>
+      </UTimeline>
     </div>
   </div>
 </template>

@@ -6,7 +6,7 @@
       :items="items"
       :ui="{ trigger: 'grow' }"
       variant="link"
-      color="neutral"
+      color="primary"
       class="w-full gap-4">
       <template #content="{ item }">
         <UAlert

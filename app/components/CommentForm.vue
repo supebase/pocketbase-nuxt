@@ -6,52 +6,29 @@
       @submit.prevent="handleSubmit"
       class="space-y-4">
       <UTextarea
-        v-model="form.content"
+        v-model="form.comment"
         autoresize
         color="neutral"
-        placeholder="请输入文章内容"
+        placeholder="请输入评论内容"
         size="lg"
         :rows="10"
         :disabled="isSubmitting"
         class="w-full" />
       <div
-        v-if="errors.content"
+        v-if="errors.comment"
         class="error-message">
-        {{ errors.content }}
+        {{ errors.comment }}
       </div>
 
-      <UInput
-        v-model="form.icon"
-        placeholder="图标"
-        variant="outline"
-        color="neutral"
-        :disabled="isSubmitting"
-        icon="hugeicons:image-rotation-clockwise"
-        size="lg"
-        class="w-full" />
-
-      <URadioGroup
-        v-model="form.action"
-        :items="['dit', 'partager']" />
-
-      <div class="flex items-center justify-between">
-        <div>
-          <USwitch
-            v-model="form.allow_comment"
-            :disabled="isSubmitting"
-            label="允许评论" />
-        </div>
-
-        <div>
-          <UButton
-            type="submit"
-            color="neutral"
-            :loading="isSubmitting"
-            :disabled="isSubmitting">
-            <span v-if="!isSubmitting">发表贴文</span>
-            <span v-else>发布中...</span>
-          </UButton>
-        </div>
+      <div>
+        <UButton
+          type="submit"
+          color="neutral"
+          :loading="isSubmitting"
+          :disabled="isSubmitting">
+          <span v-if="!isSubmitting">发表评论</span>
+          <span v-else>发布中...</span>
+        </UButton>
       </div>
 
       <div
@@ -64,17 +41,28 @@
 </template>
 
 <script setup lang="ts">
+const props = defineProps({
+  postId: {
+    type: String,
+    required: true,
+  },
+});
+
+// 定义事件
+const emit = defineEmits<{
+  // 评论创建成功事件
+  (e: 'comment-created', comment: any): void;
+}>();
+
 // 表单数据
 const form = reactive({
-  content: "",
-  allow_comment: true, // 默认允许评论
-  icon: "",
-  action: "dit", // 默认操作是贴文
+  comment: "",
+  post: props.postId,
 });
 
 // 表单验证错误
 const errors = reactive({
-  content: "",
+  comment: "",
 });
 
 // 状态管理
@@ -86,15 +74,15 @@ const validateForm = () => {
   let isValid = true;
 
   // 重置错误
-  errors.content = "";
+  errors.comment = "";
   globalError.value = "";
 
   // 验证内容
-  if (!form.content.trim()) {
-    errors.content = "内容不能为空";
+  if (!form.comment.trim()) {
+    errors.comment = "内容不能为空";
     isValid = false;
-  } else if (form.content.length > 10000) {
-    errors.content = "内容长度不能超过10000字符";
+  } else if (form.comment.length > 300) {
+    errors.comment = "内容长度不能超过300字符";
     isValid = false;
   }
 
@@ -111,33 +99,34 @@ const handleSubmit = async () => {
   // 设置提交状态
   isSubmitting.value = true;
   globalError.value = "";
-  errors.content = "";
+  errors.comment = "";
 
   try {
     // 调用后端API
-    await $fetch("/api/posts/records", {
+    const response = await $fetch("/api/comments/records", {
       method: "POST",
       body: form,
     });
 
-    form.content = "";
-    form.allow_comment = true;
-    form.icon = "";
-    form.action = "dit";
-    // 跳转到首页
-    await navigateTo("/");
+    // 清空表单
+    form.comment = "";
+    
+    // 触发评论创建成功事件，传递新评论数据
+    if (response.comments) {
+      emit('comment-created', response.comments);
+    }
   } catch (error: any) {
     // 检查是否存在详细字段错误 (由 handlePocketBaseError 转发)
     if (error.data && Object.keys(error.data).length > 0) {
-      // 尝试分配给 content 字段
-      if (error.data.content) {
-        errors.content = error.data.content.message;
+      // 尝试分配给 comment 字段
+      if (error.data.comment) {
+        errors.comment = error.data.comment.message;
       }
 
       // 如果存在通用错误或未分配的字段错误，则显示在 globalError
-      const hasUnassignedError = Object.keys(error.data).some((field) => field !== "content");
+      const hasUnassignedError = Object.keys(error.data).some((field) => field !== "comment");
 
-      if (error.statusMessage && (hasUnassignedError || errors.content === "")) {
+      if (error.statusMessage && (hasUnassignedError || errors.comment === "")) {
         globalError.value = error.statusMessage + "。请检查字段错误。";
       }
     } else {
