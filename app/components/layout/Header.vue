@@ -31,9 +31,9 @@
           icon="i-hugeicons:add-circle"
           class="rounded-full"
           v-if="user?.verified" />
-        <LogoutButton />
+        <AuthLogoutButton />
       </div>
-      <ColorModeButton />
+      <CommonColorModeButton />
     </div>
   </div>
 </template>

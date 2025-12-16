@@ -1,4 +1,4 @@
-import { pb } from "../../utils/pocketbase";
+import { createComment } from "../../services/comments.service";
 import { handlePocketBaseError } from "../../utils/errorHandler";
 import sanitizeHtml from "sanitize-html";
 
@@ -43,11 +43,11 @@ export default defineEventHandler(async (event) => {
 
   try {
     // 创建评论记录
-    const comments = await pb.collection("comments").create({
+    const comments = await createComment({
       comment: cleanComment,
       post: post, // 关联贴文
       user: user.id, // 关联当前登录用户
-    }, { expand: "user" }); // 添加expand参数，确保返回用户信息
+    });
 
     return {
       message: "评论发布成功",

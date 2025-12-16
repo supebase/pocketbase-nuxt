@@ -51,7 +51,7 @@ const props = defineProps({
 // 定义事件
 const emit = defineEmits<{
   // 评论创建成功事件
-  (e: 'comment-created', comment: any): void;
+  (e: "comment-created", comment: any): void;
 }>();
 
 // 表单数据
@@ -110,10 +110,10 @@ const handleSubmit = async () => {
 
     // 清空表单
     form.comment = "";
-    
+
     // 触发评论创建成功事件，传递新评论数据
     if (response.comments) {
-      emit('comment-created', response.comments);
+      emit("comment-created", response.comments);
     }
   } catch (error: any) {
     // 检查是否存在详细字段错误 (由 handlePocketBaseError 转发)

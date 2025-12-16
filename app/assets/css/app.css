@@ -5,6 +5,14 @@
   --ui-primary: oklch(90.1% 0.076 70.697);
 }
 
+:root {
+  --ui-primary: oklch(60.6% 0.25 292.717);
+}
+
+.dark {
+  --ui-primary: oklch(90.1% 0.076 70.697);
+}
+
 body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -50,6 +58,37 @@ body {
   padding: 0 0.1em;
   height: 1.25em;
   line-height: 1.25em;
+}
+
+/* 评论列表过渡动画 (不变) */
+.comment-fade-enter-active,
+.comment-fade-leave-active {
+  transition: all 0.3s ease;
+}
+
+/* 新评论进入时的起始状态：不透明度为0，向上位移20px */
+.comment-fade-enter-from {
+  opacity: 0;
+  transform: translateY(-20px);
+}
+
+/* 现有评论离开时的结束状态：不透明度为0，向上位移20px */
+.comment-fade-leave-to {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+/* 当非进入/离开的元素移动时，应用过渡效果 */
+.comment-fade-move {
+  transition: transform 0.3s ease;
+}
+
+/* 【修改点 4: 确保离开元素绝对定位，防止布局跳跃】 
+  保留并强调此规则。 
+*/
+.comment-fade-leave-active {
+  position: absolute;
+  width: 100%; /* 保持宽度，避免抖动 */
 }
 
 .eric svg {

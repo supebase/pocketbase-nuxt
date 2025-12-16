@@ -1,17 +1,17 @@
 <template>
   <UCard
-    variant="soft"
+    variant="subtle"
     class="mx-auto max-w-md">
     <UTabs
       :items="items"
-      :ui="{ trigger: 'grow' }"
+      :ui="{ trigger: 'grow cursor-pointer' }"
       variant="link"
       color="primary"
       class="w-full gap-4">
       <template #content="{ item }">
         <UAlert
           :title="item.description"
-          variant="soft"
+          variant="outline"
           color="neutral" />
         <AuthForm :is-login-mode="item.content === 'login' ? true : false" />
       </template>

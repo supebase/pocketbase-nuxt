@@ -33,7 +33,7 @@
             :aria-label="showPassword ? '隐藏密码' : '显示密码'"
             :aria-pressed="showPassword"
             aria-controls="password"
-            @click="showPassword = !showPassword" />
+            @click="togglePasswordVisibility" />
         </template>
       </UInput>
 
@@ -43,11 +43,11 @@
             v-for="(req, index) in strength"
             :key="index"
             class="flex items-center gap-1"
-            :class="req.met ? 'text-success' : 'text-muted'">
+            :class="req.met ? 'text-primary' : 'text-dimmed'">
             <UIcon
               :name="req.met ? 'hugeicons:checkmark-circle-03' : 'hugeicons:circle'"
-              class="size-5 shrink-0" />
-            <span class="text-sm text-muted">
+              class="size-4 shrink-0" />
+            <span class="text-xs text-dimmed tabular-nums">
               {{ req.text }}
             </span>
           </li>
@@ -74,7 +74,7 @@
             :aria-label="showPasswordConfirm ? '隐藏密码' : '显示密码'"
             :aria-pressed="showPasswordConfirm"
             aria-controls="passwordConfirm"
-            @click="showPasswordConfirm = !showPasswordConfirm" />
+            @click="togglePasswordConfirmVisibility" />
         </template>
       </UInput>
 
@@ -99,6 +99,13 @@
 </template>
 
 <script setup lang="ts">
+import {
+  checkPasswordStrength,
+  calculatePasswordScore,
+  getPasswordStrengthColor,
+} from "~/utils/password";
+import { usePasswordVisibility } from "~/composables/utils/usePasswordVisibility";
+
 const { fetch: fetchSession } = useUserSession();
 
 const props = defineProps<{
@@ -112,8 +119,11 @@ const passwordConfirm = ref("");
 const loading = ref(false);
 const error = ref("");
 
-const showPassword = ref(false);
-const showPasswordConfirm = ref(false);
+// 使用密码显示/隐藏组合式函数
+const { isVisible: showPassword, toggleVisibility: togglePasswordVisibility } =
+  usePasswordVisibility();
+const { isVisible: showPasswordConfirm, toggleVisibility: togglePasswordConfirmVisibility } =
+  usePasswordVisibility();
 
 // 计算属性
 const formState = computed(() => ({
@@ -189,25 +199,8 @@ async function handleAuth() {
   }
 }
 
-function checkStrength(str: string) {
-  const requirements = [
-    { regex: /.{8,}/, text: "密码至少 8 个字符" },
-    { regex: /\d/, text: "包含至少 1 个数字" },
-    { regex: /[a-z]/, text: "包含至少 1 个小写字母" },
-    { regex: /[A-Z]/, text: "包含至少 1 个大写字母" },
-  ];
-
-  return requirements.map((req) => ({ met: req.regex.test(str), text: req.text }));
-}
-
-const strength = computed(() => checkStrength(password.value));
-const score = computed(() => strength.value.filter((req) => req.met).length);
-
-const color = computed(() => {
-  if (score.value === 0) return "neutral";
-  if (score.value <= 1) return "error";
-  if (score.value <= 2) return "warning";
-  if (score.value === 3) return "warning";
-  return "success";
-});
+// 密码强度相关计算
+const strength = computed(() => checkPasswordStrength(password.value));
+const score = computed(() => calculatePasswordScore(strength.value));
+const color = computed(() => getPasswordStrengthColor(score.value));
 </script>

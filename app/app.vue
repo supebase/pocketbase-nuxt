@@ -3,10 +3,10 @@
     <NuxtLoadingIndicator />
     <UHeader :toggle="false">
       <template #title>
-        <Logo />
+        <CommonLogo />
       </template>
       <template #right>
-        <Header />
+        <LayoutHeader />
       </template>
     </UHeader>
 

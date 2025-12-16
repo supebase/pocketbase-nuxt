@@ -1,4 +1,4 @@
-import { pb, getMd5Hash } from "../../utils/pocketbase";
+import { registerService } from "../../services/auth.service";
 import { handlePocketBaseError } from "../../utils/errorHandler";
 import { handleAuthSuccess } from "../../utils/authHelpers";
 
@@ -19,21 +19,8 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  const md5Hash = getMd5Hash(email);
-  // 假设新用户注册时，默认 name 为 email 或其他值
-  const defaultName = email.split("@")[0];
-
   try {
-    await pb.collection("users").create({
-      email,
-      password,
-      passwordConfirm,
-      avatar: md5Hash,
-      name: defaultName, // 确保 name 字段有值
-    });
-
-    const authData = await pb.collection("users").authWithPassword(email, password);
-    const pbUser = authData.record;
+    const pbUser = await registerService(email, password, passwordConfirm);
 
     // 使用辅助函数处理成功逻辑
     return handleAuthSuccess(event, pbUser, "注册成功");

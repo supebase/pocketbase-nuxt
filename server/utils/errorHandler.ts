@@ -7,6 +7,7 @@ import { ClientResponseError } from "pocketbase";
 const GLOBAL_ERROR_CODE_MAP: Record<string, string> = {
   "Something went wrong.": "发生错误，请稍后再试。",
   "Failed to authenticate.": "登录失败，请检查电子邮件或密码。",
+  "Something went wrong while processing your request.": "处理请求时出错，请稍后再试。",
 };
 
 /**

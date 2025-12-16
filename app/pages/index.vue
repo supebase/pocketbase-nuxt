@@ -1,7 +1,7 @@
 <template>
   <div class="flex flex-col items-center justify-center">
     <div class="flex items-center gap-2 text-xl font-semibold">
-      <AnimateNumber :value="totalItems" /> 条贴文
+      <CommonAnimateNumber :value="totalItems" /> 条贴文
       <UIcon
         v-if="isRefreshing"
         name="hugeicons:reload"
@@ -37,10 +37,10 @@
       class="mt-8 space-y-4">
       <UTimeline
         :items="
-          posts.map((item) => ({
+          processedPosts.map((item) => ({
             id: item.id,
             title: item.expand?.user?.name,
-            date: useRelativeTime(item.created).value,
+            date: item.relativeTime,
             description: item.content,
             action: item.action,
             ...(item.icon && { icon: item.icon }),
@@ -56,14 +56,14 @@
         :default-value="1"
         :ui="{
           title: '-mt-0.5',
-          date: 'float-end ms-1 text-sm',
+          date: 'float-end ms-1 text-sm text-dimmed',
           description: 'mt-2 text-base',
         }">
         <template #title="{ item }">
           <span class="text-base mr-2">{{ item.title }}</span>
           <span
             v-if="item.action === 'partager'"
-            class="text-sm text-neutral-400 dark:text-neutral-700"
+            class="text-sm text-dimmed"
             >和大家分享</span
           >
         </template>
@@ -76,14 +76,16 @@
           <ULink :to="`/${item.id}`">{{ cleanMarkdown(item.description) }}</ULink>
           <div
             v-if="!item.allowComment"
-            class="flex items-center gap-2 text-sm mt-2 text-neutral-300 dark:text-neutral-600">
+            class="flex items-center gap-2 text-sm mt-2 text-dimmed">
             <UIcon
               name="hugeicons:comment-block-02"
               class="size-5" />
             评论已关闭
           </div>
-          
-          <CommentUsers :post-id="item.id" v-if="item.allowComment" />
+
+          <CommentsCommentUsers
+            :post-id="item.id"
+            v-if="item.allowComment" />
         </template>
       </UTimeline>
     </div>
@@ -91,7 +93,9 @@
 </template>
 
 <script setup lang="ts">
-import type { PocketBasePostRecord } from "~/types/auth.d";
+import type { PostRecord } from "~/types/posts";
+import { cleanMarkdown } from "~/utils/index";
+import { useRelativeTime } from "~/composables/utils/useRelativeTime";
 
 const isRefreshing = ref(false);
 
@@ -103,7 +107,7 @@ const {
 } = await useLazyFetch<{
   message: string;
   data: {
-    posts: PocketBasePostRecord[];
+    posts: PostRecord[];
     totalItems: number;
     page: number;
     perPage: number;
@@ -116,6 +120,17 @@ const {
 const posts = computed(() => data.value?.data.posts || []);
 const totalItems = computed(() => data.value?.data.totalItems || 0);
 
+// 处理相对时间计算
+const processedPosts = computed(() => {
+  return posts.value.map((item) => {
+    const relativeTime = useRelativeTime(item.created).value;
+    return {
+      ...item,
+      relativeTime,
+    };
+  });
+});
+
 onActivated(async () => {
   try {
     isRefreshing.value = true;
@@ -124,29 +139,4 @@ onActivated(async () => {
     isRefreshing.value = false;
   }
 });
-
-/**
-   * 清理 Markdown 语法，返回纯文本
-   * @param text - 包含 Markdown 语法的文本
-   * @returns 清理后的纯文本
-   */
-  const cleanMarkdown = (text: string): string => {
-    // 类型和边界检查：只处理字符串类型
-    if (typeof text !== "string" || !text) return "";
-
-    const cleaned = text
-      .replace(/#{1,6}\s/g, "")
-      .replace(/\*\*(.+?)\*\*/g, "$1")
-      .replace(/\*(.+?)\*/g, "$1")
-      .replace(/\[(.+?)\]\(.+?\)({target=_blank})?/g, "$1") // 处理带有 target=_blank 的链接
-      .replace(/`(.+?)`/g, "$1")
-      .replace(/~~(.+?)~~/g, "$1")
-      .replace(/>\s(.+)/g, "$1")
-      .replace(/\n\s*[-*+]\s/g, "\n")
-      .replace(/\n\s*\d+\.\s/g, "\n")
-      .replace(/::.*?::/gs, "")
-      .replace(/`.*?`/gs, "");
-
-    return cleaned;
-  };
 </script>

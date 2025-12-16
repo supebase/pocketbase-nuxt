@@ -5,7 +5,7 @@ import "nuxt-auth-utils";
  * 注意：通常 PocketBase 记录包含 created/updated/collectionId 等字段，
  * 但这里只保留了业务所需的字段，作为 UserSession 载荷的来源。
  */
-export interface PocketBaseUserRecord {
+export interface UserRecord {
   id: string;
   email?: string;
   name?: string; // 允许 name 字段可选
@@ -14,55 +14,46 @@ export interface PocketBaseUserRecord {
   // ... 其他 PocketBase 记录字段，如有需要
 }
 
-export interface PocketBasePostRecord {
-  id: string;
-  content: string;
-  allow_comment: boolean;
-  icon?: string;
-  action?: string;
-  created: string;
-  expand?: {
-    user?: {
-      name?: string;
-      verified?: boolean;
-      avatar?: string;
-    };
-  };
+/**
+ * 登录请求类型
+ */
+export interface LoginRequest {
+  email: string;
+  password: string;
 }
 
-export interface PocketBaseCommentRecord {
-  id: string;
-  comment: string;
-  created: string;
-  expand?: {
-    post?: {
-      id?: string;
-      content?: string;
-    };
-    user?: {
-      name?: string;
-      verified?: boolean;
-      avatar?: string;
-    };
+/**
+ * 注册请求类型
+ */
+export interface RegisterRequest {
+  email: string;
+  password: string;
+  passwordConfirm: string;
+}
+
+/**
+ * 认证响应类型
+ */
+export interface AuthResponse {
+  message: string;
+  data: {
+    user: UserRecord;
   };
 }
 
 declare module "#auth-utils" {
   /**
-   * UserSession 中的 User 接口继承自 PocketBaseUserRecord，
+   * UserSession 中的 User 接口继承自 UserRecord，
    * 确保类型一致性。
    */
-  interface User extends PocketBaseUserRecord {
+  interface User extends UserRecord {
     // 这里不再重复 id/email/name/avatar 的定义，继承即可
     // 如果您需要确保 name 字段在 UserSession 中是必填的，则可以再次定义：
     // name: string;
   }
 
   interface UserSession {
-    user: User;
+    user?: User;
     // ...
   }
 }
-
-// 导出空对象以确保文件被视为模块
-export { };

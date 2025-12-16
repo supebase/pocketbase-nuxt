@@ -5,7 +5,7 @@ const config = useRuntimeConfig();
 const POCKETBASE_URL = config.public.POCKETBASE_URL;
 
 if (!POCKETBASE_URL) {
-  throw new Error("POCKETBASE_URL is not set in runtimeConfig");
+  throw new Error("POCKETBASE_URL 未配置正确");
 }
 
 export const pb = new PocketBase(POCKETBASE_URL as string).autoCancellation(false);
