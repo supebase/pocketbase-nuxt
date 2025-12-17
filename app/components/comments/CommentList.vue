@@ -38,26 +38,41 @@
             class="size-8 ring-4 ring-white dark:ring-neutral-900 bg-white dark:bg-neutral-900 shadow-sm" />
         </template>
 
-        <template #title="{ item }">
-          <div class="flex items-center justify-between w-full">
-            <div class="text-base font-medium">
+        <template #title="{ item, index }">
+          <div
+            :key="item.id"
+            :class="[
+              !item.initialized && !item.isNew ? 'record-item-animate' : '',
+              item.isNew ? 'new-item-animate' : '',
+            ]"
+            :style="{ '--delay': item.isNew ? '0s' : `${index * 0.08}s` }">
+            <div class="flex items-center justify-between text-base font-medium">
               {{ item.expand?.user?.name }}
+
+              <CommonLikeButton
+                :comment-id="item.id"
+                :initial-likes="item.likes || 0"
+                :is-liked="item.isLiked || false"
+                @like-change="handleLikeChange" />
             </div>
-            <UButton
-              variant="link"
-              color="neutral"
-              icon="hugeicons:favourite"
-              label="0" />
           </div>
         </template>
 
-        <template #description="{ item }">
-          <div class="text-base break-all whitespace-pre-wrap">
-            {{ item.comment }}
-          </div>
+        <template #description="{ item, index }">
+          <div
+            :key="item.id"
+            :class="[
+              !item.initialized && !item.isNew ? 'record-item-animate' : '',
+              item.isNew ? 'new-item-animate' : '',
+            ]"
+            :style="{ '--delay': item.isNew ? '0s' : `${index * 0.08}s` }">
+            <div class="text-base break-all whitespace-pre-wrap">
+              {{ item.comment }}
+            </div>
 
-          <div class="text-sm text-dimmed mt-1.5">
-            {{ item.relativeTime }}
+            <div class="text-sm text-dimmed mt-1.5">
+              {{ item.relativeTime }}
+            </div>
           </div>
         </template>
       </CommonMotionTimeline>
@@ -79,7 +94,6 @@
 
 <script setup lang="ts">
 import type { CommentRecord, CommentsResponse } from "~/types/comments";
-import { useRelativeTime } from "~/composables/utils/useRelativeTime";
 
 const props = defineProps<{
   postId: string;
@@ -113,6 +127,12 @@ const { data: commentsData, refresh: refreshComments } = await useLazyFetch<Comm
         };
       });
       loading.value = false;
+
+      setTimeout(() => {
+        comments.value.forEach((c) => {
+          c.initialized = true;
+        });
+      }, 1000);
     },
 
     onResponseError(err) {
@@ -129,7 +149,34 @@ const handleCommentCreated = (newComment: CommentRecord) => {
   comments.value.unshift({
     ...newComment,
     relativeTime,
+    likes: 0,
+    isLiked: false,
+    isNew: true,
   });
+
+  setTimeout(() => {
+    const target = comments.value.find((c) => c.id === newComment.id);
+    if (target) {
+      target.isNew = false;
+      target.initialized = true;
+    }
+  }, 500);
+};
+
+// 处理点赞状态变化
+const handleLikeChange = (liked: boolean, likes: number, commentId: string) => {
+  const commentIndex = comments.value.findIndex((comment) => comment.id === commentId);
+  if (commentIndex !== -1) {
+    const currentComment = comments.value[commentIndex];
+    // 确保currentComment存在
+    if (currentComment) {
+      comments.value[commentIndex] = {
+        ...currentComment,
+        likes,
+        isLiked: liked,
+      };
+    }
+  }
 };
 
 defineExpose({

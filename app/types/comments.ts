@@ -10,6 +10,10 @@ export interface CommentRecord {
   comment: string;
   created: string;
   relativeTime?: string; // 相对时间，用于前端显示
+  likes?: number; // 点赞数
+  isLiked?: boolean; // 当前用户是否已点赞
+  isNew?: boolean; // 是否是刚发表的评论
+  initialized?: boolean; // 是否已初始化，用于动画效果
   expand?: {
     post?: {
       id?: string;

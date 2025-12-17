@@ -3,10 +3,10 @@
     ref="timelineContainer"
     class="relative">
     <div
-      class="absolute top-8 bottom-8 w-0.5 z-0 bg-neutral-100 dark:bg-neutral-800 rounded-full overflow-hidden"
+      class="absolute top-8 bottom-8 w-0.5 z-0 bg-neutral-100 dark:bg-neutral-800 overflow-hidden"
       :style="{ left: lineOffset }">
       <div
-        class="absolute top-0 w-full bg-primary will-change-[height] shadow-[0_0_8px_rgba(var(--color-primary-500),0.5)]"
+        class="absolute top-0 w-full bg-primary rounded-full will-change-[height] shadow-[0_0_8px_rgba(var(--color-primary-500),0.5)]"
         :class="{ 'transition-all duration-300 ease-out': !loadingMore && !isResetting }"
         :style="{ height: `${progress}%` }" />
     </div>
@@ -21,7 +21,8 @@
         #[name]="slotData">
         <slot
           :name="name"
-          v-bind="slotData" />
+          v-bind="slotData"
+          :index="slotData.item?.index" />
       </template>
     </UTimeline>
   </div>

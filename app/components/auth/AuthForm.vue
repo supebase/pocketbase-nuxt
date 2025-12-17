@@ -104,7 +104,6 @@ import {
   calculatePasswordScore,
   getPasswordStrengthColor,
 } from "~/utils/password";
-import { usePasswordVisibility } from "~/composables/utils/usePasswordVisibility";
 
 const { fetch: fetchSession } = useUserSession();
 

@@ -73,7 +73,6 @@
 <script setup lang="ts">
 import type { PostRecord } from "~/types/posts";
 import type { CommentRecord } from "~/types/comments";
-import { useRelativeTime } from "~/composables/utils/useRelativeTime";
 
 const { loggedIn } = useUserSession();
 

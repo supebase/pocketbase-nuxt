@@ -10,7 +10,7 @@
       </template>
     </UHeader>
 
-    <UMain class="max-w-md mx-auto">
+    <UMain class="max-w-lg mx-auto">
       <UContainer>
         <NuxtLayout>
           <NuxtPage :keepalive="{ max: 10 }" />
