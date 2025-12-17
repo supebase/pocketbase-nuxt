@@ -16,6 +16,25 @@ export default defineAppConfig({
             name: "text-sm",
           },
         },
+        orientation: {
+          vertical: {
+            root: "flex-col items-center justify-center",
+          },
+        },
+      },
+    },
+    empty: {
+      slots: {
+        avatar: "shrink-0 mb-2 bg-transparent",
+      },
+      variants: {
+        size: {
+          md: {
+            title: "text-dimmed",
+            description: "text-dimmed!",
+            avatar: "text-3xl",
+          },
+        },
       },
     },
   },

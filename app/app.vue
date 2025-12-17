@@ -13,7 +13,7 @@
     <UMain class="max-w-md mx-auto">
       <UContainer>
         <NuxtLayout>
-          <NuxtPage />
+          <NuxtPage :keepalive="{ max: 10 }" />
         </NuxtLayout>
       </UContainer>
     </UMain>

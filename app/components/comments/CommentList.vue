@@ -18,46 +18,45 @@
       class="mt-4" />
 
     <!-- 评论列表 -->
-    <div
-      class="mt-12"
-      v-else-if="comments.length > 0">
+    <div v-else-if="comments.length > 0">
       <!-- 评论标题和数量 -->
-      <div class="flex items-center text-2xl font-bold mb-6 space-x-2">
-        <div>评论</div>
+      <USeparator
+        type="dashed"
+        class="mb-6">
+        <div class="mr-1">评论</div>
         <CommonAnimateNumber :value="comments.length" />
-      </div>
+      </USeparator>
 
       <transition-group
         name="comment-fade"
         tag="div"
-        class="relative space-y-4">
-        <UCard
-          variant="soft"
+        class="relative space-y-6">
+        <div
           v-for="comment in comments"
           :key="comment.id">
-          <div class="flex items-center gap-2 text-gray-500 mb-2">
+          <div class="flex items-center gap-3 mb-2">
             <UAvatar
               :src="`https://gravatar.loli.net/avatar/${comment.expand?.user?.avatar}?s=64&r=G`"
-              class="size-5" />
-            <span class="font-medium text-gray-800 dark:text-gray-200">{{
-              comment.expand?.user?.name
-            }}</span>
-            <span>•</span>
-            <span>{{ comment.relativeTime }}</span>
+              class="size-7" />
+            <div class="flex items-center justify-between w-full">
+              <div class="font-medium">{{ comment.expand?.user?.name }}</div>
+              <div class="text-sm text-dimmed">{{ comment.relativeTime }}</div>
+            </div>
           </div>
-          <div class="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+          <div class="whitespace-pre-wrap ml-10">
             {{ comment.comment }}
           </div>
-        </UCard>
+        </div>
       </transition-group>
     </div>
 
     <!-- 无评论提示 -->
-    <div
+    <UEmpty
       v-else
-      class="text-center py-8 text-gray-500">
-      暂无评论，快来抢沙发吧！
-    </div>
+      variant="naked"
+      :icon="allowComment ? 'hugeicons:comment-02' : 'hugeicons:comment-block-02'"
+      :title="allowComment ? '暂无评论' : '评论已关闭'"
+      :description="allowComment ? '评论区竟无人类交互记录' : '本评论区已启动勿扰模式'" />
   </div>
 </template>
 
@@ -67,6 +66,7 @@ import { useRelativeTime } from "~/composables/utils/useRelativeTime";
 
 const props = defineProps<{
   postId: string;
+  allowComment: boolean;
 }>();
 
 const emit = defineEmits<{

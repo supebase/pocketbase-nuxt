@@ -1,29 +1,48 @@
 <template>
-  <div class="container mx-auto px-4 py-8">
+  <div class="container mx-auto">
     <UAlert
       v-if="error"
       :title="error.message"
       variant="soft"
       color="error"
-      class="mt-4 max-w-4xl mx-auto" />
+      class="mt-4" />
 
     <div
       v-else-if="status === 'pending'"
-      class="max-w-4xl mx-auto flex justify-center items-center py-16 min-h-[calc(100vh-14rem)]">
+      class="flex justify-center items-center py-16 min-h-[calc(100vh-14rem)]">
       <UIcon
         name="svg-spinners:ring-resize"
         class="size-7 text-primary" />
     </div>
 
-    <div
-      v-else-if="postWithRelativeTime"
-      class="max-w-4xl mx-auto">
-      <div class="flex items-center gap-2 text-gray-500 mb-6">
-        <span>{{ postWithRelativeTime.expand?.user?.name }}</span>
-        <span>•</span>
-        <span>{{ postWithRelativeTime.relativeTime }}</span>
+    <div v-else-if="postWithRelativeTime">
+      <div class="flex flex-col items-center justify-center gap-3">
+        <div class="flex items-center justify-between gap-2 w-full">
+          <div class="flex items-center gap-3">
+            <UIcon
+              v-if="postWithRelativeTime.icon"
+              :name="postWithRelativeTime.icon"
+              class="size-8 text-primary" />
+            <UAvatar
+              v-else
+              :src="`https://gravatar.loli.net/avatar/${postWithRelativeTime.expand?.user?.avatar}?s=64&r=G`"
+              class="size-8" />
+            <div class="text-sm text-dimmed">
+            {{ postWithRelativeTime.relativeTime }}
+            <span class="mx-1.5">&bull;</span>
+            {{ useReadingTime(postWithRelativeTime.content) }}
+          </div>
+          </div>
+
+          <div class="text-sm text-dimmed">
+            <UIcon
+              name="hugeicons:arrow-turn-backward"
+              class="size-6 text-dimmed cursor-pointer"
+              @click="$router.back()" />
+          </div>
+        </div>
       </div>
-      <div class="mt-8">
+      <div>
         <MDC :value="postWithRelativeTime.content" />
       </div>
 
@@ -36,6 +55,7 @@
       <!-- 使用新创建的 CommentList 组件 -->
       <CommentsCommentList
         :post-id="postWithRelativeTime.id"
+        :allow-comment="postWithRelativeTime.allow_comment"
         ref="commentListRef" />
     </div>
 
