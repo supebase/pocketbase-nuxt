@@ -33,5 +33,8 @@ export async function getCommentsList(page: number = 1, perPage: number = 20, fi
  * @returns 创建的评论
  */
 export async function createComment(data: any) {
-  return await pb.collection('comments').create(data);
+  // 创建评论并返回包含用户信息的完整评论
+  return await pb.collection('comments').create(data, {
+    expand: 'user'
+  });
 }

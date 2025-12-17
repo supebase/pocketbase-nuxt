@@ -9,7 +9,7 @@
 
     <div
       v-else-if="status === 'pending'"
-      class="flex justify-center items-center py-16 min-h-[calc(100vh-14rem)]">
+      class="flex justify-center items-center min-h-[calc(100vh-14rem)]">
       <UIcon
         name="svg-spinners:ring-resize"
         class="size-7 text-primary" />

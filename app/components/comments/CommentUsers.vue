@@ -1,11 +1,11 @@
 <template>
-  <div class="flex mt-2">
+  <div class="flex mt-2.5 h-6">
     <div
       v-if="status === 'pending'"
       class="flex items-center">
       <UIcon
         name="hugeicons:reload"
-        class="size-6 text-dimmed animate-spin" />
+        class="size-5 text-dimmed animate-spin" />
     </div>
 
     <UUser
@@ -31,6 +31,15 @@
     </UAvatarGroup>
 
     <div
+      v-else-if="!allowComment"
+      class="flex items-center gap-2 text-sm text-dimmed">
+      <UIcon
+        name="hugeicons:comment-block-02"
+        class="size-5" />
+      评论已关闭
+    </div>
+
+    <div
       v-else
       class="flex items-center gap-2 text-sm text-dimmed">
       <UIcon
@@ -48,6 +57,10 @@ const props = defineProps({
   postId: {
     type: String,
     required: true,
+  },
+  allowComment: {
+    type: Boolean,
+    default: true,
   },
 });
 

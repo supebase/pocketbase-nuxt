@@ -37,5 +37,10 @@ export default defineAppConfig({
         },
       },
     },
+    separator: {
+      slots: {
+        label: "text-sm text-dimmed",
+      },
+    },
   },
 });

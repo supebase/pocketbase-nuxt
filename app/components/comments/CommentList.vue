@@ -1,6 +1,5 @@
 <template>
   <div class="mt-6">
-    <!-- 评论加载状态 -->
     <div
       v-if="loading"
       class="flex justify-center items-center py-8">
@@ -9,7 +8,6 @@
         class="size-7 text-primary" />
     </div>
 
-    <!-- 评论错误提示 -->
     <UAlert
       v-else-if="error"
       :title="error.message"
@@ -17,40 +15,59 @@
       color="error"
       class="mt-4" />
 
-    <!-- 评论列表 -->
     <div v-else-if="comments.length > 0">
-      <!-- 评论标题和数量 -->
       <USeparator
         type="dashed"
         class="mb-6">
-        <div class="mr-1">评论</div>
-        <CommonAnimateNumber :value="comments.length" />
+        <div class="text-dimmed">评论</div>
+        <CommonAnimateNumber
+          :value="comments.length"
+          class="text-dimmed mx-1.5" />
+        <div class="text-dimmed">条</div>
       </USeparator>
 
-      <transition-group
-        name="comment-fade"
-        tag="div"
-        class="relative space-y-6">
-        <div
-          v-for="comment in comments"
-          :key="comment.id">
-          <div class="flex items-center gap-3 mb-2">
-            <UAvatar
-              :src="`https://gravatar.loli.net/avatar/${comment.expand?.user?.avatar}?s=64&r=G`"
-              class="size-7" />
-            <div class="flex items-center justify-between w-full">
-              <div class="font-medium">{{ comment.expand?.user?.name }}</div>
-              <div class="text-sm text-dimmed">{{ comment.relativeTime }}</div>
+      <CommonMotionTimeline
+        :items="comments"
+        :is-resetting="loading"
+        :loading-more="false"
+        line-offset="15px"
+        :trigger-ratio="0.65">
+        <template #indicator="{ item }">
+          <UAvatar
+            :src="`https://gravatar.loli.net/avatar/${item.expand?.user?.avatar}?s=64&r=G`"
+            class="size-8 ring-4 ring-white dark:ring-neutral-900 bg-white dark:bg-neutral-900 shadow-sm" />
+        </template>
+
+        <template #title="{ item }">
+          <div class="flex items-center justify-between w-full">
+            <div class="text-base font-medium">
+              {{ item.expand?.user?.name }}
             </div>
+            <UButton
+              variant="link"
+              color="neutral"
+              icon="hugeicons:favourite"
+              label="0" />
           </div>
-          <div class="whitespace-pre-wrap ml-10">
-            {{ comment.comment }}
+        </template>
+
+        <template #description="{ item }">
+          <div class="text-base break-all whitespace-pre-wrap">
+            {{ item.comment }}
           </div>
-        </div>
-      </transition-group>
+
+          <div class="text-sm text-dimmed mt-1.5">
+            {{ item.relativeTime }}
+          </div>
+        </template>
+      </CommonMotionTimeline>
+
+      <USeparator
+        label="已经到底了"
+        type="dashed"
+        class="mt-10" />
     </div>
 
-    <!-- 无评论提示 -->
     <UEmpty
       v-else
       variant="naked"
@@ -61,7 +78,7 @@
 </template>
 
 <script setup lang="ts">
-import type { CommentRecord } from "~/types/comments";
+import type { CommentRecord, CommentsResponse } from "~/types/comments";
 import { useRelativeTime } from "~/composables/utils/useRelativeTime";
 
 const props = defineProps<{
@@ -69,78 +86,60 @@ const props = defineProps<{
   allowComment: boolean;
 }>();
 
-const emit = defineEmits<{
-  "comment-created": [comment: CommentRecord];
-}>();
-
-// 评论相关状态
 const comments = ref<CommentRecord[]>([]);
 const loading = ref(true);
 const error = ref<Error | null>(null);
 
-// 获取评论列表
-const {
-  data: commentsData,
-  error: commentsError,
-  refresh: refreshComments,
-} = await useLazyFetch<{
-  message: string;
-  data: {
-    comments: CommentRecord[];
-    totalItems: number;
-    page: number;
-    perPage: number;
-  };
-}>(`/api/comments/records?filter=post="${props.postId}"&sort=-created`, {
-  server: true,
-  dedupe: "cancel",
+const { data: commentsData, refresh: refreshComments } = await useLazyFetch<CommentsResponse>(
+  `/api/comments/records?filter=post="${props.postId}"&sort=-created`,
+  {
+    server: true,
+    dedupe: "cancel",
+    onRequest() {
+      loading.value = true;
+      error.value = null;
+    },
 
-  // 关键：在请求开始前立即将 loading 设为 true
-  onRequest() {
-    loading.value = true;
-    error.value = null;
-  },
+    onResponse({ response }) {
+      // 此时 TypeScript 知道 response._data 是 CommentsResponse 类型
+      const rawComments = response._data?.data?.comments || [];
 
-  // 数据返回后，更新 comments 列表并设置加载状态
-  onResponse({ response }) {
-    const rawComments = response._data?.data?.comments || [];
-    // 为每个评论添加相对时间
-    const commentsWithRelativeTime = rawComments.map((comment) => {
-      const relativeTime = useRelativeTime(comment.created).value;
-      return {
-        ...comment,
-        relativeTime,
-      };
-    });
-    comments.value = commentsWithRelativeTime;
-    loading.value = false;
-  },
+      // 为每个评论添加相对时间
+      comments.value = rawComments.map((comment) => {
+        const relativeTime = useRelativeTime(comment.created).value;
+        return {
+          ...comment,
+          relativeTime,
+        };
+      });
+      loading.value = false;
+    },
 
-  // 请求失败时，也务必关闭加载状态
-  onResponseError(err) {
-    loading.value = false;
-    error.value = new Error(err.response?._data?.message || "获取评论失败");
-  },
-});
+    onResponseError(err) {
+      loading.value = false;
+      // 确保访问安全
+      const errorMessage = (err.response?._data as any)?.message || "获取评论失败";
+      error.value = new Error(errorMessage);
+    },
+  }
+);
 
-// 处理评论创建事件
 const handleCommentCreated = (newComment: CommentRecord) => {
-  comments.value.unshift(newComment);
+  const relativeTime = useRelativeTime(newComment.created).value;
+  comments.value.unshift({
+    ...newComment,
+    relativeTime,
+  });
 };
 
-// 暴露方法给父组件
 defineExpose({
   handleCommentCreated,
 });
 
-// 确保在客户端 hydration 完成后，如果需要，刷新评论
 onMounted(() => {
-  if (!commentsData.value) {
-    refreshComments();
-  }
+  if (!commentsData.value) refreshComments();
 });
 
-// 当组件被 keep-alive 缓存后，再次进入时刷新评论
 onActivated(() => {
   refreshComments();
 });

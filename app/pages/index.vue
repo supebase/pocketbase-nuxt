@@ -1,17 +1,23 @@
 <template>
   <div class="flex flex-col items-center justify-center">
-    <div class="flex items-center gap-2 text-xl font-semibold">
-      <CommonAnimateNumber :value="totalItems" /> 条贴文
+    <div
+      v-if="status !== 'pending' || isRefreshing"
+      class="flex items-center justify-between w-full">
+      <div class="flex items-center gap-2 text-lg text-muted font-semibold">
+        贴文 <CommonAnimateNumber :value="totalItems" /> 条
+      </div>
 
-      <UIcon
-        v-if="isRefreshing"
-        name="hugeicons:reload"
-        class="size-5 text-muted animate-spin" />
-      <UIcon
-        v-else-if="allPosts.length > 0"
-        name="hugeicons:reload"
-        class="size-5 text-muted cursor-pointer hover:text-primary transition-colors"
-        @click="manualRefresh" />
+      <div>
+        <UIcon
+          v-if="isRefreshing"
+          name="hugeicons:reload"
+          class="size-5 text-muted animate-spin" />
+        <UIcon
+          v-else-if="allPosts.length > 0"
+          name="hugeicons:reload"
+          class="size-5 text-muted cursor-pointer hover:text-primary transition-colors"
+          @click="manualRefresh" />
+      </div>
     </div>
 
     <div
@@ -41,30 +47,27 @@
     <div
       v-else
       class="mt-8 space-y-4">
-      <UTimeline
-        :items="
-          processedPosts.map((item) => ({
-            id: item.id,
-            title: item.expand?.user?.name,
-            date: item.relativeTime,
-            description: item.content,
-            action: item.action,
-            ...(item.icon && { icon: item.icon }),
-            ...(!item.icon && {
-              avatar: {
-                src: `https://gravatar.loli.net/avatar/${item.expand?.user?.avatar}?s=64&r=G`,
-              },
-            }),
-            allowComment: item.allow_comment,
-            verified: item.expand?.user?.verified,
-          }))
-        "
-        :default-value="1"
-        :ui="{
-          title: '-mt-0.5',
-          date: 'float-end ms-1 text-sm text-dimmed',
-          description: 'mt-2 text-base',
-        }">
+      <CommonMotionTimeline
+        :items="displayItems"
+        :loading-more="isLoadingMore"
+        line-offset="15px"
+        :trigger-ratio="0.7"
+        :is-resetting="isResetting">
+        <template #indicator="{ item }">
+          <div
+            v-if="item.icon"
+            class="flex items-center justify-center size-8 rounded-full bg-white dark:bg-neutral-900 ring-3 ring-white dark:ring-neutral-900 shadow-sm overflow-hidden">
+            <UIcon
+              :name="item.icon"
+              class="size-6 text-primary" />
+          </div>
+
+          <UAvatar
+            v-else
+            :src="item.avatar?.src"
+            class="object-cover size-full" />
+        </template>
+
         <template #title="{ item }">
           <span class="text-base mr-2">{{ item.title }}</span>
           <span
@@ -81,23 +84,15 @@
         <template #description="{ item }">
           <ULink
             :to="`/${item.id}`"
-            class="line-clamp-5"
-            >{{ cleanMarkdown(item.description) }}</ULink
-          >
-          <div
-            v-if="!item.allowComment"
-            class="flex items-center gap-2 text-sm mt-2 text-dimmed">
-            <UIcon
-              name="hugeicons:comment-block-02"
-              class="size-5" />
-            评论已关闭
-          </div>
-
+            class="line-clamp-5">
+            {{ cleanMarkdown(item.description) }}
+          </ULink>
           <CommentsCommentUsers
             :post-id="item.id"
-            v-if="item.allowComment" />
+            :allow-comment="item.allowComment" />
         </template>
-      </UTimeline>
+      </CommonMotionTimeline>
+
       <div class="flex justify-center mt-8 mb-4">
         <UButton
           v-if="hasMore"
@@ -105,15 +100,16 @@
           :loading="isLoadingMore"
           :disabled="isLoadingMore"
           variant="soft"
-          color="primary"
-          size="md">
+          color="neutral"
+          size="md"
+          class="cursor-pointer">
           加载更多
         </UButton>
-        <div
+
+        <USeparator
           v-else
-          class="text-sm text-dimmed">
-          没有更多数据了
-        </div>
+          label="已经到底了"
+          type="dashed" />
       </div>
     </div>
   </div>
@@ -131,6 +127,7 @@ const isRefreshing = ref(false); // 用于控制刷新时的加载图标
 const currentPage = ref(1); // 当前页码
 const isLoadingMore = ref(false); // 用于控制“加载更多”按钮的加载状态
 const allPosts = ref<PostRecord[]>([]); // 存储所有已加载的贴文
+const isResetting = ref(false); // 用于控制重置/刷新时的回顶动画
 
 // ----------------------------------------
 // 1. 数据获取 (useLazyFetch)
@@ -202,13 +199,19 @@ onActivated(async () => {
 // ----------------------------------------
 const manualRefresh = async () => {
   try {
+    isResetting.value = true; // 开启重置状态
     isRefreshing.value = true;
-    currentPage.value = 1; // 明确刷新，重置页码
-    await refreshPosts(); // 重新获取第 1 页数据，watch 钩子会重置 allPosts
+
+    // 给 CSS 一个滑回顶部的机会 (300ms 与 transition 时间一致)
+    await new Promise((resolve) => setTimeout(resolve, 300));
+
+    currentPage.value = 1;
+    await refreshPosts();
   } catch (err) {
     console.error("手动刷新失败:", err);
   } finally {
-    isRefreshing.value = false;
+    isResetting.value = false; // 重置完成
+    isRefreshing.value = false; // 恢复正常监听
   }
 };
 
@@ -239,4 +242,21 @@ const loadMore = async () => {
     isLoadingMore.value = false;
   }
 };
+
+// 页面逻辑：只需要负责数据处理
+const displayItems = computed(() => {
+  return processedPosts.value.map((item) => ({
+    id: item.id,
+    title: item.expand?.user?.name,
+    date: item.relativeTime,
+    description: item.content,
+    action: item.action,
+    allowComment: item.allow_comment,
+    ...(item.icon
+      ? { icon: item.icon }
+      : {
+          avatar: { src: `https://gravatar.loli.net/avatar/${item.expand?.user?.avatar}?s=64` },
+        }),
+  }));
+});
 </script>
