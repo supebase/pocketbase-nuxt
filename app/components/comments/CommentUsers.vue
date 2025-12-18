@@ -57,36 +57,27 @@ const props = defineProps({
   allowComment: { type: Boolean, default: true },
 });
 
-// 使用 query 对象代替字符串拼接，更优雅且会自动处理 URL 编码
-const {
-  data: commentsResponse,
-  status,
-  refresh,
-} = await useLazyFetch<{
-  message: string;
+const nuxtApp = useNuxtApp();
+// 定义唯一 Key，用于跨页面精准刷新
+const cacheKey = computed(() => `comments-data-${props.postId}`);
+
+const { data: commentsResponse, status } = await useLazyFetch<{
   data: { comments: CommentRecord[] };
 }>(`/api/comments/records`, {
+  key: cacheKey.value,
   server: true,
   query: {
     filter: `post="${props.postId}"`,
     sort: "-created",
   },
   dedupe: "cancel",
+  default: () => ({ data: { comments: [] } }),
 });
 
 const usersToShow = computed(() => commentsResponse.value?.data?.comments || []);
 
-/**
- * 提取头像 URL 生成逻辑
- * 统一管理 Gravatar 镜像地址和参数
- */
 const getAvatarUrl = (avatarId?: string) => {
   if (!avatarId) return undefined;
   return `https://gravatar.loli.net/avatar/${avatarId}?s=64&r=G`;
 };
-
-// 当组件从 KeepAlive 中恢复时刷新数据
-onActivated(() => {
-  refresh();
-});
 </script>

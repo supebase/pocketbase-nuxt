@@ -63,9 +63,9 @@ export function doPasswordsMatch(password: string, confirmPassword: string): boo
 }
 
 /**
- * 验证字符串是否为空或只包含空格
+ * 验证字符串是否为空或只包含空格、回车
  * @param str 要验证的字符串
- * @returns 是否为空或只包含空格
+ * @returns 是否为空或只包含空格、回车
  */
 export function isEmptyString(str: string): boolean {
   return str.trim() === '';

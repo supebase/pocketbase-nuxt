@@ -43,7 +43,7 @@ export default defineEventHandler(async (event) => {
 
   try {
     // 创建评论记录
-    const comments = await createComment({
+    const comment = await createComment({
       comment: cleanComment,
       post: post, // 关联贴文
       user: user.id, // 关联当前登录用户
@@ -51,7 +51,9 @@ export default defineEventHandler(async (event) => {
 
     return {
       message: "评论发布成功",
-      comments,
+      data: {
+        comment
+      },
     };
   } catch (error) {
     handlePocketBaseError(error, "评论发布失败");

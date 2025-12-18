@@ -48,12 +48,11 @@
             :style="{ '--delay': item.isNew ? '0s' : `${index * 0.08}s` }">
             <div class="flex items-center justify-between text-base font-medium">
               {{ item.expand?.user?.name }}
-
               <CommonLikeButton
-                :comment-id="item.id"
+                :comment-id="String(item.id)"
                 :initial-likes="item.likes || 0"
                 :is-liked="item.isLiked || false"
-                @like-change="handleLikeChange" />
+                @like-change="(liked, likes) => handleLikeChange(liked, likes, item.id)" />
             </div>
           </div>
         </template>
@@ -69,7 +68,6 @@
             <div class="text-base break-all whitespace-pre-wrap">
               {{ item.comment }}
             </div>
-
             <div class="text-sm text-dimmed mt-1.5">
               {{ item.relativeTime }}
             </div>
@@ -100,94 +98,116 @@ const props = defineProps<{
   allowComment: boolean;
 }>();
 
+const emit = defineEmits(["loading-change", "update-commenters"]);
+
+// 响应式状态
 const comments = ref<CommentRecord[]>([]);
 const loading = ref(true);
 const error = ref<Error | null>(null);
 
+/**
+ * 核心请求：获取完整评论列表
+ * 使用 key 确保 Nuxt 可以追踪此请求
+ */
 const { data: commentsData, refresh: refreshComments } = await useLazyFetch<CommentsResponse>(
-  `/api/comments/records?filter=post="${props.postId}"&sort=-created`,
+  `/api/comments/records`,
   {
+    key: `comments-list-full-${props.postId}`,
     server: true,
-    dedupe: "cancel",
+    query: {
+      filter: `post="${props.postId}"`,
+      sort: "-created",
+    },
     onRequest() {
       loading.value = true;
       error.value = null;
     },
-
     onResponse({ response }) {
-      // 此时 TypeScript 知道 response._data 是 CommentsResponse 类型
       const rawComments = response._data?.data?.comments || [];
 
-      // 为每个评论添加相对时间
-      comments.value = rawComments.map((comment) => {
-        const relativeTime = useRelativeTime(comment.created).value;
-        return {
-          ...comment,
-          relativeTime,
-        };
-      });
+      const mapped = rawComments.map((comment: any) => ({
+        ...comment,
+        relativeTime: useRelativeTime(comment.created).value,
+        initialized: true,
+      }));
+
+      // 严格合并：如果本地有 isNew 的，优先保留
+      const localItems = comments.value;
+      const newItems = localItems.filter((c) => c.isNew);
+
+      // 过滤掉服务器中已存在的重复项
+      const serverItems = mapped.filter((m: any) => !newItems.some((n) => n.id === m.id));
+
+      comments.value = [...newItems, ...serverItems];
       loading.value = false;
-
-      setTimeout(() => {
-        comments.value.forEach((c) => {
-          c.initialized = true;
-        });
-      }, 1000);
+      emit("update-commenters", comments.value);
     },
-
     onResponseError(err) {
       loading.value = false;
-      // 确保访问安全
-      const errorMessage = (err.response?._data as any)?.message || "获取评论失败";
-      error.value = new Error(errorMessage);
+      const msg = (err.response?._data as any)?.message || "获取评论失败";
+      error.value = new Error(msg);
     },
   }
 );
 
+/**
+ * 供 [id].vue 调用的方法：在列表顶部插入新评论
+ */
 const handleCommentCreated = (newComment: CommentRecord) => {
-  const relativeTime = useRelativeTime(newComment.created).value;
-  comments.value.unshift({
+  // 确保有有效的创建时间
+  const createdTime = newComment.created || new Date().toISOString();
+  const { value: timeStr } = useRelativeTime(createdTime);
+
+  const formatted: CommentRecord = {
     ...newComment,
-    relativeTime,
+    comment: newComment.comment || "", // 确保有评论内容
+    created: createdTime, // 使用有效的创建时间
+    relativeTime: timeStr,
     likes: 0,
     isLiked: false,
-    isNew: true,
-  });
+    isNew: true, // 触发 CSS 入场动画
+    initialized: false, // 告知 Timeline 这是新内容
+  };
 
+  comments.value.unshift(formatted);
+  emit("update-commenters", comments.value);
+
+  // 延迟后取消“新项”标记
   setTimeout(() => {
     const target = comments.value.find((c) => c.id === newComment.id);
     if (target) {
       target.isNew = false;
       target.initialized = true;
     }
-  }, 500);
+  }, 2000);
 };
 
-// 处理点赞状态变化
+/**
+ * 处理点赞状态更新
+ */
 const handleLikeChange = (liked: boolean, likes: number, commentId: string) => {
-  const commentIndex = comments.value.findIndex((comment) => comment.id === commentId);
-  if (commentIndex !== -1) {
-    const currentComment = comments.value[commentIndex];
-    // 确保currentComment存在
-    if (currentComment) {
-      comments.value[commentIndex] = {
-        ...currentComment,
-        likes,
-        isLiked: liked,
-      };
-    }
+  const index = comments.value.findIndex((c) => c.id === commentId);
+  if (index !== -1 && comments.value[index]) {
+    comments.value[index] = {
+      ...comments.value[index],
+      likes,
+      isLiked: liked,
+    };
   }
 };
 
-defineExpose({
-  handleCommentCreated,
-});
+// 监听加载状态同步给父组件
+watch(loading, (val) => emit("loading-change", val), { immediate: true });
+
+// 暴露接口
+defineExpose({ handleCommentCreated, comments });
 
 onMounted(() => {
   if (!commentsData.value) refreshComments();
 });
 
 onActivated(() => {
+  // KeepAlive 恢复时执行刷新
   refreshComments();
 });
 </script>

@@ -20,6 +20,7 @@ export interface CommentRecord {
       content?: string;
     };
     user?: {
+      id?: string;
       name?: string;
       verified?: boolean;
       avatar?: string;

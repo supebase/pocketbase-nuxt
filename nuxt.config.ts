@@ -2,7 +2,7 @@
 export default defineNuxtConfig({
   compatibilityDate: "2025-07-15",
   devtools: { enabled: false },
-  modules: ["nuxt-auth-utils", "@nuxt/ui", "@nuxtjs/mdc"],
+  modules: ["nuxt-auth-utils", "@nuxt/ui", "@nuxtjs/mdc", "nuxt-emoji-picker"],
   runtimeConfig: {
     session: {
       name: "pb-session",

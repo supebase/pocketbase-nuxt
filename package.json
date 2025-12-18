@@ -10,19 +10,27 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
-    "@nuxt/ui": "^4.2.1",
+    "@nuxt/ui": "^4.3.0",
     "@nuxtjs/mdc": "0.19.1",
     "nuxt": "^4.2.2",
     "nuxt-auth-utils": "0.5.26",
+    "nuxt-emoji-picker": "^1.2.1",
     "pocketbase": "^0.26.5",
     "vue": "^3.5.25",
-    "vue-router": "^4.6.3"
+    "vue-router": "^4.6.4"
   },
   "devDependencies": {
     "@iconify-json/hugeicons": "^1.2.20",
     "@iconify-json/svg-spinners": "^1.2.4",
-    "@types/node": "^25.0.2",
+    "@tailwindcss/typography": "^0.5.19",
+    "@types/node": "^25.0.3",
     "@types/sanitize-html": "^2.16.0",
     "sanitize-html": "^2.17.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "esbuild": "0.21.5",
+      "@esbuild/darwin-x64": "0.21.5"
+    }
   }
 }

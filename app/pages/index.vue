@@ -61,7 +61,6 @@
               :name="item.icon"
               class="size-6 text-primary" />
           </div>
-
           <UAvatar
             v-else
             :src="item.avatar?.src"
@@ -72,9 +71,9 @@
           <span class="text-base mr-2">{{ item.title }}</span>
           <span
             v-if="item.action === 'partager'"
-            class="text-sm text-dimmed">
-            和大家分享
-          </span>
+            class="text-sm text-dimmed"
+            >和大家分享</span
+          >
         </template>
 
         <template #date="{ item }">
@@ -110,7 +109,6 @@
           class="cursor-pointer">
           加载更多
         </UButton>
-
         <USeparator
           v-else
           label="已经到底了"
@@ -127,14 +125,14 @@ import { cleanMarkdown } from "~/utils/index";
 // ----------------------------------------
 // 状态管理
 // ----------------------------------------
-const allPosts = ref<PostRecord[]>([]); // 统一存储所有贴文
+const allPosts = ref<PostRecord[]>([]);
 const currentPage = ref(1);
-const isRefreshing = ref(false); // 顶部刷新锁
-const isLoadingMore = ref(false); // 底部加载锁
-const isResetting = ref(false); // 时间轴回弹/重置状态
+const isRefreshing = ref(false);
+const isLoadingMore = ref(false);
+const isResetting = ref(false);
 
 // ----------------------------------------
-// 1. 核心数据请求逻辑 (SSR + Client 共用)
+// 1. 核心请求逻辑
 // ----------------------------------------
 const fetchData = async (page: number) => {
   const response = await $fetch<PostsResponse>("/api/posts/records", {
@@ -143,7 +141,7 @@ const fetchData = async (page: number) => {
   return response.data;
 };
 
-// 初始加载 (SSR 友好)
+// 初始加载 (SSR)
 const {
   data: fetchResult,
   status,
@@ -153,7 +151,6 @@ const {
   dedupe: "cancel",
 });
 
-// 同步初始数据到本地 ref
 watch(
   fetchResult,
   (newResult) => {
@@ -171,45 +168,44 @@ watch(
 const totalItems = computed(() => fetchResult.value?.data.totalItems || 0);
 const hasMore = computed(() => allPosts.value.length < totalItems.value);
 
-// 处理列表显示模型
 const displayItems = computed(() => {
-  return allPosts.value.map((item) => {
-    const relativeTime = useRelativeTime(item.created).value;
-    return {
-      id: item.id,
-      title: item.expand?.user?.name,
-      date: relativeTime,
-      description: item.content,
-      action: item.action,
-      allowComment: item.allow_comment,
-      ...(item.icon
-        ? { icon: item.icon }
-        : {
-            avatar: { src: `https://gravatar.loli.net/avatar/${item.expand?.user?.avatar}?s=64` },
-          }),
-    };
-  });
+  return allPosts.value.map((item) => ({
+    id: item.id,
+    title: item.expand?.user?.name,
+    date: useRelativeTime(item.created).value,
+    description: item.content,
+    action: item.action,
+    allowComment: item.allow_comment,
+    ...(item.icon
+      ? { icon: item.icon }
+      : {
+          avatar: { src: `https://gravatar.loli.net/avatar/${item.expand?.user?.avatar}?s=64` },
+        }),
+  }));
 });
 
 // ----------------------------------------
-// 3. 核心交互函数
+// 3. 交互函数
 // ----------------------------------------
 
 /**
- * 手动刷新：获取第 1 页并替换当前列表
+ * 手动刷新逻辑
  */
 const manualRefresh = async () => {
   if (isRefreshing.value) return;
-
   try {
     isRefreshing.value = true;
     isResetting.value = true;
 
-    // 先请求数据，此时页面保持旧数据，避免“白屏”
+    // 1. 刷新文章
     const data = await fetchData(1);
 
-    // 视觉缓冲：确保动画有时间播放
-    await new Promise((resolve) => setTimeout(resolve, 350));
+    // 2. 强制刷新评论头像 Key
+// 注意：用 refresh 而不是 clear，这样能确保正在显示的组件重新进入 pending
+// 遍历所有帖子，刷新对应的评论数据缓存
+allPosts.value.forEach(post => {
+  refreshNuxtData(`comments-data-${post.id}`);
+});
 
     if (data?.posts) {
       allPosts.value = data.posts;
@@ -223,36 +219,23 @@ const manualRefresh = async () => {
   }
 };
 
-/**
- * 加载更多：获取下一页并追加到列表
- */
 const loadMore = async () => {
   if (isLoadingMore.value || !hasMore.value) return;
-
   try {
     isLoadingMore.value = true;
     const nextPage = currentPage.value + 1;
     const data = await fetchData(nextPage);
-
     if (data?.posts?.length) {
       allPosts.value = [...allPosts.value, ...data.posts];
       currentPage.value = nextPage;
     }
-  } catch (err) {
-    console.error("加载更多失败:", err);
   } finally {
     isLoadingMore.value = false;
   }
 };
 
-// ----------------------------------------
-// 4. 生命周期 (Keep-alive 支持)
-// ----------------------------------------
 onActivated(() => {
-  // 如果当前无数据且不在加载中，自动尝试刷新
-  const shouldAutoRefresh = allPosts.value.length === 0 && status.value !== "pending";
-
-  if (shouldAutoRefresh && !isRefreshing.value) {
+  if (allPosts.value.length === 0 && status.value !== "pending") {
     manualRefresh();
   }
 });
