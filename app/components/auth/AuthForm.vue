@@ -7,7 +7,7 @@
       <UInput
         v-model="email"
         placeholder="电子邮件"
-        variant="outline"
+        variant="soft"
         color="neutral"
         :disabled="loading"
         icon="hugeicons:at"
@@ -17,7 +17,7 @@
       <UInput
         v-model="password"
         placeholder="登录密码"
-        variant="outline"
+        variant="soft"
         :color="isLoginMode ? 'neutral' : color"
         :disabled="loading"
         icon="hugeicons:lock-key"
@@ -38,7 +38,7 @@
       </UInput>
 
       <div v-if="!isLoginMode">
-        <ul class="space-y-2">
+        <ul class="space-y-2 ml-3.25">
           <li
             v-for="(req, index) in strength"
             :key="index"
@@ -58,7 +58,7 @@
         v-if="!isLoginMode"
         v-model="passwordConfirm"
         placeholder="确认密码"
-        variant="outline"
+        variant="soft"
         color="neutral"
         :disabled="loading"
         icon="hugeicons:square-lock-check-01"

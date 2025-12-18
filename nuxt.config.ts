@@ -14,7 +14,9 @@ export default defineNuxtConfig({
     },
   },
   app: {
-    keepalive: true,
+    keepalive: {
+      max: 10,
+    },
     head: {
       htmlAttrs: {
         lang: "zh-CN",

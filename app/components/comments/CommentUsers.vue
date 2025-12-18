@@ -1,50 +1,43 @@
 <template>
   <div class="flex mt-2.5 h-6">
-    <div
-      v-if="status === 'pending'"
-      class="flex items-center">
-      <UIcon
-        name="hugeicons:reload"
-        class="size-5 text-dimmed animate-spin" />
+    <div v-if="status === 'pending'" class="flex items-center">
+      <UIcon name="hugeicons:reload" class="size-5 text-dimmed animate-spin" />
     </div>
 
     <template v-else-if="usersToShow.length === 1">
-      <UUser
-        :name="usersToShow[0]?.expand?.user?.name"
-        :avatar="{
-          src: getAvatarUrl(usersToShow[0]?.expand?.user?.avatar),
-          icon: 'hugeicons:image-03',
-        }"
-        size="xs" />
+      <div class="flex items-center gap-2">
+        <div class="size-5.5 rounded-full overflow-hidden">
+          <CommonGravatar :avatar-id="usersToShow[0]?.expand?.user?.avatar" :size="32" />
+        </div>
+        <span class="text-xs font-medium text-dimmed">{{ usersToShow[0]?.expand?.user?.name }}</span>
+      </div>
     </template>
 
-    <UAvatarGroup
-      v-else-if="usersToShow.length > 1"
-      :max="3"
-      size="xs">
-      <UAvatar
-        v-for="comment in usersToShow"
+    <div v-else-if="usersToShow.length > 1" class="flex -space-x-0.5 overflow-hidden">
+      <div
+        v-for="(comment, index) in usersToShow.slice(0, 3)"
         :key="comment.id"
-        :src="getAvatarUrl(comment.expand?.user?.avatar)"
-        :alt="comment.expand?.user?.name" />
-    </UAvatarGroup>
-
-    <div
-      v-else-if="!allowComment"
-      class="flex items-center gap-2 text-sm text-dimmed">
-      <UIcon
-        name="hugeicons:comment-block-02"
-        class="size-5" />
-      评论已关闭
+        class="inline-block size-5.5 rounded-full ring-2 ring-white dark:ring-neutral-900 overflow-hidden"
+        :style="{ zIndex: 10 - index }"
+      >
+        <CommonGravatar :avatar-id="comment.expand?.user?.avatar" :size="32" />
+      </div>
+      <div 
+        v-if="usersToShow.length > 3" 
+        class="flex items-center justify-center size-5.5 rounded-full bg-neutral-100 dark:bg-neutral-800 ring-2 ring-white dark:ring-neutral-900 text-[10px] text-dimmed z-0"
+      >
+        +{{ usersToShow.length - 3 }}
+      </div>
     </div>
 
-    <div
-      v-else
-      class="flex items-center gap-2 text-sm text-dimmed">
-      <UIcon
-        name="hugeicons:comment-02"
-        class="size-5" />
-      暂无评论
+    <div v-else-if="!allowComment" class="flex items-center gap-2 text-sm text-dimmed">
+      <UIcon name="hugeicons:comment-block-02" class="size-4.5" />
+      <span class="text-xs">评论已关闭</span>
+    </div>
+
+    <div v-else class="flex items-center gap-2 text-sm text-dimmed">
+      <UIcon name="hugeicons:comment-02" class="size-4.5" />
+      <span class="text-xs">暂无评论</span>
     </div>
   </div>
 </template>
@@ -57,8 +50,6 @@ const props = defineProps({
   allowComment: { type: Boolean, default: true },
 });
 
-const nuxtApp = useNuxtApp();
-// 定义唯一 Key，用于跨页面精准刷新
 const cacheKey = computed(() => `comments-data-${props.postId}`);
 
 const { data: commentsResponse, status } = await useLazyFetch<{
@@ -75,9 +66,4 @@ const { data: commentsResponse, status } = await useLazyFetch<{
 });
 
 const usersToShow = computed(() => commentsResponse.value?.data?.comments || []);
-
-const getAvatarUrl = (avatarId?: string) => {
-  if (!avatarId) return undefined;
-  return `https://gravatar.loli.net/avatar/${avatarId}?s=64&r=G`;
-};
 </script>

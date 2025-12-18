@@ -1,5 +1,7 @@
 <template>
-  <UApp :locale="zh_cn">
+  <UApp
+    :locale="zh_cn"
+    :toaster="appConfig.toaster">
     <NuxtLoadingIndicator />
     <UHeader :toggle="false">
       <template #title>
@@ -13,7 +15,7 @@
     <UMain class="max-w-lg mx-auto">
       <UContainer>
         <NuxtLayout>
-          <NuxtPage :keepalive="{ max: 10 }" />
+          <NuxtPage />
         </NuxtLayout>
       </UContainer>
     </UMain>
@@ -22,4 +24,6 @@
 
 <script setup lang="ts">
 import { zh_cn } from "@nuxt/ui/locale";
+
+const appConfig = useAppConfig();
 </script>

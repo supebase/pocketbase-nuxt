@@ -1,66 +1,85 @@
 <template>
-  <UCard
-    variant="soft"
-    class="max-w-md mx-auto">
+  <div
+      class="bg-neutral-50 dark:bg-neutral-950/50 border border-neutral-200/90 dark:border-neutral-800/70 rounded-lg p-4">
     <form
       @submit.prevent="handleSubmit"
-      class="space-y-4">
+      class="space-y-6">
       <UTextarea
         v-model="form.content"
         autoresize
         color="neutral"
-        placeholder="请输入文章内容"
+        variant="none"
+        :placeholder="form.action === 'partager' ? '粘贴链接或内容，转发给他人 ...' : '输入原创内容，分享你的观点 ...'"
         size="lg"
         :rows="10"
+        :maxrows="18"
         :disabled="isSubmitting"
-        class="w-full" />
-      <div
-        v-if="errors.content"
-        class="error-message">
-        {{ errors.content }}
-      </div>
-
-      <UInput
-        v-model="form.icon"
-        placeholder="图标"
-        variant="outline"
-        color="neutral"
-        :disabled="isSubmitting"
-        icon="hugeicons:image-rotation-clockwise"
-        size="lg"
         class="w-full" />
 
       <URadioGroup
         v-model="form.action"
-        :items="['dit', 'partager']" />
+        indicator="hidden"
+        orientation="horizontal"
+        variant="table"
+        :items="[
+          {
+            label: '贴文',
+            description: '发布原创内容，记录观点、动态与生活。',
+            value: 'dit',
+          },
+          {
+            label: '分享',
+            description: '转发优质内容，传递价值与趣味给用户。',
+            value: 'partager',
+          },
+        ]" />
+
+      <UInput
+        v-model="form.icon"
+        v-show="form.action === 'partager'"
+        placeholder="图标，例如：hugeicons:share-06"
+        variant="subtle"
+        color="neutral"
+        :disabled="isSubmitting"
+        icon="hugeicons:share-06"
+        size="lg"
+        class="w-full" />
 
       <div class="flex items-center justify-between">
-        <div>
-          <USwitch
-            v-model="form.allow_comment"
-            :disabled="isSubmitting"
-            label="允许评论" />
-        </div>
+        <USwitch
+          v-model="form.allow_comment"
+          :disabled="isSubmitting"
+          label="允许评论" />
 
-        <div>
-          <UButton
-            type="submit"
-            color="neutral"
-            :loading="isSubmitting"
-            :disabled="isSubmitting">
-            <span v-if="!isSubmitting">发表贴文</span>
-            <span v-else>发布中...</span>
-          </UButton>
-        </div>
+        <UButton
+          type="submit"
+          color="neutral"
+          :loading="isSubmitting"
+          :disabled="isSubmitting">
+          <span v-if="!isSubmitting">
+            {{ form.action === "partager" ? "分享互联网" : "发表新贴文" }}
+          </span>
+          <span v-else>正在发布...</span>
+        </UButton>
       </div>
 
-      <div
+      <UAlert
+        v-if="errors.content"
+        icon="hugeicons:alert-02"
+        color="error"
+        variant="soft"
+        :title="errors.content"
+        class="mt-4" />
+
+      <UAlert
         v-if="globalError"
-        class="global-error">
-        {{ globalError }}
-      </div>
+        icon="hugeicons:alert-02"
+        color="error"
+        variant="soft"
+        :title="globalError"
+        class="mt-4" />
     </form>
-  </UCard>
+  </div>
 </template>
 
 <script setup lang="ts">

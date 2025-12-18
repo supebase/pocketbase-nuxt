@@ -1,7 +1,7 @@
 <template>
   <form @submit.prevent="handleSubmit">
     <div
-      class="bg-white/80 dark:bg-neutral-950/80 border border-neutral-200/70 dark:border-neutral-800/70 rounded-lg p-1">
+      class="bg-neutral-50 dark:bg-neutral-950/50 border border-neutral-200/90 dark:border-neutral-800/70 rounded-lg p-1">
       <UTextarea
         ref="textareaRef"
         v-model="form.comment"
@@ -17,8 +17,7 @@
         :disabled="isSubmitting"
         placeholder="说点什么 ..." />
 
-      <div
-        class="flex justify-between items-center px-3 py-1 border-t border-neutral-100 dark:border-neutral-800">
+      <div class="flex justify-between items-center px-3 py-1">
         <div class="flex items-center space-x-3">
           <CommonEmojiSelector @emoji="insertEmoji" />
           <UPopover
@@ -51,9 +50,11 @@
                       close();
                     "
                     class="flex items-center gap-2 p-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded cursor-pointer transition-colors">
-                    <UAvatar
-                      :src="`https://gravatar.loli.net/avatar/${user.avatar}?s=32&r=G`"
-                      size="xs" />
+                    <div class="size-5 rounded-full overflow-hidden shrink-0">
+                      <CommonGravatar
+                        :avatar-id="user.avatar"
+                        :size="32" />
+                    </div>
                     <span class="text-sm truncate">{{ user.name }}</span>
                   </div>
                 </div>
@@ -63,7 +64,7 @@
 
           <span
             v-if="rawSuggestions.length > 0"
-            class="text-xs text-dimmed">
+            class="text-xs text-primary">
             可提及 {{ rawSuggestions.length }} 个用户
           </span>
         </div>
@@ -120,6 +121,7 @@
 import type { CommentRecord } from "~/types/comments";
 
 const { user: currentUser } = useUserSession();
+const toast = useToast();
 
 const props = defineProps({
   postId: { type: String, required: true },
@@ -217,6 +219,13 @@ const handleSubmit = async () => {
 
       form.comment = "";
       emit("comment-created", commentWithUser);
+
+      toast.add({
+        title: "评论发表成功",
+        description: "评论通常实时展示；若未显示，刷新页面。",
+        icon: "hugeicons:comment-02",
+        color: "success",
+      });
     } else {
       // 如果没有返回评论数据，仍需清空评论框
       form.comment = "";

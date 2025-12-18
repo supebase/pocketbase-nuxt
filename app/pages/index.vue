@@ -3,15 +3,15 @@
     <div
       v-if="status !== 'pending' || isRefreshing"
       class="flex items-center justify-between w-full">
-      <div class="flex items-center gap-2 text-lg text-muted font-semibold">
-        贴文 <CommonAnimateNumber :value="totalItems" /> 条
+      <div class="flex items-center gap-2 text-sm text-dimmed font-semibold">
+        <CommonAnimateNumber :value="totalItems" /> 条贴文
       </div>
 
       <div>
         <UIcon
           v-if="isRefreshing"
           name="hugeicons:reload"
-          class="size-5 text-muted animate-spin" />
+          class="size-5 text-muted cursor-not-allowed animate-spin" />
         <UIcon
           v-else-if="allPosts.length > 0"
           name="hugeicons:reload"
@@ -61,23 +61,29 @@
               :name="item.icon"
               class="size-6 text-primary" />
           </div>
-          <UAvatar
+          <CommonGravatar
             v-else
-            :src="item.avatar?.src"
-            class="object-cover size-full" />
+            :avatar-id="item.avatarId"
+            :size="64" />
         </template>
 
         <template #title="{ item }">
-          <span class="text-base mr-2">{{ item.title }}</span>
-          <span
-            v-if="item.action === 'partager'"
-            class="text-sm text-dimmed"
-            >和大家分享</span
-          >
+          <div class="flex items-center gap-3">
+            <div class="text-base">{{ item.title }}</div>
+            <UBadge
+              v-if="item.action === 'partager'"
+              variant="subtle"
+              color="neutral"
+              size="sm"
+              label="分享" />
+          </div>
         </template>
 
         <template #date="{ item }">
-          {{ item.date }}
+          <div class="flex items-center gap-2.5">
+           {{ item.date }}
+          <UIcon name="hugeicons:more-horizontal" class="size-5" /> 
+          </div>
         </template>
 
         <template #description="{ item, index }">
@@ -176,11 +182,8 @@ const displayItems = computed(() => {
     description: item.content,
     action: item.action,
     allowComment: item.allow_comment,
-    ...(item.icon
-      ? { icon: item.icon }
-      : {
-          avatar: { src: `https://gravatar.loli.net/avatar/${item.expand?.user?.avatar}?s=64` },
-        }),
+    icon: item.icon,
+    avatarId: item.expand?.user?.avatar,
   }));
 });
 
@@ -201,11 +204,11 @@ const manualRefresh = async () => {
     const data = await fetchData(1);
 
     // 2. 强制刷新评论头像 Key
-// 注意：用 refresh 而不是 clear，这样能确保正在显示的组件重新进入 pending
-// 遍历所有帖子，刷新对应的评论数据缓存
-allPosts.value.forEach(post => {
-  refreshNuxtData(`comments-data-${post.id}`);
-});
+    // 注意：用 refresh 而不是 clear，这样能确保正在显示的组件重新进入 pending
+    // 遍历所有帖子，刷新对应的评论数据缓存
+    allPosts.value.forEach((post) => {
+      refreshNuxtData(`comments-data-${post.id}`);
+    });
 
     if (data?.posts) {
       allPosts.value = data.posts;
