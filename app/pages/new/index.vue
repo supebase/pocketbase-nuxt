@@ -1,26 +1,14 @@
 <template>
   <div
-      class="bg-neutral-50 dark:bg-neutral-950/50 border border-neutral-200/90 dark:border-neutral-800/70 rounded-lg p-4">
+    class="bg-neutral-50 dark:bg-neutral-950/50 border border-neutral-200/90 dark:border-neutral-800/70 rounded-lg p-4">
     <form
       @submit.prevent="handleSubmit"
       class="space-y-6">
-      <UTextarea
-        v-model="form.content"
-        autoresize
-        color="neutral"
-        variant="none"
-        :placeholder="form.action === 'partager' ? '粘贴链接或内容，转发给他人 ...' : '输入原创内容，分享你的观点 ...'"
-        size="lg"
-        :rows="10"
-        :maxrows="18"
-        :disabled="isSubmitting"
-        class="w-full" />
-
       <URadioGroup
         v-model="form.action"
         indicator="hidden"
         orientation="horizontal"
-        variant="table"
+        variant="card"
         :items="[
           {
             label: '贴文',
@@ -34,22 +22,53 @@
           },
         ]" />
 
-      <UInput
-        v-model="form.icon"
-        v-show="form.action === 'partager'"
-        placeholder="图标，例如：hugeicons:share-06"
-        variant="subtle"
+      <USeparator type="dashed" />
+
+      <UTextarea
+        v-model="form.content"
+        autoresize
         color="neutral"
+        variant="none"
+        :placeholder="
+          form.action === 'partager'
+            ? '粘贴链接或内容，转发给他人 ...'
+            : '输入原创内容，分享你的观点 ...'
+        "
+        size="xl"
+        :rows="10"
+        :maxrows="18"
         :disabled="isSubmitting"
-        icon="hugeicons:share-06"
-        size="lg"
         class="w-full" />
+
+      <div
+        v-show="form.action === 'partager'"
+        class="flex items-center gap-2.5">
+        <UInput
+          v-model="form.icon"
+          placeholder="图标，例如：hugeicons:at"
+          variant="subtle"
+          color="neutral"
+          :disabled="isSubmitting"
+          size="lg"
+          class="w-full" />
+
+        <UButton
+          to="https://icones.js.org/collection/hugeicons"
+          target="_blank"
+          variant="link"
+          color="neutral"
+          icon="hugeicons:search-area"
+          label="查找图标" />
+      </div>
+
+      <USeparator />
 
       <div class="flex items-center justify-between">
         <USwitch
           v-model="form.allow_comment"
           :disabled="isSubmitting"
-          label="允许评论" />
+          color="neutral"
+          label="允许用户评论" />
 
         <UButton
           type="submit"
@@ -143,6 +162,10 @@ const handleSubmit = async () => {
     form.allow_comment = true;
     form.icon = "";
     form.action = "dit";
+
+    // 清除首页数据缓存，确保下次进入首页看到的是最新的
+    await refreshNuxtData("posts-list-data");
+
     // 跳转到首页
     await navigateTo("/");
   } catch (error: any) {

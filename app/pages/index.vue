@@ -51,7 +51,7 @@
         :items="displayItems"
         :loading-more="isLoadingMore"
         line-offset="15px"
-        :trigger-ratio="0.7"
+        :trigger-ratio="0.55"
         :is-resetting="isResetting">
         <template #indicator="{ item }">
           <div
@@ -152,7 +152,9 @@ const {
   data: fetchResult,
   status,
   error,
+  refresh,
 } = await useLazyFetch<PostsResponse>("/api/posts/records", {
+  key: "posts-list-data",
   server: true,
   dedupe: "cancel",
 });
@@ -201,7 +203,7 @@ const manualRefresh = async () => {
     isResetting.value = true;
 
     // 1. 刷新文章
-    const data = await fetchData(1);
+    await refresh();
 
     // 2. 强制刷新评论头像 Key
     // 注意：用 refresh 而不是 clear，这样能确保正在显示的组件重新进入 pending
@@ -210,15 +212,15 @@ const manualRefresh = async () => {
       refreshNuxtData(`comments-data-${post.id}`);
     });
 
-    if (data?.posts) {
-      allPosts.value = data.posts;
-      currentPage.value = 1;
-    }
+  currentPage.value = 1;
   } catch (err) {
     console.error("刷新失败:", err);
   } finally {
-    isRefreshing.value = false;
-    isResetting.value = false;
+    // 延迟关闭重置状态，给 CSS 动画留出时间
+    setTimeout(() => {
+      isRefreshing.value = false;
+      isResetting.value = false;
+    }, 300);
   }
 };
 
@@ -231,9 +233,14 @@ const loadMore = async () => {
     if (data?.posts?.length) {
       allPosts.value = [...allPosts.value, ...data.posts];
       currentPage.value = nextPage;
+
+      await nextTick();
     }
   } finally {
-    isLoadingMore.value = false;
+    // 这里的延迟可以确保 CommonMotionTimeline 的 watch 能够捕捉到正确的渲染后高度
+    setTimeout(() => {
+      isLoadingMore.value = false;
+    }, 100);
   }
 };
 

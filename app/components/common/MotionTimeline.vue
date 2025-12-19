@@ -6,8 +6,11 @@
       class="absolute top-8 bottom-8 w-0.5 z-0 bg-neutral-100 dark:bg-neutral-800 overflow-hidden"
       :style="{ left: lineOffset }">
       <div
-        class="absolute top-0 w-full bg-primary rounded-full will-change-[height] shadow-[0_0_8px_rgba(var(--color-primary-500),0.5)]"
-        :class="{ 'transition-all duration-300 ease-out': !loadingMore && !isResetting }"
+        class="absolute top-0 w-full bg-primary rounded-full will-change-[height]"
+        :class="{
+          'transition-[height] duration-500 ease-out': !loadingMore && !isResetting,
+          'transition-none': loadingMore, // 加载时完全禁用过渡，防止抖动
+        }"
         :style="{ height: `${progress}%` }" />
     </div>
 
@@ -63,22 +66,41 @@ const timelineContainer = ref(null);
 const { y: windowY } = useWindowScroll();
 const { top, height } = useElementBounding(timelineContainer);
 
+// --- 新增：用于平滑过渡的参考高度 ---
+const displayHeight = ref(0);
+
+// 监听实际高度变化
+watch(
+  height,
+  (newHeight) => {
+    // 如果正在重置，直接同步高度
+    if (props.isResetting) {
+      displayHeight.value = newHeight;
+      return;
+    }
+
+    // 关键：只有在非加载状态，或者高度真的变大时才更新
+    // 这可以防止加载瞬间分母抖动
+    if (!props.loadingMore && newHeight !== 0) {
+      displayHeight.value = newHeight;
+    }
+  },
+  { immediate: true }
+);
+
 const progress = computed(() => {
   if (props.isResetting) return 0;
-  if (!timelineContainer.value || height.value === 0) return 0;
+  // 使用 displayHeight 替代原来的 height
+  if (!timelineContainer.value || displayHeight.value === 0) return 0;
 
   const viewportHeight = typeof window !== "undefined" ? window.innerHeight : 0;
   const triggerPoint = viewportHeight * props.triggerRatio;
 
-  // 修正到底逻辑：
-  // 当页面滚动使得 (容器顶部 + 容器高度) 到达触发点时，线应该 100%
   const elementTopRelativeDoc = top.value + windowY.value;
-
-  // 这里的 40 是顶部的 padding 补偿，如果不减去，线会点亮得太早
   const currentProgress = windowY.value + triggerPoint - (elementTopRelativeDoc + 40);
 
-  // 这里的可滑动总长度也需要减去偏移补偿，以保证终点精确
-  const adjustableHeight = height.value - 80; // 减去上下各约 40px 的 padding
+  // 这里的计算现在基于稳定的 displayHeight
+  const adjustableHeight = displayHeight.value - 80;
 
   const percentage = (currentProgress / adjustableHeight) * 100;
 

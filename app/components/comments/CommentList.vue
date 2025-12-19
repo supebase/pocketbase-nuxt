@@ -21,7 +21,8 @@
 
       <CommonMotionTimeline
         :items="comments"
-        line-offset="15px">
+        line-offset="15px"
+        :trigger-ratio="0.55">
         <template #indicator="{ item }">
           <div
             class="size-8 rounded-full ring-4 ring-white dark:ring-neutral-900 shadow-sm overflow-hidden">
@@ -46,6 +47,11 @@
           <div class="text-sm text-dimmed mt-1.5">{{ item.relativeTime }}</div>
         </template>
       </CommonMotionTimeline>
+
+      <USeparator
+        label="已经到底了"
+        type="dashed"
+        class="mt-8" />
     </div>
   </div>
 </template>

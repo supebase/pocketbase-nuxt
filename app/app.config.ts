@@ -42,6 +42,14 @@ export default defineAppConfig({
         label: "text-sm text-dimmed",
       },
     },
+    radioGroup: {
+      slots: {
+        item: "rounded-lg border has-data-[state=checked]:shadow-lg has-data-[state=checked]:shadow-primary/30 w-full cursor-pointer",
+        label: "text-base",
+        description: "text-muted/80",
+        fieldset: "gap-3 justify-center",
+      },
+    },
   },
 
   toaster: {

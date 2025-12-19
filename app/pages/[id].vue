@@ -20,7 +20,9 @@
       <div
         v-else-if="postWithRelativeTime"
         key="content">
-        <div class="flex flex-col items-center justify-center gap-3">
+        <div
+          ref="authorRow"
+          class="flex flex-col items-center justify-center gap-3">
           <div class="flex items-center justify-between gap-2 w-full">
             <div class="flex items-center gap-3">
               <UIcon
@@ -41,7 +43,7 @@
               </div>
             </div>
 
-            <div class="text-sm text-dimmed">
+            <div>
               <UIcon
                 name="hugeicons:arrow-turn-backward"
                 class="size-6 text-dimmed cursor-pointer"
@@ -71,7 +73,7 @@
               :key="postWithRelativeTime.id"
               :value="postWithRelativeTime.content || ''"
               @vue:mounted="handleMdcMounted"
-              class="prose prose-neutral dark:prose-invert max-w-none" />
+              class="prose prose-neutral dark:prose-invert" />
           </div>
         </div>
 
@@ -112,6 +114,7 @@
 <script setup lang="ts">
 import type { PostRecord } from "~/types/posts";
 import type { CommentRecord } from "~/types/comments";
+import { useIntersectionObserver } from "@vueuse/core";
 
 const { loggedIn, user: currentUser } = useUserSession();
 const route = useRoute();
@@ -174,6 +177,55 @@ watch(
   () => route.params.id,
   () => (mdcReady.value = false)
 );
+
+const { showHeaderBack } = useHeader();
+
+const authorRow = ref<HTMLElement | null>(null);
+
+const isContentReady = computed(() => {
+  return status.value === "success" && mdcReady.value && authorRow.value !== null;
+});
+
+// 1. 页面销毁时重置
+onUnmounted(() => {
+  showHeaderBack.value = false;
+});
+
+// 2. 路由跳转前置重置 (防止返回后 logo 不恢复)
+onBeforeRouteLeave(() => {
+  showHeaderBack.value = false;
+});
+
+// 3. 修改原有的监听逻辑，确保它是准确的
+useIntersectionObserver(
+  authorRow,
+  (entries) => {
+    // 1. 获取第一个条目
+    const entry = entries[0];
+
+    // 2. 只有当 entry 存在且内容就绪时才执行逻辑
+    if (!entry || !isContentReady.value) return;
+
+    // 3. 此时 entry.isIntersecting 就可以安全访问了
+    const { isIntersecting, boundingClientRect } = entry;
+
+    if (isIntersecting) {
+      showHeaderBack.value = false;
+    } else if (boundingClientRect.top < 0) {
+      // 只有当元素滚出顶部（top 为负）时才显示返回
+      showHeaderBack.value = true;
+    }
+  },
+  {
+    threshold: 0,
+    rootMargin: "-20px 0px 0px 0px",
+  }
+);
+
+// 离开页面时必须重置，防止影响到首页
+onBeforeUnmount(() => {
+  showHeaderBack.value = false;
+});
 </script>
 
 <style scoped>

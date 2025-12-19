@@ -58,6 +58,21 @@ body {
   line-height: 1.25em;
 }
 
+.header-fade-enter-active,
+.header-fade-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.header-fade-enter-from {
+  opacity: 0;
+  transform: translateX(-10px);
+}
+
+.header-fade-leave-to {
+  opacity: 0;
+  transform: translateX(10px);
+}
+
 /* 初始加载时的波浪入场 */
 .record-item-animate {
   animation: slide-up-fade 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
