@@ -11,7 +11,7 @@
         color="neutral"
         :disabled="loading"
         icon="hugeicons:at"
-        size="lg"
+        size="xl"
         class="w-full" />
 
       <UInput
@@ -21,7 +21,7 @@
         :color="isLoginMode ? 'neutral' : color"
         :disabled="loading"
         icon="hugeicons:lock-key"
-        size="lg"
+        size="xl"
         class="w-full"
         :type="showPassword ? 'text' : 'password'"
         :ui="{ trailing: 'pe-1' }">
@@ -62,7 +62,7 @@
         color="neutral"
         :disabled="loading"
         icon="hugeicons:square-lock-check-01"
-        size="lg"
+        size="xl"
         class="w-full"
         :type="showPasswordConfirm ? 'text' : 'password'"
         :ui="{ trailing: 'pe-1' }">
@@ -83,7 +83,7 @@
         :loading="loading"
         :label="buttonLabel"
         color="neutral"
-        size="lg"
+        size="xl"
         block
         class="mt-1" />
     </UForm>

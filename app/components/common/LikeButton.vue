@@ -15,7 +15,8 @@
       :name="liked ? 'hugeicons:heart-check' : 'hugeicons:favourite'"
       :class="[
         'size-5 transition-colors duration-300',
-        liked ? 'text-primary animate-heart-pop' : 'text-dimmed',
+        liked ? 'text-primary' : 'text-dimmed',
+        liked && isManualClick ? 'animate-heart-pop' : '',
       ]" />
 
     <!-- 点赞数动画 -->
@@ -40,10 +41,12 @@ const emit = defineEmits<{
 
 // 获取用户登录状态
 const { loggedIn } = useUserSession();
+
 // 状态管理
 const likes = ref(props.initialLikes || 0);
 const liked = ref(props.isLiked || false);
 const isLoading = ref(false);
+const isManualClick = ref(false);
 
 // 点赞点击事件处理
 const handleLike = async () => {
@@ -54,7 +57,7 @@ const handleLike = async () => {
   }
 
   if (isLoading.value) return;
-
+  isManualClick.value = true;
   isLoading.value = true;
 
   try {
@@ -79,6 +82,31 @@ const handleLike = async () => {
     // 可以添加全局错误提示
   } finally {
     isLoading.value = false;
+    setTimeout(() => {
+      isManualClick.value = false;
+    }, 1000);
   }
 };
+
+// 监听点赞数
+watch(
+  () => props.initialLikes,
+  (newVal) => {
+    // 只有当数值真的发生变化时，才更新内部 ref
+    if (newVal !== undefined && newVal !== likes.value) {
+      likes.value = newVal;
+    }
+  }
+);
+
+// 监听点赞状态
+watch(
+  () => props.isLiked,
+  (newVal) => {
+    // 只有当状态真的改变，且不是当前正在手动点击时，才同步
+    if (newVal !== undefined && newVal !== liked.value && !isManualClick.value) {
+      liked.value = newVal;
+    }
+  }
+);
 </script>

@@ -16,12 +16,13 @@
     "nuxt-auth-utils": "0.5.26",
     "nuxt-emoji-picker": "^1.2.1",
     "pocketbase": "^0.26.5",
-    "vue": "^3.5.25",
+    "vue": "^3.5.26",
     "vue-router": "^4.6.4"
   },
   "devDependencies": {
     "@iconify-json/hugeicons": "^1.2.20",
     "@iconify-json/svg-spinners": "^1.2.4",
+    "@iconify-json/vscode-icons": "^1.2.37",
     "@tailwindcss/typography": "^0.5.19",
     "@types/node": "^25.0.3",
     "@types/sanitize-html": "^2.16.0",

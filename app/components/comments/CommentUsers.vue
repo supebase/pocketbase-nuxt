@@ -1,42 +1,63 @@
 <template>
   <div class="flex mt-2.5 h-6">
-    <div v-if="status === 'pending'" class="flex items-center">
-      <UIcon name="hugeicons:reload" class="size-5 text-dimmed animate-spin" />
+    <div
+      v-if="status === 'pending'"
+      class="flex items-center">
+      <UIcon
+        name="hugeicons:refresh"
+        class="size-5 text-dimmed animate-spin" />
     </div>
 
     <template v-else-if="usersToShow.length === 1">
       <div class="flex items-center gap-2">
         <div class="size-5.5 rounded-full overflow-hidden">
-          <CommonGravatar :avatar-id="usersToShow[0]?.expand?.user?.avatar" :size="32" />
+          <CommonGravatar
+            :avatar-id="usersToShow[0]?.expand?.user?.avatar"
+            :size="32" />
         </div>
-        <span class="text-xs font-medium text-dimmed">{{ usersToShow[0]?.expand?.user?.name }}</span>
+        <span class="text-xs font-medium text-dimmed">{{
+          usersToShow[0]?.expand?.user?.name
+        }}</span>
       </div>
     </template>
 
-    <div v-else-if="usersToShow.length > 1" class="flex -space-x-0.5 overflow-hidden">
+    <div
+      v-else-if="usersToShow.length > 1"
+      class="flex -space-x-0.5 overflow-hidden">
       <div
         v-for="(comment, index) in usersToShow.slice(0, 3)"
         :key="comment.id"
         class="inline-block size-5.5 rounded-full ring-2 ring-white dark:ring-neutral-900 overflow-hidden"
-        :style="{ zIndex: 10 - index }"
-      >
-        <CommonGravatar :avatar-id="comment.expand?.user?.avatar" :size="32" />
+        :style="{ zIndex: 10 - index }">
+        <CommonGravatar
+          :avatar-id="comment.expand?.user?.avatar"
+          :size="32" />
       </div>
-      <div 
-        v-if="usersToShow.length > 3" 
-        class="flex items-center justify-center size-5.5 rounded-full bg-neutral-100 dark:bg-neutral-800 ring-2 ring-white dark:ring-neutral-900 text-[10px] text-dimmed z-0"
-      >
-        +{{ usersToShow.length - 3 }}
-      </div>
+      <UBadge
+        v-if="usersToShow.length > 3"
+        variant="soft"
+        size="sm"
+        color="neutral"
+        class="rounded-xl text-muted text-xs">
+        +{{ remainingCount }}
+      </UBadge>
     </div>
 
-    <div v-else-if="!allowComment" class="flex items-center gap-2 text-sm text-dimmed">
-      <UIcon name="hugeicons:comment-block-02" class="size-4.5" />
+    <div
+      v-else-if="!allowComment"
+      class="flex items-center gap-2 text-sm text-dimmed">
+      <UIcon
+        name="hugeicons:comment-block-02"
+        class="size-4.5" />
       <span class="text-xs">评论已关闭</span>
     </div>
 
-    <div v-else class="flex items-center gap-2 text-sm text-dimmed">
-      <UIcon name="hugeicons:comment-02" class="size-4.5" />
+    <div
+      v-else
+      class="flex items-center gap-2 text-sm text-dimmed">
+      <UIcon
+        name="hugeicons:comment-02"
+        class="size-4.5" />
       <span class="text-xs">暂无评论</span>
     </div>
   </div>
@@ -52,18 +73,26 @@ const props = defineProps({
 
 const cacheKey = computed(() => `comments-data-${props.postId}`);
 
-const { data: commentsResponse, status } = await useLazyFetch<{
-  data: { comments: CommentRecord[] };
-}>(`/api/comments/records`, {
+// 注意：这里解构出 totalItems
+const { data: commentsResponse, status } = await useLazyFetch<any>(`/api/comments/records`, {
   key: cacheKey.value,
   server: true,
   query: {
     filter: `post="${props.postId}"`,
     sort: "-created",
+    page: 1,
+    perPage: 5, // 预览依然只取 5 个头像
   },
   dedupe: "cancel",
-  default: () => ({ data: { comments: [] } }),
+  default: () => ({ data: { comments: [], totalItems: 0 } }),
 });
 
+// 计算属性：用于循环的头像（前3个）
 const usersToShow = computed(() => commentsResponse.value?.data?.comments || []);
+
+// 计算属性：总评论数
+const totalCount = computed(() => commentsResponse.value?.data?.totalItems || 0);
+
+// 计算属性：剩余隐藏的人数
+const remainingCount = computed(() => totalCount.value - 3);
 </script>

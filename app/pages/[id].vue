@@ -58,7 +58,7 @@
               v-if="!mdcReady"
               class="absolute inset-0 h-40 flex items-center justify-center bg-white/50 dark:bg-neutral-900/50 z-10 backdrop-blur-sm rounded-lg">
               <UIcon
-                name="hugeicons:reload"
+                name="hugeicons:refresh"
                 class="size-5 mr-2 animate-spin" />
               <span class="text-sm font-medium">排版中...</span>
             </div>

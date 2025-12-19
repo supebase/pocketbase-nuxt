@@ -50,6 +50,14 @@ export default defineAppConfig({
         fieldset: "gap-3 justify-center",
       },
     },
+    prose: {
+      codeCollapse: {
+        slots: {
+          root: 'relative [&_pre]:h-[350px]',
+          footer: 'h-16 absolute inset-x-6 bottom-px rounded-b-md flex items-center justify-end',
+        }
+      }
+    }
   },
 
   toaster: {

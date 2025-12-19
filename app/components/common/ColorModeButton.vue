@@ -50,7 +50,7 @@ const startViewTransition = (event: MouseEvent) => {
       @click="startViewTransition" />
     <template #fallback>
       <UIcon
-        name="hugeicons:reload"
+        name="hugeicons:refresh"
         class="size-5 mx-1.5 text-muted animate-spin" />
     </template>
   </ClientOnly>

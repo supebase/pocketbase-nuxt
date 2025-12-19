@@ -3,36 +3,37 @@ import { handlePocketBaseError } from "../../utils/errorHandler";
 
 export default defineEventHandler(async (event) => {
   try {
-    // 获取当前登录用户（可选）
     let userId = "";
     try {
       const session = await getUserSession(event);
-      const user = session?.user;
-      if (user) {
-        userId = user.id;
+      if (session?.user) {
+        userId = session.user.id;
       }
-    } catch (error) {
-      // 用户未登录时不报错，继续执行
-    }
+    } catch (error) {}
 
-    // 获取查询参数
-    const { filter } = getQuery(event);
+    // 1. 从查询参数中获取 page 和 perPage
+    const query = getQuery(event);
 
-    // 使用服务层函数获取评论列表，传递userId以获取点赞信息
+    // 转换为数字，并设置默认值
+    const page = Number(query.page) || 1;
+    const perPage = Number(query.perPage) || 10;
+    const filter = query.filter as string | undefined;
+
+    // 2. 将动态参数传给服务层
     const {
       items: comments,
       totalItems,
-      page,
-      perPage,
-    } = await getCommentsList(1, 20, filter as string | undefined, userId);
+      page: currentPage,
+      perPage: currentPerPage,
+    } = await getCommentsList(page, perPage, filter, userId);
 
     return {
       message: "获取评论列表成功",
       data: {
         comments,
         totalItems,
-        page,
-        perPage,
+        page: currentPage,
+        perPage: currentPerPage,
       },
     };
   } catch (error) {
