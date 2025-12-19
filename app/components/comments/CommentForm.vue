@@ -189,7 +189,7 @@ const handleSubmit = async () => {
 
   isSubmitting.value = true;
   try {
-    const response = await $fetch<any>("/api/comments/records", {
+    const response = await $fetch<any>("/api/collections/comments", {
       method: "POST",
       body: {
         ...form,

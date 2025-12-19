@@ -4,8 +4,7 @@
       v-if="error"
       :title="error.message"
       variant="soft"
-      color="error"
-      class="mt-4" />
+      color="error" />
 
     <Transition
       name="fade"
@@ -102,10 +101,17 @@
         v-else
         key="empty"
         class="flex flex-col items-center justify-center py-20">
-        <UIcon
-          name="hugeicons:file-empty-02"
-          class="text-4xl text-neutral-300" />
-        <p class="text-neutral-400 text-sm">文章不存在</p>
+        <UEmpty
+          variant="naked"
+          title="内容无法找到"
+          description="当前访问的内容已不存在，建议返回首页浏览其他内容"
+          :actions="[
+            {
+              label: '返回首页',
+              color: 'neutral',
+              to: '/',
+            },
+          ]" />
       </div>
     </Transition>
   </div>
@@ -125,9 +131,12 @@ const mdcReady = ref(false);
 const commentListRef = ref();
 const commenters = ref<any[]>([]);
 
-const { data, status, error } = await useLazyFetch<{ data: PostRecord }>(`/api/posts/${id}`, {
-  server: true,
-});
+const { data, status, error } = await useLazyFetch<{ data: PostRecord }>(
+  `/api/collections/post/${id}`,
+  {
+    server: true,
+  }
+);
 
 const postWithRelativeTime = computed(() => {
   if (!data.value?.data) return null;

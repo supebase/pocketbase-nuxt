@@ -1,5 +1,5 @@
-import { getPostById } from "../../services/posts.service";
-import { handlePocketBaseError } from "../../utils/errorHandler";
+import { getPostById } from "../../../services/posts.service";
+import { handlePocketBaseError } from "../../../utils/errorHandler";
 
 export default defineEventHandler(async (event) => {
   try {

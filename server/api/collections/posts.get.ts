@@ -7,8 +7,8 @@ export default defineEventHandler(async (event) => {
     const query = getQuery(event);
 
     // 2. 提取 page 参数，确保它是数字，如果不存在或无效，默认为 1
-    const requestedPage = parseInt(query.page as string) || 1;
-    const perPageLimit = parseInt(query.perPage as string) || 10; // 也可以从查询中获取 perPage，如果需要
+    const requestedPage = Number(query.page) || 1;
+    const perPageLimit = Number(query.perPage) || 10; // 也可以从查询中获取 perPage，如果需要
 
     // 3. 将动态页码传递给服务层函数
     const {

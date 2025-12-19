@@ -27,6 +27,7 @@
         :ui="{ trailing: 'pe-1' }">
         <template #trailing>
           <UButton
+            tabindex="-1"
             color="neutral"
             variant="link"
             :icon="showPassword ? 'hugeicons:view' : 'hugeicons:view-off'"
@@ -68,6 +69,7 @@
         :ui="{ trailing: 'pe-1' }">
         <template #trailing>
           <UButton
+            tabindex="-1"
             color="neutral"
             variant="link"
             :icon="showPasswordConfirm ? 'hugeicons:view' : 'hugeicons:view-off'"
@@ -85,8 +87,22 @@
         color="neutral"
         size="xl"
         block
-        class="mt-1" />
+        class="mt-1 cursor-pointer" />
     </UForm>
+
+    <USeparator
+      type="dashed"
+      label="或者"
+      class="my-5" />
+
+    <UButton
+      type="button"
+      variant="soft"
+      label="返回首页"
+      color="neutral"
+      size="xl"
+      block
+      to="/" />
 
     <UAlert
       v-if="error"

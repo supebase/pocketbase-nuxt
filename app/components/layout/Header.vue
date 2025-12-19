@@ -16,10 +16,10 @@
           :name="user?.name"
           size="sm">
           <template #avatar>
-            <div class="size-8 rounded-full overflow-hidden">
+            <div class="size-7 rounded-full overflow-hidden">
               <CommonGravatar
                 :avatar-id="user?.avatar"
-                :size="64" />
+                :size="56" />
             </div>
           </template>
         </UUser>
@@ -32,7 +32,7 @@
           to="/new"
           color="neutral"
           variant="link"
-          icon="i-hugeicons:add-circle"
+          icon="hugeicons:add-circle-half-dot"
           class="rounded-full"
           v-if="user?.verified" />
 

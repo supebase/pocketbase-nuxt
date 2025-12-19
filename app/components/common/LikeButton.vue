@@ -62,7 +62,7 @@ const handleLike = async () => {
 
   try {
     // 调用点赞API
-    const response = await $fetch<ToggleLikeResponse>("/api/likes/records", {
+    const response = await $fetch<ToggleLikeResponse>("/api/collections/likes", {
       method: "POST",
       body: {
         comment: props.commentId,

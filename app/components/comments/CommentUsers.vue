@@ -74,7 +74,7 @@ const props = defineProps({
 const cacheKey = computed(() => `comments-data-${props.postId}`);
 
 // 注意：这里解构出 totalItems
-const { data: commentsResponse, status } = await useLazyFetch<any>(`/api/comments/records`, {
+const { data: commentsResponse, status } = await useLazyFetch<any>(`/api/collections/comments`, {
   key: cacheKey.value,
   server: true,
   query: {

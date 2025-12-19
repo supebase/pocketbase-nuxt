@@ -30,7 +30,7 @@ export default defineNuxtConfig({
   },
   icon: {
     serverBundle: {
-      collections: ["hugeicons", "svg-spinners", "vscode-icons"],
+      collections: ["hugeicons", "svg-spinners", "vscode-icons", "simple-icons"],
     },
     clientBundle: {
       scan: true,

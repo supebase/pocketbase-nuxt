@@ -8,6 +8,7 @@
       :content="false"
       :ui="{ trigger: 'grow cursor-pointer' }"
       variant="link"
+      size="lg"
       color="primary"
       class="w-full gap-4" />
 

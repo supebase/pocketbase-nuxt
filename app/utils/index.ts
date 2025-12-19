@@ -22,3 +22,20 @@ export function cleanMarkdown(text: string): string {
 
     return cleaned;
 };
+
+/**
+ * 格式化用户名：首字母大写，其余小写
+ */
+export function formatDefaultName(name: string): string {
+    if (!name) return "";
+    // 确保先转小写，再把首字母提出来大写
+    const lower = name.toLowerCase();
+    return lower.charAt(0).toUpperCase() + lower.slice(1);
+};
+
+/**
+ * 预处理邮箱：去空格并转小写
+ */
+export function normalizeEmail(email: string): string {
+    return email.trim().toLowerCase();
+};

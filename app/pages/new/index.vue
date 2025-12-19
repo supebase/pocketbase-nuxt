@@ -45,7 +45,7 @@
         class="flex items-center gap-2.5">
         <UInput
           v-model="form.icon"
-          placeholder="图标，例如：hugeicons:at"
+          placeholder="图标，例如：simple-icons:nuxt"
           variant="subtle"
           color="neutral"
           :disabled="isSubmitting"
@@ -53,7 +53,7 @@
           class="w-full" />
 
         <UButton
-          to="https://icones.js.org/collection/hugeicons"
+          to="https://icones.js.org/collection/simple-icons"
           target="_blank"
           variant="link"
           color="neutral"
@@ -102,95 +102,103 @@
 </template>
 
 <script setup lang="ts">
-// 表单数据
-const form = reactive({
-  content: "",
-  allow_comment: true, // 默认允许评论
-  icon: "",
-  action: "dit", // 默认操作是贴文
-});
+import { reactive, ref, onDeactivated } from "vue";
 
-// 表单验证错误
+// --- 1. 初始化与数据定义 ---
+
+const initialForm = {
+  content: "",
+  allow_comment: true,
+  icon: "",
+  action: "dit",
+};
+
+const form = reactive({ ...initialForm });
+
 const errors = reactive({
   content: "",
 });
 
-// 状态管理
 const isSubmitting = ref(false);
 const globalError = ref("");
 
-// 表单验证
+// --- 2. 核心逻辑函数 ---
+
+/**
+ * 重置表单到初始状态
+ */
+const resetForm = () => {
+  // 使用 Object.assign 快速重置 reactive 对象
+  Object.assign(form, initialForm);
+  // 清除错误信息
+  errors.content = "";
+  globalError.value = "";
+};
+
+/**
+ * 表单验证
+ */
 const validateForm = () => {
   let isValid = true;
-
-  // 重置错误
   errors.content = "";
   globalError.value = "";
 
-  // 验证内容
   if (!form.content.trim()) {
     errors.content = "内容不能为空";
     isValid = false;
   } else if (form.content.length > 10000) {
-    errors.content = "内容长度不能超过10000字符";
+    errors.content = "内容长度不能超过 10000 字符";
     isValid = false;
   }
 
   return isValid;
 };
 
-// 提交表单
+/**
+ * 提交表单
+ */
 const handleSubmit = async () => {
-  // 表单验证
-  if (!validateForm()) {
-    return;
-  }
+  if (!validateForm()) return;
 
-  // 设置提交状态
   isSubmitting.value = true;
-  globalError.value = "";
-  errors.content = "";
 
   try {
-    // 调用后端API
-    await $fetch("/api/posts/records", {
+    await $fetch("/api/collections/posts", {
       method: "POST",
       body: form,
     });
 
-    form.content = "";
-    form.allow_comment = true;
-    form.icon = "";
-    form.action = "dit";
+    // 提交成功后重置表单
+    resetForm();
 
-    // 清除首页数据缓存，确保下次进入首页看到的是最新的
+    // 刷新数据并跳转
     await refreshNuxtData("posts-list-data");
-
-    // 跳转到首页
     await navigateTo("/");
   } catch (error: any) {
-    // 检查是否存在详细字段错误 (由 handlePocketBaseError 转发)
     if (error.data && Object.keys(error.data).length > 0) {
-      // 尝试分配给 content 字段
       if (error.data.content) {
         errors.content = error.data.content.message;
       }
-
-      // 如果存在通用错误或未分配的字段错误，则显示在 globalError
       const hasUnassignedError = Object.keys(error.data).some((field) => field !== "content");
-
       if (error.statusMessage && (hasUnassignedError || errors.content === "")) {
         globalError.value = error.statusMessage + "。请检查字段错误。";
       }
     } else {
-      // 捕获通用错误 (未登录 401, 或服务端抛出的 400/500)
       globalError.value = error.statusMessage || "发布失败，请稍后重试";
     }
-
     console.error("Post Error:", error);
   } finally {
-    // 恢复提交状态
     isSubmitting.value = false;
   }
 };
+
+// --- 3. 生命周期钩子 ---
+
+/**
+ * 处理 KeepAlive 模式下的离开页面重置
+ * 当组件被缓存但从视图中移除时触发
+ */
+onDeactivated(() => {
+  resetForm();
+});
 </script>

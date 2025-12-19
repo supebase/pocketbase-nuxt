@@ -21,6 +21,7 @@
   },
   "devDependencies": {
     "@iconify-json/hugeicons": "^1.2.20",
+    "@iconify-json/simple-icons": "^1.2.63",
     "@iconify-json/svg-spinners": "^1.2.4",
     "@iconify-json/vscode-icons": "^1.2.37",
     "@tailwindcss/typography": "^0.5.19",

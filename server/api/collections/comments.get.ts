@@ -9,7 +9,7 @@ export default defineEventHandler(async (event) => {
       if (session?.user) {
         userId = session.user.id;
       }
-    } catch (error) {}
+    } catch (error) { }
 
     // 1. 从查询参数中获取 page 和 perPage
     const query = getQuery(event);

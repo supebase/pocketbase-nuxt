@@ -35,10 +35,18 @@
     <div
       v-else-if="!allPosts || allPosts.length === 0"
       class="flex flex-col items-center justify-center space-y-4 min-h-[calc(100vh-14rem)] pt-16">
-      <UIcon
-        name="hugeicons:file-empty-02"
-        class="text-4xl text-neutral-300 dark:text-neutral-700" />
-      <p class="text-neutral-400 dark:text-neutral-700 text-sm font-medium">信息矩阵仍处待填充态</p>
+      <UEmpty
+        variant="naked"
+        title="暂无贴文记录"
+        description="您可以点击刷新按钮尝试获取最新的贴文记录"
+        :actions="[
+          {
+            label: '刷新',
+            color: 'neutral',
+            loadingAuto: true,
+            onClick: manualRefresh,
+          },
+        ]" />
     </div>
 
     <div
@@ -132,7 +140,7 @@ const {
 
 // API 获取逻辑
 const fetchPostsApi = async (page: number) => {
-  const res = await $fetch<PostsResponse>("/api/posts/records", { query: { page } });
+  const res = await $fetch<PostsResponse>("/api/collections/posts", { query: { page } });
   return { items: res.data.posts, total: res.data.totalItems };
 };
 
@@ -142,7 +150,7 @@ const {
   status,
   error,
   refresh,
-} = await useLazyFetch<PostsResponse>("/api/posts/records", {
+} = await useLazyFetch<PostsResponse>("/api/collections/posts", {
   key: "posts-list-data",
   server: true,
 });

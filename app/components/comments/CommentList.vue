@@ -88,7 +88,7 @@ const loading = ref(false);
 
 // API 请求逻辑
 const fetchCommentsApi = async (page: number) => {
-  const res = await $fetch<any>(`/api/comments/records`, {
+  const res = await $fetch<any>(`/api/collections/comments`, {
     query: {
       filter: `post="${props.postId}"`,
       sort: "-created",
