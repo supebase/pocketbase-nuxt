@@ -11,6 +11,6 @@ export function usePasswordVisibility() {
 
   return {
     isVisible,
-    toggleVisibility
+    toggleVisibility,
   };
 }

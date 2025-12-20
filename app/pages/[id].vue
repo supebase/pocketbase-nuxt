@@ -2,9 +2,11 @@
   <div class="container mx-auto">
     <UAlert
       v-if="error"
-      :title="error.message"
+      :description="error.data?.message || '获取内容失败，请稍后重试'"
       variant="soft"
-      color="error" />
+      icon="hugeicons:alert-02"
+      color="error"
+      class="mb-4" />
 
     <Transition
       name="fade"
@@ -59,7 +61,7 @@
               <UIcon
                 name="hugeicons:refresh"
                 class="size-5 mr-2 animate-spin" />
-              <span class="text-sm font-medium">排版中...</span>
+              <span class="text-sm font-medium">沉浸式梳理内容</span>
             </div>
           </Transition>
 
@@ -72,7 +74,7 @@
               :key="postWithRelativeTime.id"
               :value="postWithRelativeTime.content || ''"
               @vue:mounted="handleMdcMounted"
-              class="prose prose-neutral dark:prose-invert" />
+              class="prose prose-neutral dark:prose-invert prose-img:rounded-xl prose-img:ring-1 prose-img:ring-neutral-200 prose-img:dark:ring-neutral-800" />
           </div>
         </div>
 
@@ -139,10 +141,12 @@ const { data, status, error } = await useLazyFetch<{ data: PostRecord }>(
 );
 
 const postWithRelativeTime = computed(() => {
-  if (!data.value?.data) return null;
+  const postData = data.value?.data;
+  if (!postData) return null;
+
   return {
-    ...data.value.data,
-    relativeTime: useRelativeTime(data.value.data.created).value,
+    ...postData,
+    relativeTime: useRelativeTime(postData.created).value,
   };
 });
 

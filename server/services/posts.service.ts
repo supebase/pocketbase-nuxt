@@ -10,14 +10,10 @@ import { pb } from '../utils/pocketbase';
  * @returns 文章列表及分页信息
  */
 export async function getPostsList(page: number = 1, perPage: number = 10) {
-  return await pb.collection('posts').getList(
-    page,
-    perPage,
-    {
-      sort: '-created',
-      expand: 'user'
-    }
-  );
+  return await pb.collection('posts').getList(page, perPage, {
+    sort: '-created',
+    expand: 'user',
+  });
 }
 
 /**
@@ -26,12 +22,9 @@ export async function getPostsList(page: number = 1, perPage: number = 10) {
  * @returns 文章详情
  */
 export async function getPostById(postId: string) {
-  return await pb.collection('posts').getOne(
-    postId,
-    {
-      expand: 'user'
-    }
-  );
+  return await pb.collection('posts').getOne(postId, {
+    expand: 'user',
+  });
 }
 
 /**

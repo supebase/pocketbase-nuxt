@@ -1,6 +1,7 @@
 <template>
   <UButton
     @click="handleLogout"
+    :loading="isPending"
     color="neutral"
     variant="link"
     icon="hugeicons:door-01"
@@ -9,20 +10,24 @@
 
 <script setup lang="ts">
 const { fetch: fetchSession } = useUserSession();
+const isPending = ref(false);
+const toast = useToast();
 
 async function handleLogout() {
+  isPending.value = true;
   try {
-    // 调用 SSR 退出路由
-    await $fetch("/api/auth/logout", {
-      method: "POST",
-    });
-
-    // 退出成功后，立即调用 navigateTo 进行跳转
+    await $fetch("/api/auth/logout", { method: "POST" });
     await fetchSession();
     await navigateTo("/auth");
-  } catch (error) {
-    console.error("Logout failed:", error);
-    alert("退出失败，请稍后再试。");
+  } catch (err: any) {
+    toast.add({
+      title: "操作失败",
+      description: err.data?.message || "无法完成退出操作",
+      icon: "hugeicons:alert-02",
+      color: "error",
+    });
+  } finally {
+    isPending.value = false;
   }
 }
 </script>

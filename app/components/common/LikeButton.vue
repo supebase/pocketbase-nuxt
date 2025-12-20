@@ -7,8 +7,8 @@
     <!-- 加载图标 -->
     <UIcon
       v-if="isLoading"
-      name="svg-spinners:ring-resize"
-      class="size-5 text-dimmed" />
+      name="hugeicons:refresh"
+      class="size-5 text-dimmed animate-spin" />
     <!-- 点赞图标 -->
     <UIcon
       v-else
@@ -76,10 +76,8 @@ const handleLike = async () => {
     // 触发事件
     emit("likeChange", liked.value, likes.value, props.commentId);
   } catch (error: any) {
-    // 显示错误信息
-    const errorMessage = error.data?.message || "点赞失败，请稍后重试";
+    const errorMessage = error.data?.message || "点赞操作失败";
     console.error(errorMessage);
-    // 可以添加全局错误提示
   } finally {
     isLoading.value = false;
     setTimeout(() => {

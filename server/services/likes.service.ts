@@ -13,7 +13,7 @@ export async function toggleLike(commentId: string, userId: string) {
   // 修正：改用 getList 避免 404 报错
   const result = await pb.collection('likes').getList(1, 1, {
     filter: `comment="${commentId}" && user="${userId}"`,
-    $autoCancel: false
+    $autoCancel: false,
   });
 
   const existingLike = result.items[0];
@@ -25,7 +25,7 @@ export async function toggleLike(commentId: string, userId: string) {
   } else {
     await pb.collection('likes').create({
       user: userId,
-      comment: commentId
+      comment: commentId,
     });
     liked = true;
   }
@@ -45,7 +45,7 @@ export async function toggleLike(commentId: string, userId: string) {
 export async function getCommentLikes(commentId: string) {
   const result = await pb.collection('likes').getList(1, 1, {
     filter: `comment="${commentId}"`,
-    $autoCancel: false
+    $autoCancel: false,
   });
 
   return result.totalItems;
@@ -58,9 +58,11 @@ export async function getCommentLikes(commentId: string) {
  * @returns 是否已点赞
  */
 export async function isUserLiked(commentId: string, userId: string) {
-  const existingLike = await pb.collection('likes').getFirstListItem(`comment="${commentId}" && user="${userId}"`, {
-    ignoreErrors: true
-  });
+  const existingLike = await pb
+    .collection('likes')
+    .getFirstListItem(`comment="${commentId}" && user="${userId}"`, {
+      ignoreErrors: true,
+    });
 
   return !!existingLike;
 }
@@ -74,22 +76,22 @@ export async function isUserLiked(commentId: string, userId: string) {
 export async function getCommentsLikesMap(commentIds: string[], userId: string) {
   if (!commentIds || commentIds.length === 0) return {};
 
-  const commentFilter = commentIds.map(id => `comment="${id}"`).join(' || ');
+  const commentFilter = commentIds.map((id) => `comment="${id}"`).join(' || ');
 
   const allLikes = await pb.collection('likes').getFullList({
     filter: commentFilter,
-    $autoCancel: false
+    $autoCancel: false,
   });
 
   const likesMap: Record<string, { commentId: string; likes: number; isLiked: boolean }> = {};
 
   // 初始化
-  commentIds.forEach(id => {
+  commentIds.forEach((id) => {
     likesMap[id] = { commentId: id, likes: 0, isLiked: false };
   });
 
   // 填充数据
-  allLikes.forEach(like => {
+  allLikes.forEach((like) => {
     if (likesMap[like.comment]) {
       likesMap[like.comment].likes++;
       // 只有当 userId 匹配时才标记为已点赞

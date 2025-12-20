@@ -1,4 +1,4 @@
-import "nuxt-auth-utils";
+import 'nuxt-auth-utils';
 
 /**
  * 基础 PocketBase 用户记录类型 (可被服务器端模块引用)
@@ -41,7 +41,7 @@ export interface AuthResponse {
   };
 }
 
-declare module "#auth-utils" {
+declare module '#auth-utils' {
   /**
    * UserSession 中的 User 接口继承自 UserRecord，
    * 确保类型一致性。

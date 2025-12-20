@@ -63,7 +63,7 @@ export function useRefresh() {
       // 3. 重置页码
       currentPage.value = 1;
     } catch (err) {
-      console.error("刷新失败:", err);
+      console.error('刷新失败:', err);
       throw err;
     } finally {
       completeRefresh();

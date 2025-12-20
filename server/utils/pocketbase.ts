@@ -1,11 +1,11 @@
-import PocketBase from "pocketbase";
-import { createHash } from "node:crypto";
+import PocketBase from 'pocketbase';
+import { createHash } from 'node:crypto';
 
 const config = useRuntimeConfig();
 const POCKETBASE_URL = config.public.POCKETBASE_URL;
 
 if (!POCKETBASE_URL) {
-  throw new Error("POCKETBASE_URL 未配置正确");
+  throw new Error('POCKETBASE_URL 未配置正确');
 }
 
 export const pb = new PocketBase(POCKETBASE_URL as string).autoCancellation(false);
@@ -22,5 +22,5 @@ export const pb = new PocketBase(POCKETBASE_URL as string).autoCancellation(fals
 export function getMd5Hash(email: string): string {
   const normalizedEmail = email.trim().toLowerCase();
 
-  return createHash("md5").update(normalizedEmail).digest("hex");
+  return createHash('md5').update(normalizedEmail).digest('hex');
 }

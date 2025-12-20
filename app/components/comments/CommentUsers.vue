@@ -64,8 +64,6 @@
 </template>
 
 <script setup lang="ts">
-import type { CommentRecord } from "~/types/comments";
-
 const props = defineProps({
   postId: { type: String, required: true },
   allowComment: { type: Boolean, default: true },

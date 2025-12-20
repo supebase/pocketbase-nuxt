@@ -1,6 +1,6 @@
 import { createPost } from '../../services/posts.service';
 import { handlePocketBaseError } from '../../utils/errorHandler';
-import sanitizeHtml from "sanitize-html";
+import sanitizeHtml from 'sanitize-html';
 
 export default defineEventHandler(async (event) => {
   // 1. 获取当前登录用户
@@ -10,55 +10,68 @@ export default defineEventHandler(async (event) => {
   if (!user) {
     throw createError({
       statusCode: 401,
-      statusMessage: '请先登录',
+      message: '请先登录后操作', // 改为 message
+      statusMessage: 'Unauthorized',
     });
   }
 
   // 2. 读取请求体
   const { content, allow_comment, icon, action } = await readBody(event);
 
-  // 3. 参数验证
+  // 3. 参数验证 (初步)
   if (!content || typeof content !== 'string') {
     throw createError({
       statusCode: 400,
-      statusMessage: '内容不能为空',
+      message: '内容不能为空', // 改为 message
+      statusMessage: 'Bad Request',
     });
   }
 
-  // 4. HTML 清洗 (核心修改点)
-  // 我们允许 Markdown 渲染后常见的安全标签，同时允许代码高亮所需的 class
+  // 4. HTML 清洗
   const cleanContent = sanitizeHtml(content, {
-    // 允许 Markdown 转换后常见的 HTML 标签
     allowedTags: [
       ...sanitizeHtml.defaults.allowedTags,
-      'img', 'details', 'summary', 'h1', 'h2', 'span'
+      'img',
+      'details',
+      'summary',
+      'h1',
+      'h2',
+      'span',
     ],
-    // 允许特定的属性，特别是代码高亮所需的 class
     allowedAttributes: {
       ...sanitizeHtml.defaults.allowedAttributes,
       img: ['src', 'alt', 'title', 'width', 'height', 'loading'],
       code: ['class'],
       span: ['class'],
-      div: ['class'], // 有些 MDC 组件渲染后会产生带 class 的 div
+      div: ['class'],
     },
-    // 强制给链接加上 rel="nofollow" 防止 SEO 垃圾信息
     transformTags: {
-      'a': sanitizeHtml.simpleTransform('a', { rel: 'nofollow' }),
-    }
+      a: sanitizeHtml.simpleTransform('a', { rel: 'nofollow' }),
+    },
   });
 
-  // 5. 内容长度限制 (对清洗后的内容进行校验)
-  if (cleanContent.length < 1 || cleanContent.length > 10000) {
+  // 5. 内容长度限制 (使用清洗后的内容)
+  // 注意：如果清洗后只剩下空白字符，也应该拦截
+  if (cleanContent.trim().length === 0) {
     throw createError({
       statusCode: 400,
-      statusMessage: '内容长度不能超过 10000 字符',
+      message: '有效内容不能为空',
+      statusMessage: 'Bad Request',
+    });
+  }
+
+  if (cleanContent.length > 10000) {
+    throw createError({
+      statusCode: 400,
+      message: '内容长度不能超过 10000 字符',
+      statusMessage: 'Payload Too Large',
     });
   }
 
   try {
     // 6. 创建文章记录
     const post = await createPost({
-      content: cleanContent, // 使用清洗后的内容
+      content: cleanContent,
       user: user.id,
       allow_comment: allow_comment,
       icon: icon,
@@ -67,9 +80,10 @@ export default defineEventHandler(async (event) => {
 
     return {
       message: '内容发布成功',
-      post,
+      data: { post }, // 保持与 AuthResponse 类似的 data 结构（可选）
     };
   } catch (error) {
+    // 这里内部已经按照我们的新标准抛出 message 了
     handlePocketBaseError(error, '内容发布失败');
   }
 });

@@ -1,25 +1,28 @@
-import { getCommentsList } from "../../services/comments.service";
-import { handlePocketBaseError } from "../../utils/errorHandler";
+import { getCommentsList } from '../../services/comments.service';
+import { handlePocketBaseError } from '../../utils/errorHandler';
 
 export default defineEventHandler(async (event) => {
   try {
-    let userId = "";
-    try {
-      const session = await getUserSession(event);
-      if (session?.user) {
-        userId = session.user.id;
-      }
-    } catch (error) { }
+    // 1. 获取用户信息 (用于判断点赞状态)
+    const session = await getUserSession(event);
+    const userId = session?.user?.id || '';
 
-    // 1. 从查询参数中获取 page 和 perPage
+    // 2. 获取并解析查询参数
     const query = getQuery(event);
-
-    // 转换为数字，并设置默认值
     const page = Number(query.page) || 1;
     const perPage = Number(query.perPage) || 10;
     const filter = query.filter as string | undefined;
 
-    // 2. 将动态参数传给服务层
+    // 3. 参数合法性基本校验
+    if (page < 1 || perPage > 100) {
+      throw createError({
+        statusCode: 400,
+        message: '分页参数不合法', // 统一使用 message 存放中文
+        statusMessage: 'Bad Request', // 简短英文状态
+      });
+    }
+
+    // 4. 调用服务层
     const {
       items: comments,
       totalItems,
@@ -27,8 +30,9 @@ export default defineEventHandler(async (event) => {
       perPage: currentPerPage,
     } = await getCommentsList(page, perPage, filter, userId);
 
+    // 5. 统一返回格式 { message, data }
     return {
-      message: "获取评论列表成功",
+      message: '获取评论列表成功',
       data: {
         comments,
         totalItems,
@@ -37,6 +41,7 @@ export default defineEventHandler(async (event) => {
       },
     };
   } catch (error) {
-    handlePocketBaseError(error, "获取评论列表失败");
+    // 6. 统一错误处理
+    handlePocketBaseError(error, '获取评论列表失败，请稍后重试');
   }
 });

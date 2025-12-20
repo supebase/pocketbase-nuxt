@@ -87,7 +87,7 @@
         icon="hugeicons:alert-02"
         color="error"
         variant="soft"
-        :title="errors.content"
+        :description="errors.content"
         class="mt-4" />
 
       <UAlert
@@ -95,7 +95,7 @@
         icon="hugeicons:alert-02"
         color="error"
         variant="soft"
-        :title="globalError"
+        :description="globalError"
         class="mt-4" />
     </form>
   </div>
@@ -161,6 +161,7 @@ const handleSubmit = async () => {
   if (!validateForm()) return;
 
   isSubmitting.value = true;
+  globalError.value = "";
 
   try {
     await $fetch("/api/collections/posts", {
@@ -174,19 +175,24 @@ const handleSubmit = async () => {
     // 刷新数据并跳转
     await refreshNuxtData("posts-list-data");
     await navigateTo("/");
-  } catch (error: any) {
-    if (error.data && Object.keys(error.data).length > 0) {
-      if (error.data.content) {
-        errors.content = error.data.content.message;
-      }
-      const hasUnassignedError = Object.keys(error.data).some((field) => field !== "content");
-      if (error.statusMessage && (hasUnassignedError || errors.content === "")) {
-        globalError.value = error.statusMessage + "。请检查字段错误。";
-      }
-    } else {
-      globalError.value = error.statusMessage || "发布失败，请稍后重试";
+  } catch (err: any) {
+    // 1. 优先获取后端 handlePocketBaseError 传回的友好 message
+    if (err.data?.message) {
+      globalError.value = err.data.message;
     }
-    console.error("Post Error:", error);
+    // 2. 如果是具体的字段错误 (PocketBase 可能会返回 data.data)
+    else if (err.data?.data) {
+      const firstError = Object.values(err.data.data)[0] as any;
+      globalError.value = firstError?.message || "输入信息有误";
+    }
+    // 3. 网络错误或未知错误
+    else {
+      globalError.value = err.message?.includes("fetch")
+        ? "网络连接失败，请稍后再试"
+        : "发布失败，请检查网络或联系管理员";
+    }
+
+    console.error("Post Error Details:", err.data);
   } finally {
     isSubmitting.value = false;
   }

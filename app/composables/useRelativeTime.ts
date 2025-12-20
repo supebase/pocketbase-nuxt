@@ -1,15 +1,15 @@
-import { useTimeAgo, type UseTimeAgoMessages } from "@vueuse/core";
+import { useTimeAgo, type UseTimeAgoMessages } from '@vueuse/core';
 
 /**
  * 自定义时间映射表
  * 将特定时间段转换为更友好的中文表述
  */
 const timeMap: Record<string, string> = {
-  "1 天": "昨天",
-  "2 天": "前天",
-  "1 周": "上周",
-  "1 个月": "上个月",
-  "1 年": "去年",
+  '1 天': '昨天',
+  '2 天': '前天',
+  '1 周': '上周',
+  '1 个月': '上个月',
+  '1 年': '去年',
 };
 
 /**
@@ -21,10 +21,10 @@ const timeMap: Record<string, string> = {
  * @returns 格式化后的日期字符串
  */
 const fullDateFormatter = (date: Date): string => {
-  return new Date(date).toLocaleDateString("zh-CN", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
+  return new Date(date).toLocaleDateString('zh-CN', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
   });
 };
 
@@ -33,7 +33,7 @@ const fullDateFormatter = (date: Date): string => {
  * 定义不同时间单位的中文显示格式
  */
 const messages: UseTimeAgoMessages = {
-  justNow: "刚刚",
+  justNow: '刚刚',
   past: (n) => timeMap[n] || `${n}前`,
   future: (n) => `${n} 后`,
   second: (n) => `${n} 秒`,
@@ -43,7 +43,7 @@ const messages: UseTimeAgoMessages = {
   week: (n) => `${n} 周`,
   month: (n) => `${n} 个月`,
   year: (n) => `${n} 年`,
-  invalid: "无效的日期",
+  invalid: '无效的日期',
 };
 
 /**
@@ -60,11 +60,11 @@ export function useRelativeTime(date: string | Date | number | null): ComputedRe
     try {
       return useTimeAgo(date, {
         messages,
-        max: "year",
+        max: 'year',
         fullDateFormatter,
       }).value;
     } catch (error) {
-      console.warn("Date formatting error:", error);
+      console.warn('Date formatting error:', error);
       return messages.invalid;
     }
   });

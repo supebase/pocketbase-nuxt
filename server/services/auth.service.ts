@@ -12,7 +12,7 @@ import { normalizeEmail, formatDefaultName } from '~/utils/index';
  */
 export async function loginService(email: string, password: string) {
   const cleanEmail = normalizeEmail(email);
-  const authData = await pb.collection("users").authWithPassword(cleanEmail, password);
+  const authData = await pb.collection('users').authWithPassword(cleanEmail, password);
   return authData.record;
 }
 
@@ -31,11 +31,11 @@ export async function registerService(email: string, password: string, passwordC
   const md5Hash = getMd5Hash(cleanEmail);
 
   // 3. 处理默认用户名 (例如: "john.doe" -> "John.doe")
-  const rawName = cleanEmail.split("@")[0];
+  const rawName = cleanEmail.split('@')[0];
   const defaultName = formatDefaultName(rawName);
 
   // 创建用户
-  await pb.collection("users").create({
+  await pb.collection('users').create({
     email: cleanEmail,
     password,
     passwordConfirm,
@@ -44,7 +44,7 @@ export async function registerService(email: string, password: string, passwordC
   });
 
   // 自动登录使用同样的 cleanEmail
-  const authData = await pb.collection("users").authWithPassword(cleanEmail, password);
+  const authData = await pb.collection('users').authWithPassword(cleanEmail, password);
   return authData.record;
 }
 

@@ -23,7 +23,7 @@ const READ_SPEED_CONFIG = {
  * @returns 预计阅读时间（分钟）
  */
 export const useReadingTime = (content: string, images?: string): string => {
-  const safeContent = content || "";
+  const safeContent = content || '';
 
   /**
    * 计算代码块阅读时间
@@ -33,7 +33,7 @@ export const useReadingTime = (content: string, images?: string): string => {
   const calculateCodeTime = (content: string): number => {
     const codeBlocks = content.match(/```[\s\S]*?```/g) || [];
     return codeBlocks.reduce((total, block) => {
-      const lines = block.split("\n").length - 2; // 减去代码块标记的两行
+      const lines = block.split('\n').length - 2; // 减去代码块标记的两行
       return (
         total + READ_SPEED_CONFIG.CODE_BLOCK_BASE_TIME + lines * READ_SPEED_CONFIG.CODE_LINE_TIME
       );
@@ -46,10 +46,10 @@ export const useReadingTime = (content: string, images?: string): string => {
    * @returns 文本阅读时间（分钟）
    */
   const calculateTextTime = (content: string): number => {
-    const contentWithoutCode = content.replace(/```[\s\S]*?```/g, "");
+    const contentWithoutCode = content.replace(/```[\s\S]*?```/g, '');
     const chineseChars = contentWithoutCode.match(/[\u4e00-\u9fa5]/g)?.length || 0;
     const englishWordsArr = contentWithoutCode
-      .replace(/[\u4e00-\u9fa5]/g, "")
+      .replace(/[\u4e00-\u9fa5]/g, '')
       .trim()
       .split(/\s+/)
       .filter(Boolean); // 过滤空字符串

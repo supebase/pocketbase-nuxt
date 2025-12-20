@@ -4,8 +4,8 @@
       v-if="loading && comments.length === 0"
       class="flex justify-center py-8">
       <UIcon
-        name="svg-spinners:ring-resize"
-        class="size-7 text-primary" />
+        name="hugeicons:refresh"
+        class="size-6 text-primary animate-spin" />
     </div>
 
     <div v-else-if="comments.length > 0">
@@ -126,7 +126,12 @@ const checkAndRefresh = async () => {
   try {
     const result = await fetchCommentsApi(1); // 检查第一页数据
     if (result.total !== totalItems.value) {
-      toast.add({ title: "发现评论更新", icon: "hugeicons:comment-02", color: "info" });
+      toast.add({
+        title: "发现评论更新",
+        description: `目前有 ${comments.value.length} 条评论，最新记录 ${result.total} 条。正在刷新...`,
+        icon: "hugeicons:comment-02",
+        color: "info",
+      });
       await fetchComments(true);
     }
   } catch (e) {

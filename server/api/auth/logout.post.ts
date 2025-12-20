@@ -1,18 +1,24 @@
-import { logoutService } from "../../services/auth.service";
+import { logoutService } from '../../services/auth.service';
 
 export default defineEventHandler(async (event) => {
   try {
-    // 1. 清除 nuxt-auth-utils 创建的用户会话 Cookie
+    // 1. 清除 nuxt-auth-utils 会话
     await clearUserSession(event);
 
-    // 2. 清除 PocketBase 客户端的 authStore
+    // 2. 清除 PocketBase 客户端状态
     await logoutService();
 
-    return { message: "退出成功" };
+    return { success: true, message: '退出成功' };
   } catch (error: any) {
+    // 统一抛出错误格式
     throw createError({
-      statusCode: 500,
-      statusMessage: "退出失败",
+      statusCode: error.statusCode || 500,
+      // 遵循新规范：message 放详细中文，statusMessage 放简短英文
+      statusMessage: 'Logout Error',
+      message: '退出登录时发生错误，请稍后再试',
+      data: {
+        originalError: error.message,
+      },
     });
   }
 });

@@ -1,29 +1,33 @@
-import { getPostById } from "../../../services/posts.service";
-import { handlePocketBaseError } from "../../../utils/errorHandler";
+import { getPostById } from '../../../services/posts.service';
+import { handlePocketBaseError } from '../../../utils/errorHandler';
 
 export default defineEventHandler(async (event) => {
   try {
-    // 1. 从事件对象中获取路由参数 (这里是文章的 ID)
-    const postId = getRouterParam(event, "id");
+    // 1. 获取路由参数
+    const postId = getRouterParam(event, 'id');
 
+    // 2. 参数验证
     if (!postId) {
-      // 如果没有提供 ID，返回 400 错误
       throw createError({
         statusCode: 400,
-        statusMessage: "Bad Request",
-        message: "文章 ID 缺失",
+        // 遵循新标准：message 存放中文，statusMessage 存放简短英文
+        message: '文章 ID 不能为空',
+        statusMessage: 'Bad Request',
       });
     }
 
-    // 2. 使用服务层函数获取单个 posts 记录
+    // 3. 调用服务层获取数据
+    // 注意：如果 getPostById 内部没找到记录，PocketBase 通常会抛出 404
     const post = await getPostById(postId);
 
+    // 4. 统一成功响应格式
     return {
-      message: "获取文章详情成功",
+      message: '获取文章详情成功',
       data: post,
     };
-  } catch (error) {
-    // 3. 处理 PocketBase 错误
-    handlePocketBaseError(error, "获取文章详情失败");
+  } catch (error: any) {
+    // 5. 统一错误处理
+    // 如果是 404 (记录不存在)，handlePocketBaseError 会自动转换为友好的中文
+    handlePocketBaseError(error, '该文章可能已被删除或不存在');
   }
 });

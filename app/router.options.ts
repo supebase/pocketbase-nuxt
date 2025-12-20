@@ -1,4 +1,4 @@
-import type { RouterConfig } from "@nuxt/schema";
+import type { RouterConfig } from '@nuxt/schema';
 
 export default <RouterConfig>{
   scrollBehavior(to, from, savedPosition) {
@@ -11,7 +11,7 @@ export default <RouterConfig>{
     if (to.hash) {
       return {
         el: to.hash,
-        behavior: "smooth",
+        behavior: 'smooth',
       };
     }
 

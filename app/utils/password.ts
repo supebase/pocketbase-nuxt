@@ -13,10 +13,10 @@ export interface PasswordRequirement {
  */
 export function checkPasswordStrength(str: string): PasswordRequirement[] {
   const requirements = [
-    { regex: /.{8,}/, text: "建议密码至少 8 个字符" },
-    { regex: /\d/, text: "推荐包含至少 1 个数字" },
-    { regex: /[a-z]/, text: "推荐包含至少 1 个小写字母" },
-    { regex: /[A-Z]/, text: "推荐包含至少 1 个大写字母" },
+    { regex: /.{8,}/, text: '建议密码至少 8 个字符' },
+    { regex: /\d/, text: '推荐包含至少 1 个数字' },
+    { regex: /[a-z]/, text: '推荐包含至少 1 个小写字母' },
+    { regex: /[A-Z]/, text: '推荐包含至少 1 个大写字母' },
   ];
 
   return requirements.map((req) => ({ met: req.regex.test(str), text: req.text }));
@@ -36,9 +36,11 @@ export function calculatePasswordScore(requirements: PasswordRequirement[]): num
  * @param score 密码强度分数（0-4）
  * @returns 对应的颜色字符串
  */
-export function getPasswordStrengthColor(score: number): "error" | "success" | "warning" | "neutral" {
-  if (score === 0) return "neutral";
-  if (score <= 1) return "error";
-  if (score <= 3) return "warning";
-  return "success";
+export function getPasswordStrengthColor(
+  score: number
+): 'error' | 'success' | 'warning' | 'neutral' {
+  if (score === 0) return 'neutral';
+  if (score <= 1) return 'error';
+  if (score <= 3) return 'warning';
+  return 'success';
 }

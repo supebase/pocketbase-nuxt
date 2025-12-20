@@ -7,7 +7,6 @@
       <UInput
         v-model="email"
         placeholder="电子邮件"
-        variant="soft"
         color="neutral"
         :disabled="loading"
         icon="hugeicons:at"
@@ -17,7 +16,6 @@
       <UInput
         v-model="password"
         placeholder="登录密码"
-        variant="soft"
         :color="isLoginMode ? 'neutral' : color"
         :disabled="loading"
         icon="hugeicons:lock-key"
@@ -59,7 +57,6 @@
         v-if="!isLoginMode"
         v-model="passwordConfirm"
         placeholder="确认密码"
-        variant="soft"
         color="neutral"
         :disabled="loading"
         icon="hugeicons:square-lock-check-01"
@@ -109,7 +106,7 @@
       icon="hugeicons:alert-02"
       color="error"
       variant="soft"
-      :title="error"
+      :description="error"
       class="mt-4" />
   </div>
 </template>
@@ -199,16 +196,25 @@ async function handleAuth() {
     // 成功后跳转到首页
     await navigateTo("/");
   } catch (err: any) {
-    const serverErrorData = err?.data;
-    let friendlyErrorMessage = "网络错误，请稍后重试";
-
-    if (serverErrorData?.statusMessage) {
-      friendlyErrorMessage = serverErrorData.statusMessage;
-    } else if (err?.message) {
-      friendlyErrorMessage = err.message;
+    // 1. 优先读取 err.data.message (这是我们后端 handlePocketBaseError 传回的友好中文)
+    if (err.data?.message) {
+      error.value = err.data.message;
+    }
+    // 2. 如果没有 data.message，尝试读取外层的 err.message
+    else if (err.message) {
+      // 这里的 err.message 可能是 Nuxt 自动生成的，也可能是网络错误
+      error.value = err.message.includes("fetch") ? "无法连接到服务器，请检查网络" : err.message;
+    }
+    // 3. 最后兜底
+    else {
+      error.value = "发生未知错误，请稍后再试";
     }
 
-    error.value = friendlyErrorMessage;
+    console.error("Auth Error Details:", {
+      status: err.statusCode,
+      message: err.message,
+      data: err.data,
+    });
   } finally {
     loading.value = false;
   }

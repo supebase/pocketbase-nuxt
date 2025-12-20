@@ -30,7 +30,7 @@ export function usePagination<T>() {
         await nextTick();
       }
     } catch (err) {
-      console.error("Pagination error:", err);
+      console.error('Pagination error:', err);
     } finally {
       setTimeout(() => {
         isLoadingMore.value = false;

@@ -188,6 +188,8 @@ const handleSubmit = async () => {
   if (!validateForm() || isSubmitting.value) return;
 
   isSubmitting.value = true;
+  globalError.value = "";
+
   try {
     const response = await $fetch<any>("/api/collections/comments", {
       method: "POST",
@@ -197,17 +199,16 @@ const handleSubmit = async () => {
       },
     });
 
-    // 确保无论返回格式如何，都清空评论框并触发事件
-    const newComment = response.data?.comment || response.comments || response;
+    // 2. 按照后端 { data: { comment } } 结构解析
+    const newComment = response.data?.comment;
+
     if (newComment) {
+      // 刷新数据（这将触发评论列表更新）
       await refreshNuxtData(`comments-data-${props.postId}`);
 
-      // 添加当前用户信息到新评论
-      const commentWithUser = {
+      // 3. 构造完整的评论对象用于“乐观更新”
+      const commentWithUser: CommentRecord = {
         ...newComment,
-        id: newComment.id, // 确保有正确的评论ID
-        comment: form.comment.trim(), // 使用提交的评论内容
-        created: newComment.created || new Date().toISOString(), // 确保有有效的创建时间
         expand: {
           user: {
             id: currentUser.value?.id,
@@ -217,6 +218,7 @@ const handleSubmit = async () => {
         },
       };
 
+      // 4. 重置状态
       form.comment = "";
       emit("comment-created", commentWithUser);
 
@@ -226,11 +228,9 @@ const handleSubmit = async () => {
         icon: "hugeicons:comment-02",
         color: "success",
       });
-    } else {
-      // 如果没有返回评论数据，仍需清空评论框
-      form.comment = "";
     }
   } catch (error: any) {
+    // 5. 统一从后端 message 读取错误
     globalError.value = error.data?.message || "网络请求失败，请稍后再试";
   } finally {
     isSubmitting.value = false;

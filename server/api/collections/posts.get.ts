@@ -1,16 +1,24 @@
-import { getPostsList } from "../../services/posts.service";
-import { handlePocketBaseError } from "../../utils/errorHandler";
+import { getPostsList } from '../../services/posts.service';
+import { handlePocketBaseError } from '../../utils/errorHandler';
 
 export default defineEventHandler(async (event) => {
   try {
-    // 1. 获取请求的查询参数
     const query = getQuery(event);
 
-    // 2. 提取 page 参数，确保它是数字，如果不存在或无效，默认为 1
+    // 1. 提取并校验分页参数
     const requestedPage = Number(query.page) || 1;
-    const perPageLimit = Number(query.perPage) || 10; // 也可以从查询中获取 perPage，如果需要
+    const perPageLimit = Number(query.perPage) || 10;
 
-    // 3. 将动态页码传递给服务层函数
+    // 校验：防止传入负数或极端过大的分页请求
+    if (requestedPage < 1 || perPageLimit > 100) {
+      throw createError({
+        statusCode: 400,
+        message: '分页参数不合法',
+        statusMessage: 'Bad Request',
+      });
+    }
+
+    // 2. 调用服务层
     const {
       items: posts,
       totalItems,
@@ -18,8 +26,9 @@ export default defineEventHandler(async (event) => {
       perPage,
     } = await getPostsList(requestedPage, perPageLimit);
 
+    // 3. 统一返回格式
     return {
-      message: "获取文章列表成功",
+      message: '获取文章列表成功',
       data: {
         posts,
         totalItems,
@@ -27,7 +36,7 @@ export default defineEventHandler(async (event) => {
         perPage,
       },
     };
-  } catch (error) {
-    handlePocketBaseError(error, "获取文章列表失败");
+  } catch (error: any) {
+    handlePocketBaseError(error, '获取文章列表失败');
   }
 });
