@@ -56,9 +56,9 @@ export default defineNuxtConfig({
     },
     minify: true,
   },
-  routeRules: {
-    '/': { prerender: true },
-  },
+  // routeRules: {
+  //   '/': { prerender: true },
+  // },
   // 图片优化
   image: {
     // 1. 预设尺寸（关键）：解决重复加载

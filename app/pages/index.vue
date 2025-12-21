@@ -4,10 +4,8 @@
       v-if="status !== 'pending' || isRefreshing || !error"
       class="flex items-center justify-center w-full gap-3"
     >
-      <div
-        class="flex items-center gap-1 text-base tracking-widest text-dimmed font-semibold"
-      >
-        <CommonAnimateNumber :value="totalItems" /> 条贴文
+      <div class="flex items-center gap-1 text-base tracking-widest text-dimmed font-semibold">
+        <CommonAnimateNumber :value="visibleTotalItems" /> 条贴文
       </div>
       <UIcon
         v-if="isRefreshing"
@@ -31,10 +29,7 @@
       class="mt-4"
     />
 
-    <div
-      v-if="status === 'pending' && !isRefreshing"
-      class="mt-8 space-y-4 w-full"
-    >
+    <div v-if="status === 'pending' && !isRefreshing" class="mt-8 space-y-4 w-full">
       <SkeletonPosts :count="3" class="opacity-60" />
     </div>
 
@@ -83,10 +78,21 @@
 
         <template #date="{ item }">
           <div class="flex items-center gap-2.5">
+            <UBadge
+              v-if="!item.published && canViewDrafts"
+              variant="subtle"
+              size="sm"
+              color="warning"
+              label="草稿"
+            />
             {{ item.date }}
-            <!-- <UIcon
-              name="i-hugeicons:more-horizontal"
-              class="size-5" /> -->
+            <UButton
+              v-if="canViewDrafts"
+              variant="link"
+              icon="i-hugeicons:more-horizontal"
+              class="size-5"
+              :to="`/edit/${item.id}`"
+            />
           </div>
         </template>
 
@@ -132,10 +138,7 @@
               </div>
             </ULink>
 
-            <CommentsCommentUsers
-              :post-id="item.id"
-              :allow-comment="item.allowComment"
-            />
+            <CommentsCommentUsers :post-id="item.id" :allow-comment="item.allowComment" />
           </div>
         </template>
       </CommonMotionTimeline>
@@ -169,75 +172,100 @@
 </template>
 
 <script setup lang="ts">
-import type { PostRecord, PostsResponse } from "~/types/posts";
+  import type { PostRecord, PostsResponse } from '~/types/posts';
 
-const { isRefreshing, isResetting, refreshPostsAndComments } = useRefresh();
-const {
-  allItems: allPosts,
-  currentPage,
-  totalItems,
-  isLoadingMore,
-  hasMore,
-  loadMore,
-  resetPagination,
-} = usePagination<PostRecord>();
+  // 获取当前用户认证状态
+  const { loggedIn, user } = useUserSession();
 
-// API 获取逻辑
-const fetchPostsApi = async (page: number) => {
-  try {
-    const res = await $fetch<PostsResponse>("/api/collections/posts", {
-      query: { page },
-    });
-    return { items: res.data.posts, total: res.data.totalItems };
-  } catch (err: any) {
-    throw err;
-  }
-};
+  const { isRefreshing, isResetting, refreshPostsAndComments } = useRefresh();
+  const {
+    allItems: allPosts,
+    currentPage,
+    totalItems,
+    isLoadingMore,
+    hasMore,
+    loadMore,
+    resetPagination,
+  } = usePagination<PostRecord>();
 
-// SSR 初始加载
-const {
-  data: fetchResult,
-  status,
-  error,
-  refresh,
-} = await useLazyFetch<PostsResponse>("/api/collections/posts", {
-  key: "posts-list-data",
-  server: true,
-});
-
-// 监听数据初始化
-watch(
-  fetchResult,
-  (res) => {
-    if (res?.data.page === 1) {
-      resetPagination(res.data.posts || [], res.data.totalItems || 0);
+  // API 获取逻辑
+  const fetchPostsApi = async (page: number) => {
+    try {
+      const res = await $fetch<PostsResponse>('/api/collections/posts', {
+        query: { page },
+      });
+      return { items: res.data.posts, total: res.data.totalItems };
+    } catch (err: any) {
+      throw err;
     }
-  },
-  { immediate: true },
-);
+  };
 
-// 交互逻辑
-const manualRefresh = () =>
-  refreshPostsAndComments(refresh, allPosts, currentPage);
-const handleLoadMore = () => loadMore(fetchPostsApi);
+  // SSR 初始加载
+  const {
+    data: fetchResult,
+    status,
+    error,
+    refresh,
+  } = await useLazyFetch<PostsResponse>('/api/collections/posts', {
+    key: 'posts-list-data',
+    server: true,
+  });
 
-const displayItems = computed(() => {
-  return allPosts.value.map((item) => ({
-    id: item.id,
-    title: item.expand?.user?.name,
-    date: useRelativeTime(item.created).value,
-    description: item.content,
-    action: item.action,
-    allowComment: item.allow_comment,
-    icon: item.icon,
-    avatarId: item.expand?.user?.avatar,
-    firstImage: getFirstImageUrl(item.content),
-  }));
-});
+  // 监听数据初始化
+  watch(
+    fetchResult,
+    (res) => {
+      if (res?.data.page === 1) {
+        resetPagination(res.data.posts || [], res.data.totalItems || 0);
+      }
+    },
+    { immediate: true }
+  );
 
-onActivated(() => {
-  if (allPosts.value.length === 0 && status.value !== "pending") {
-    manualRefresh();
-  }
-});
+  // 交互逻辑
+  const manualRefresh = () => refreshPostsAndComments(refresh, allPosts, currentPage);
+  const handleLoadMore = () => loadMore(fetchPostsApi);
+
+  // 检查用户是否有权限查看草稿
+  const canViewDrafts = computed(() => {
+    return loggedIn && user.value?.verified;
+  });
+
+  const displayItems = computed(() => {
+    const items = allPosts.value.map((item) => ({
+      id: item.id,
+      title: item.expand?.user?.name,
+      date: useRelativeTime(item.created).value,
+      description: item.content,
+      action: item.action,
+      allowComment: item.allow_comment,
+      published: item.published,
+      icon: item.icon,
+      avatarId: item.expand?.user?.avatar,
+      firstImage: getFirstImageUrl(item.content),
+    }));
+
+    // 如果用户无权查看草稿，过滤掉未发布的文章
+    if (!canViewDrafts.value) {
+      return items.filter((item) => item.published);
+    }
+
+    return items;
+  });
+
+  // 修改 totalItems 的显示，根据权限调整
+  const visibleTotalItems = computed(() => {
+    if (!canViewDrafts.value) {
+      // 只计算已发布的文章数量
+      const publishedPosts = allPosts.value.filter((post) => post.published);
+      return publishedPosts.length;
+    }
+    return totalItems.value;
+  });
+
+  onActivated(() => {
+    if (allPosts.value.length === 0 && status.value !== 'pending') {
+      manualRefresh();
+    }
+  });
 </script>

@@ -9,6 +9,7 @@ export interface PostRecord {
   id: string;
   content: string;
   allow_comment: boolean;
+  published: boolean;
   icon?: string;
   action?: string;
   created: string;
@@ -49,6 +50,7 @@ export interface PostResponse {
 export interface CreatePostRequest {
   content: string;
   allow_comment: boolean;
+  published: boolean;
   icon?: string;
   action?: string;
 }

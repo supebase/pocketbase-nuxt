@@ -7,7 +7,7 @@ export default defineNuxtRouteMiddleware((to, from) => {
   }
 
   // 当用户访问发表文章页面时，需要检查用户是否已登录且verified为true
-  if (to.path.includes('/new')) {
+  if (to.path.includes('/new') || to.path.includes('/edit')) {
     // 未登录则重定向到登录页
     if (!loggedIn.value) {
       return navigateTo('/auth', { replace: true });

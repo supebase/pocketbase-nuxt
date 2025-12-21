@@ -35,3 +35,13 @@ export async function getPostById(postId: string) {
 export async function createPost(data: any) {
   return await pb.collection('posts').create(data);
 }
+
+/**
+ * 更新文章
+ * @param postId 文章ID
+ * @param data 更新数据
+ * @returns 更新后的文章
+ */
+export async function updatePost(postId: string, data: any) {
+  return await pb.collection('posts').update(postId, data);
+}
