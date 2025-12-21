@@ -5,6 +5,7 @@
       <UTextarea
         ref="textareaRef"
         v-model="form.comment"
+        id="comment"
         color="neutral"
         variant="none"
         autoresize
@@ -29,7 +30,7 @@
             }">
             <template #default="{ open }">
               <UIcon
-                name="hugeicons:at"
+                name="i-hugeicons:at"
                 class="size-5.25 text-muted cursor-pointer hover:text-primary transition-colors"
                 :class="{ 'text-primary': open }" />
             </template>
@@ -88,8 +89,8 @@
             :loading="isSubmitting"
             :icon="
               !isSubmitting && !(form.comment.length >= maxLimit) && form.comment.trim() !== ''
-                ? 'hugeicons:comment-add-02'
-                : 'hugeicons:comment-block-02'
+                ? 'i-hugeicons:comment-add-02'
+                : 'i-hugeicons:comment-block-02'
             "
             :disabled="
               isSubmitting || form.comment.length >= maxLimit || form.comment.trim() === ''
@@ -101,7 +102,7 @@
 
     <UAlert
       v-if="errors.comment"
-      icon="hugeicons:alert-02"
+      icon="i-hugeicons:alert-02"
       color="error"
       variant="soft"
       :title="errors.comment"
@@ -109,7 +110,7 @@
 
     <UAlert
       v-if="globalError"
-      icon="hugeicons:alert-02"
+      icon="i-hugeicons:alert-02"
       color="error"
       variant="soft"
       :title="globalError"
@@ -225,7 +226,7 @@ const handleSubmit = async () => {
       toast.add({
         title: "评论发表成功",
         description: "评论通常实时展示；若未显示，刷新页面。",
-        icon: "hugeicons:comment-02",
+        icon: "i-hugeicons:comment-02",
         color: "success",
       });
     }

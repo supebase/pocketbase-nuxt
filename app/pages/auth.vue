@@ -32,13 +32,13 @@ const router = useRouter();
 const items = [
   {
     label: "登录我的账户",
-    icon: "hugeicons:login-02",
+    icon: "i-hugeicons:login-02",
     value: "login", // 必须与 activeTab 的值对应
     description: "使用电子邮件和密码登录到您的账户。",
   },
   {
     label: "免费创建账户",
-    icon: "hugeicons:user-add-01",
+    icon: "i-hugeicons:user-add-01",
     value: "register",
     description: "创建一个新账户，完成后即可自动登录。",
   },

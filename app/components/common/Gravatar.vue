@@ -16,7 +16,7 @@
 
     <UIcon
       v-if="hasError || (!avatarId && !isLoading)"
-      name="hugeicons:image-02"
+      name="i-hugeicons:image-02"
       class="text-dimmed size-4 z-30" />
   </div>
 </template>

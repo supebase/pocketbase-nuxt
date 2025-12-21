@@ -13,7 +13,7 @@ export async function toggleLike(commentId: string, userId: string) {
   // 修正：改用 getList 避免 404 报错
   const result = await pb.collection('likes').getList(1, 1, {
     filter: `comment="${commentId}" && user="${userId}"`,
-    $autoCancel: false,
+    requestKey: null,
   });
 
   const existingLike = result.items[0];
@@ -45,7 +45,7 @@ export async function toggleLike(commentId: string, userId: string) {
 export async function getCommentLikes(commentId: string) {
   const result = await pb.collection('likes').getList(1, 1, {
     filter: `comment="${commentId}"`,
-    $autoCancel: false,
+    requestKey: null,
   });
 
   return result.totalItems;
@@ -80,7 +80,7 @@ export async function getCommentsLikesMap(commentIds: string[], userId: string) 
 
   const allLikes = await pb.collection('likes').getFullList({
     filter: commentFilter,
-    $autoCancel: false,
+    requestKey: null,
   });
 
   const likesMap: Record<string, { commentId: string; likes: number; isLiked: boolean }> = {};
@@ -94,8 +94,9 @@ export async function getCommentsLikesMap(commentIds: string[], userId: string) 
   allLikes.forEach((like) => {
     if (likesMap[like.comment]) {
       likesMap[like.comment].likes++;
-      // 只有当 userId 匹配时才标记为已点赞
-      if (userId && like.user === userId) {
+
+      // 强制转换为字符串对比，并确保 userId 存在
+      if (userId && String(like.user) === String(userId)) {
         likesMap[like.comment].isLiked = true;
       }
     }

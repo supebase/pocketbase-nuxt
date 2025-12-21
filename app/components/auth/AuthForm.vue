@@ -6,19 +6,21 @@
       class="flex flex-col gap-4">
       <UInput
         v-model="email"
+        id="email"
         placeholder="电子邮件"
         color="neutral"
         :disabled="loading"
-        icon="hugeicons:at"
+        icon="i-hugeicons:at"
         size="xl"
         class="w-full" />
 
       <UInput
         v-model="password"
+        id="password"
         placeholder="登录密码"
         :color="isLoginMode ? 'neutral' : color"
         :disabled="loading"
-        icon="hugeicons:lock-key"
+        icon="i-hugeicons:lock-key"
         size="xl"
         class="w-full"
         :type="showPassword ? 'text' : 'password'"
@@ -28,7 +30,7 @@
             tabindex="-1"
             color="neutral"
             variant="link"
-            :icon="showPassword ? 'hugeicons:view' : 'hugeicons:view-off'"
+            :icon="showPassword ? 'i-hugeicons:view' : 'i-hugeicons:view-off'"
             :aria-label="showPassword ? '隐藏密码' : '显示密码'"
             :aria-pressed="showPassword"
             aria-controls="password"
@@ -44,7 +46,7 @@
             class="flex items-center gap-1"
             :class="req.met ? 'text-primary' : 'text-dimmed'">
             <UIcon
-              :name="req.met ? 'hugeicons:checkmark-circle-03' : 'hugeicons:circle'"
+              :name="req.met ? 'i-hugeicons:checkmark-circle-03' : 'i-hugeicons:circle'"
               class="size-4 shrink-0" />
             <span class="text-xs text-dimmed tabular-nums">
               {{ req.text }}
@@ -56,10 +58,11 @@
       <UInput
         v-if="!isLoginMode"
         v-model="passwordConfirm"
+        id="passwordConfirm"
         placeholder="确认密码"
         color="neutral"
         :disabled="loading"
-        icon="hugeicons:square-lock-check-01"
+        icon="i-hugeicons:square-lock-check-01"
         size="xl"
         class="w-full"
         :type="showPasswordConfirm ? 'text' : 'password'"
@@ -69,7 +72,7 @@
             tabindex="-1"
             color="neutral"
             variant="link"
-            :icon="showPasswordConfirm ? 'hugeicons:view' : 'hugeicons:view-off'"
+            :icon="showPasswordConfirm ? 'i-hugeicons:view' : 'i-hugeicons:view-off'"
             :aria-label="showPasswordConfirm ? '隐藏密码' : '显示密码'"
             :aria-pressed="showPasswordConfirm"
             aria-controls="passwordConfirm"
@@ -103,7 +106,7 @@
 
     <UAlert
       v-if="error"
-      icon="hugeicons:alert-02"
+      icon="i-hugeicons:alert-02"
       color="error"
       variant="soft"
       :description="error"

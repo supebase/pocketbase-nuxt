@@ -4,7 +4,7 @@
       v-if="loading && comments.length === 0"
       class="flex justify-center py-8">
       <UIcon
-        name="hugeicons:refresh"
+        name="i-hugeicons:refresh"
         class="size-6 text-primary animate-spin" />
     </div>
 
@@ -12,11 +12,10 @@
       <USeparator
         type="dashed"
         class="mb-6">
-        <div class="text-dimmed">评论</div>
         <CommonAnimateNumber
           :value="totalItems"
           class="text-dimmed mx-1.5" />
-        <div class="text-dimmed">条</div>
+        <div class="text-dimmed">条评论</div>
       </USeparator>
 
       <CommonMotionTimeline
@@ -129,7 +128,7 @@ const checkAndRefresh = async () => {
       toast.add({
         title: "发现评论更新",
         description: `目前有 ${comments.value.length} 条评论，最新记录 ${result.total} 条。正在刷新...`,
-        icon: "hugeicons:comment-02",
+        icon: "i-hugeicons:comment-02",
         color: "info",
       });
       await fetchComments(true);
@@ -162,7 +161,7 @@ const handleLikeChange = (liked: boolean, likes: number, commentId: string) => {
   }
 };
 
-defineExpose({ handleCommentCreated });
+defineExpose({ handleCommentCreated, fetchComments });
 
 onMounted(fetchComments);
 onActivated(() => {

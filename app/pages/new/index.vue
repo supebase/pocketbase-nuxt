@@ -26,6 +26,7 @@
 
       <UTextarea
         v-model="form.content"
+        id="content"
         autoresize
         color="neutral"
         variant="none"
@@ -45,6 +46,7 @@
         class="flex items-center gap-2.5">
         <UInput
           v-model="form.icon"
+          id="icon"
           placeholder="图标，例如：simple-icons:nuxt"
           variant="subtle"
           color="neutral"
@@ -57,7 +59,7 @@
           target="_blank"
           variant="link"
           color="neutral"
-          icon="hugeicons:search-area"
+          icon="i-hugeicons:search-area"
           label="查找图标" />
       </div>
 
@@ -84,7 +86,7 @@
 
       <UAlert
         v-if="errors.content"
-        icon="hugeicons:alert-02"
+        icon="i-hugeicons:alert-02"
         color="error"
         variant="soft"
         :description="errors.content"
@@ -92,7 +94,7 @@
 
       <UAlert
         v-if="globalError"
-        icon="hugeicons:alert-02"
+        icon="i-hugeicons:alert-02"
         color="error"
         variant="soft"
         :description="globalError"

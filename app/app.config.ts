@@ -5,10 +5,10 @@ export default defineAppConfig({
       neutral: 'neutral',
     },
     icons: {
-      loading: 'hugeicons:loading-02',
-      chevronDown: 'hugeicons:arrow-down-01',
-      copy: 'hugeicons:copy-02',
-      copyCheck: 'hugeicons:checkmark-square-03',
+      loading: 'i-hugeicons:loading-02',
+      chevronDown: 'i-hugeicons:arrow-down-01',
+      copy: 'i-hugeicons:copy-02',
+      copyCheck: 'i-hugeicons:checkmark-square-03',
     },
     user: {
       variants: {

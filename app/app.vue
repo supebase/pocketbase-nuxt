@@ -19,7 +19,7 @@
               }
             ">
             <UIcon
-              name="hugeicons:arrow-turn-backward"
+              name="i-hugeicons:arrow-turn-backward"
               class="size-7 text-dimmed" />
           </div>
 

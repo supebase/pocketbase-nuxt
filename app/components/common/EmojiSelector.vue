@@ -4,7 +4,7 @@
     v-model:open="isPickerVisible">
     <div class="mt-1.5">
       <UIcon
-        name="hugeicons:smile"
+        name="i-hugeicons:smile"
         @click.stop="openPicker"
         class="size-5 text-muted cursor-pointer hover:text-primary transition-colors" />
     </div>

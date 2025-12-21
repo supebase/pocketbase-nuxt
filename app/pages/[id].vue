@@ -4,7 +4,7 @@
       v-if="error"
       :description="error.data?.message || '获取内容失败，请稍后重试'"
       variant="soft"
-      icon="hugeicons:alert-02"
+      icon="i-hugeicons:alert-02"
       color="error"
       class="mb-4" />
 
@@ -46,7 +46,7 @@
 
             <div>
               <UIcon
-                name="hugeicons:arrow-turn-backward"
+                name="i-hugeicons:arrow-turn-backward"
                 class="size-6 text-dimmed cursor-pointer"
                 @click="$router.back()" />
             </div>
@@ -59,7 +59,7 @@
               v-if="!mdcReady"
               class="absolute inset-0 h-40 flex items-center justify-center bg-white/50 dark:bg-neutral-900/50 z-10 backdrop-blur-sm rounded-lg">
               <UIcon
-                name="hugeicons:refresh"
+                name="i-hugeicons:refresh"
                 class="size-5 mr-2 animate-spin" />
               <span class="text-sm font-medium">沉浸式梳理内容</span>
             </div>
@@ -183,6 +183,18 @@ const onCommentSuccess = (newComment: CommentRecord) => {
   }
   refreshNuxtData(`comments-data-${id}`);
 };
+
+// 监听登录状态变化，刷新评论列表
+watch(
+  loggedIn,
+  () => {
+    // 当登录状态变化时，重新获取评论数据
+    if (commentListRef.value) {
+      // 调用评论列表组件的 fetchComments 方法
+      commentListRef.value.fetchComments();
+    }
+  }
+);
 
 const handleMdcMounted = () => setTimeout(() => (mdcReady.value = true), 300);
 

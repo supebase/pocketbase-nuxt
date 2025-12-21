@@ -5,7 +5,7 @@
         to="/auth"
         color="neutral"
         variant="link"
-        icon="hugeicons:lock-key"
+        icon="i-hugeicons:lock-key"
         class="rounded-full"
         v-if="!loggedIn" />
 
@@ -32,7 +32,7 @@
           to="/new"
           color="neutral"
           variant="link"
-          icon="hugeicons:add-circle-half-dot"
+          icon="i-hugeicons:add-circle-half-dot"
           class="rounded-full"
           v-if="user?.verified" />
 

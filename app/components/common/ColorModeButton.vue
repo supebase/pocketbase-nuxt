@@ -43,14 +43,14 @@ const startViewTransition = (event: MouseEvent) => {
 <template>
   <ClientOnly>
     <UButton
-      :icon="`${nextTheme === 'dark' ? 'hugeicons:sun-03' : 'hugeicons:moon-02'}`"
+      :icon="`${nextTheme === 'dark' ? 'i-hugeicons:sun-03' : 'i-hugeicons:moon-02'}`"
       color="neutral"
       variant="link"
       class="rounded-full cursor-pointer"
       @click="startViewTransition" />
     <template #fallback>
       <UIcon
-        name="hugeicons:refresh"
+        name="i-hugeicons:refresh"
         class="size-5 mx-1.5 text-muted animate-spin" />
     </template>
   </ClientOnly>

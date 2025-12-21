@@ -18,6 +18,7 @@ export default defineNuxtConfig({
       max: 10,
     },
     head: {
+      title: "Eric",
       htmlAttrs: {
         lang: 'zh-CN',
       },
@@ -49,7 +50,14 @@ export default defineNuxtConfig({
     // prerender: {
     //   crawlLinks: true,
     // },
-    compressPublicAssets: true,
+    compressPublicAssets: {
+      brotli: true,
+      gzip: true,
+    },
+    minify: true,
+  },
+  routeRules: {
+    '/': { prerender: true },
   },
   // 图片优化
   image: {
@@ -58,14 +66,14 @@ export default defineNuxtConfig({
     presets: {
       preview: {
         modifiers: {
-          width: 800,
+          width: 600,
           format: 'webp',
           quality: 80
         }
       },
       large: {
         modifiers: {
-          width: 1600, // 放大后的尺寸
+          width: 1200, // 放大后的尺寸
           format: 'webp',
           quality: 90
         }
@@ -93,11 +101,11 @@ export default defineNuxtConfig({
   },
   // 图标配置
   icon: {
-    serverBundle: {
-      collections: ['hugeicons', 'vscode-icons', 'simple-icons'],
-    },
+    // 禁用本地包，改为从 CDN 加载
+    provider: 'iconify',
+    // 依然可以配置自定义
     clientBundle: {
-      scan: true,
+      scan: true, // 仅扫描代码中用到的图标，不会全量打包
     },
   },
   // MDC配置

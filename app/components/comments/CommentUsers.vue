@@ -4,7 +4,7 @@
       v-if="status === 'pending'"
       class="flex items-center">
       <UIcon
-        name="hugeicons:refresh"
+        name="i-hugeicons:refresh"
         class="size-5 text-dimmed animate-spin" />
     </div>
 
@@ -28,7 +28,7 @@
         v-for="(comment, index) in usersToShow.slice(0, 3)"
         :key="comment.id"
         class="inline-block size-5.5 rounded-full ring-2 ring-white dark:ring-neutral-900 overflow-hidden"
-        :style="{ zIndex: 10 - index }">
+        :style="{ zIndex: 10 - (index as number) }">
         <CommonGravatar
           :avatar-id="comment.expand?.user?.avatar"
           :size="32" />
@@ -47,7 +47,7 @@
       v-else-if="!allowComment"
       class="flex items-center gap-2 text-sm text-dimmed">
       <UIcon
-        name="hugeicons:comment-block-02"
+        name="i-hugeicons:comment-block-02"
         class="size-4.5" />
       <span class="text-xs">评论已关闭</span>
     </div>
@@ -56,7 +56,7 @@
       v-else
       class="flex items-center gap-2 text-sm text-dimmed">
       <UIcon
-        name="hugeicons:comment-02"
+        name="i-hugeicons:comment-02"
         class="size-4.5" />
       <span class="text-xs">暂无评论</span>
     </div>

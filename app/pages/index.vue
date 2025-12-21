@@ -11,12 +11,12 @@
       </div>
       <UIcon
         v-if="isRefreshing"
-        name="hugeicons:refresh"
+        name="i-hugeicons:refresh"
         class="size-4 text-muted cursor-not-allowed animate-spin"
       />
       <UIcon
         v-else-if="allPosts.length > 0"
-        name="hugeicons:refresh"
+        name="i-hugeicons:refresh"
         class="size-4 text-muted cursor-pointer hover:text-primary transition-colors"
         @click="manualRefresh"
       />
@@ -26,8 +26,9 @@
       v-if="error"
       :description="error.data?.message || '获取列表失败，请检查网络连接'"
       variant="soft"
-      icon="hugeicons:alert-02"
+      icon="i-hugeicons:alert-02"
       color="error"
+      class="mt-4"
     />
 
     <div
@@ -84,7 +85,7 @@
           <div class="flex items-center gap-2.5">
             {{ item.date }}
             <!-- <UIcon
-              name="hugeicons:more-horizontal"
+              name="i-hugeicons:more-horizontal"
               class="size-5" /> -->
           </div>
         </template>
@@ -103,7 +104,7 @@
               <div
                 class="my-3 rounded-xl overflow-hidden ring-1 ring-neutral-200 dark:ring-neutral-800"
               >
-                <NuxtImg :src="item.firstImage" placeholder :custom="true">
+                <NuxtImg :src="item.firstImage" placeholder preset="preview" :custom="true">
                   <template #default="{ src, isLoaded, imgAttrs }">
                     <div class="relative overflow-hidden aspect-video">
                       <img
@@ -121,7 +122,7 @@
                         class="absolute inset-0 flex items-center justify-center"
                       >
                         <UIcon
-                          name="hugeicons:refresh"
+                          name="i-hugeicons:refresh"
                           class="size-5 text-primary/30 animate-spin"
                         />
                       </div>

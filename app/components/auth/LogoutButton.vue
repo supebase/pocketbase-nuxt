@@ -4,7 +4,7 @@
     :loading="isPending"
     color="neutral"
     variant="link"
-    icon="hugeicons:door-01"
+    icon="i-hugeicons:door-01"
     class="rounded-full cursor-pointer" />
 </template>
 
@@ -23,7 +23,7 @@ async function handleLogout() {
     toast.add({
       title: "操作失败",
       description: err.data?.message || "无法完成退出操作",
-      icon: "hugeicons:alert-02",
+      icon: "i-hugeicons:alert-02",
       color: "error",
     });
   } finally {

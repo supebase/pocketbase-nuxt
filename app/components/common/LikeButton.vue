@@ -7,12 +7,12 @@
     <!-- 加载图标 -->
     <UIcon
       v-if="isLoading"
-      name="hugeicons:refresh"
+      name="i-hugeicons:refresh"
       class="size-5 text-dimmed animate-spin" />
     <!-- 点赞图标 -->
     <UIcon
       v-else
-      :name="liked ? 'hugeicons:heart-check' : 'hugeicons:favourite'"
+      :name="liked ? 'i-hugeicons:heart-check' : 'i-hugeicons:favourite'"
       :class="[
         'size-5 transition-colors duration-300',
         liked ? 'text-primary' : 'text-dimmed',
