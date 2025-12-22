@@ -6,6 +6,7 @@
  * 评论记录类型
  */
 export interface CommentRecord {
+  post: string; // 关联的文章ID
   id: string;
   comment: string;
   created: string;
@@ -26,6 +27,8 @@ export interface CommentRecord {
       avatar?: string;
     };
   };
+  collectionId: string;
+  collectionName: string;
 }
 
 /**

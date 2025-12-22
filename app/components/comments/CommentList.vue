@@ -21,9 +21,9 @@
         <template #title="{ item }">
           <div class="flex items-center justify-between text-base font-medium">
             {{ item.expand?.user?.name }}
-            <CommonLikeButton :key="item.id" :comment-id="String(item.id)"
-              :initial-likes="item.likes || 0" :is-liked="item.isLiked || false"
-              @like-change="(liked, likes) => handleLikeChange(liked, likes, item.id)" />
+            <CommonLikeButton :key="item.id" :comment-id="item.id" :initial-likes="item.likes || 0"
+              :is-liked="item.isLiked || false"
+              @like-change="(liked, likes) => handleLikeChange(liked, likes, item.id, false)" />
           </div>
         </template>
 
@@ -46,10 +46,10 @@
 
 <script setup lang="ts">
 import type { CommentRecord } from "~/types/comments";
+import type { LikeRecord } from "~/types/likes";
 
 const props = defineProps<{ postId: string; allowComment: boolean }>();
 const emit = defineEmits(["loading-change", "update-commenters"]);
-const toast = useToast();
 
 const {
   allItems: comments,
@@ -60,107 +60,137 @@ const {
   resetPagination,
 } = usePagination<CommentRecord>();
 
+const { stream: streamComments, pb } = usePocketRealtime<CommentRecord>('comments');
 const loading = ref(false);
 
-// API 请求逻辑
 const fetchCommentsApi = async (page: number) => {
   const res = await $fetch<any>(`/api/collections/comments`, {
     query: {
       filter: `post="${props.postId}"`,
       sort: "-created",
       page,
-      perPage: 10, // 可以按需调整每页数量
+      perPage: 10,
     },
   });
-
   const items = (res.data?.comments || []).map((c: any) => ({
     ...c,
     relativeTime: useRelativeTime(c.created).value,
   }));
-
   return { items, total: res.data?.totalItems || 0 };
 };
 
 const lastLoadedPostId = ref<string | null>(null);
 
-// 初始化获取
 const fetchComments = async (isSilent = false) => {
-  // 如果是同一个 ID 且已经有数据，且不是强制刷新，则跳过
-  if (!isSilent && lastLoadedPostId.value === props.postId && comments.value.length > 0) {
-    return;
-  }
-
+  if (!isSilent && lastLoadedPostId.value === props.postId && comments.value.length > 0) return;
   if (!isSilent) loading.value = true;
-
   try {
     const result = await fetchCommentsApi(1);
     resetPagination(result.items, result.total);
-    lastLoadedPostId.value = props.postId; // 更新最后加载的 ID
+    lastLoadedPostId.value = props.postId;
     emit("update-commenters", comments.value);
   } finally {
     loading.value = false;
   }
 };
 
-// 交互函数
 const handleLoadMore = () => loadMore(fetchCommentsApi);
 
-// 检查更新
-const checkAndRefresh = async () => {
-  // 如果 ID 变了，直接重新完整加载
-  if (lastLoadedPostId.value !== props.postId) {
-    return fetchComments();
-  }
+const handleLikeChange = (liked: boolean, likes: number, commentId: string, isFromRealtime = false) => {
+  const index = comments.value.findIndex((c) => String(c.id) === String(commentId));
+  if (index !== -1) {
+    const oldItem = comments.value[index];
+    if (!oldItem) return;
 
-  try {
-    const result = await fetchCommentsApi(1); // 检查第一页数据
+    const updatedItem: CommentRecord = {
+      ...oldItem,
+      likes: likes,
+      isLiked: isFromRealtime ? (oldItem.isLiked ?? false) : liked
+    };
 
-    if (result.total !== totalItems.value) {
-      toast.add({
-        title: "发现评论更新",
-        description: `目前有 ${comments.value.length} 条评论，最新记录 ${result.total} 条。正在刷新...`,
-        icon: "i-hugeicons:comment-02",
-        color: "info",
-      });
-
-      // 数量不一致，说明有新评论，静默刷新
-      resetPagination(result.items, result.total);
-      emit("update-commenters", comments.value);
-    }
-  } catch (e) {
-    console.warn(e);
+    comments.value.splice(index, 1, updatedItem);
+    emit("update-commenters", comments.value);
   }
 };
 
-// 插入新评论
-const handleCommentCreated = (newComment: CommentRecord) => {
-  const formatted: CommentRecord = {
-    ...newComment,
-    relativeTime: "刚刚",
-    likes: 0,
-    isLiked: false,
-    isNew: true,
-  };
-  comments.value.unshift(formatted);
-  totalItems.value += 1;
+const syncSingleComment = (record: any, action: 'create' | 'update' | 'delete') => {
+  const index = comments.value.findIndex(c => c.id === record.id);
+  if (action === 'create') {
+    if (index === -1) {
+      comments.value.unshift({ ...record, relativeTime: useRelativeTime(record.created).value, isNew: true });
+      totalItems.value++;
+    }
+  } else if (action === 'update') {
+    if (index !== -1) {
+      comments.value.splice(index, 1, { ...comments.value[index], ...record });
+    }
+  } else if (action === 'delete') {
+    if (index !== -1) {
+      comments.value.splice(index, 1);
+      totalItems.value--;
+    }
+  }
   emit("update-commenters", comments.value);
 };
 
-// 点赞处理
-const handleLikeChange = (liked: boolean, likes: number, commentId: string) => {
-  const comment = comments.value.find((c) => String(c.id) === String(commentId));
-  if (comment) {
-    comment.likes = likes;
-    comment.isLiked = liked;
-  }
-};
+// 使用 Map 管理不同评论的防抖定时器，防止评论 A 的点赞刷新了评论 B 的定时器
+const likeTimers = new Map<string, any>();
+
+onMounted(async () => {
+  await fetchComments();
+
+  await streamComments({
+    onUpdate: async ({ action, record }) => {
+      if (record.post !== props.postId) return;
+      let fullComment = record;
+      if (action === 'create' || action === 'update') {
+        try {
+          fullComment = await pb.collection('comments').getOne(record.id, { expand: 'user' });
+        } catch (e) { return; }
+      }
+      syncSingleComment(fullComment, action as any);
+    }
+  });
+
+  // 订阅点赞表
+  pb.collection('likes').subscribe('*', async ({ action, record }) => {
+    const likeData = record as unknown as LikeRecord;
+    const commentId = likeData.comment;
+
+    if (action === 'create' || action === 'delete') {
+      // 获取该评论的专属定时器
+      if (likeTimers.has(commentId)) clearTimeout(likeTimers.get(commentId));
+
+      const timer = setTimeout(async () => {
+        const index = comments.value.findIndex(c => c.id === commentId);
+        if (index === -1) return;
+
+        try {
+          const updatedComment = await pb.collection('comments').getOne<CommentRecord>(commentId);
+          handleLikeChange(false, updatedComment.likes || 0, commentId, true);
+        } catch (e) {
+          console.warn("实时同步点赞数失败", e);
+        }
+        likeTimers.delete(commentId);
+      }, 300);
+
+      likeTimers.set(commentId, timer);
+    }
+  });
+});
+
+onUnmounted(() => {
+  pb.collection('likes').unsubscribe('*');
+  likeTimers.forEach(timer => clearTimeout(timer));
+  likeTimers.clear();
+});
+
+const handleCommentCreated = (newComment: CommentRecord) => syncSingleComment(newComment, 'create');
 
 defineExpose({ handleCommentCreated, fetchComments });
 
-onMounted(fetchComments);
-
 onActivated(() => {
-  checkAndRefresh();
+  if (lastLoadedPostId.value !== props.postId) fetchComments();
 });
 
 watch(loading, (val) => emit("loading-change", val));

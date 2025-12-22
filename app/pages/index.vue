@@ -3,8 +3,11 @@
     <div v-if="status !== 'pending' || isRefreshing || !error"
       class="flex items-center justify-center w-full gap-3">
       <div class="flex items-center gap-1 text-base tracking-widest text-dimmed font-semibold">
-        <ClientOnly placeholder="...">
+        <ClientOnly>
           <CommonAnimateNumber :value="visibleTotalItems" /> 条贴文和分享
+          <template #fallback>
+            <span>-- 条贴文和分享</span>
+          </template>
         </ClientOnly>
       </div>
       <UIcon v-if="isRefreshing" name="i-hugeicons:refresh"
@@ -59,8 +62,12 @@
             <UButton v-if="canViewDrafts" variant="link" color="neutral"
               icon="i-hugeicons:pencil-edit-01" class="size-5 mr-1.5 text-dimmed"
               :to="`/edit/${item.id}`" />
-            <span class="text-dimmed/80" data-hydration-uid="time" suppressHydrationWarning>{{
-              item.date }}</span>
+            <ClientOnly>
+              <span class="text-dimmed/80">{{ item.date }}</span>
+              <template #fallback>
+                <span class="text-dimmed/80">...</span>
+              </template>
+            </ClientOnly>
           </div>
         </template>
 
@@ -124,6 +131,8 @@ import type { PostRecord, PostsResponse } from '~/types/posts';
 const { loggedIn, user } = useUserSession();
 
 const { isRefreshing, isResetting, refreshPostsAndComments } = useRefresh();
+
+// 分页逻辑
 const {
   allItems: allPosts,
   currentPage,
@@ -133,6 +142,9 @@ const {
   loadMore,
   resetPagination,
 } = usePagination<PostRecord>();
+
+// 实时逻辑
+const { stream, pb } = usePocketRealtime<PostRecord>('posts');
 
 // API 获取逻辑
 const fetchPostsApi = async (page: number) => {
@@ -213,5 +225,51 @@ onActivated(() => {
   if (allPosts.value.length === 0 && status.value !== 'pending') {
     manualRefresh();
   }
+});
+
+// 启动实时流
+onMounted(async () => {
+  await stream({
+    onUpdate: async ({ action, record }) => {
+      // 核心修正：如果是新建或更新，我们需要获取带 expand 的完整数据
+      let fullRecord = record;
+
+      if (action === 'create' || action === 'update') {
+        try {
+          // 重新拉取该条记录，并带上 expand 参数
+          fullRecord = await pb.collection('posts').getOne(record.id, {
+            expand: 'user' // 确保这里和你 API 返回的 expand 字段一致
+          });
+        } catch (err) {
+          console.error("无法获取完整的实时记录详情:", err);
+        }
+      }
+
+      const index = allPosts.value.findIndex(p => p.id === fullRecord.id);
+
+      if (action === 'create') {
+        const exists = allPosts.value.some(p => p.id === fullRecord.id);
+        if (!exists && (fullRecord.published || canViewDrafts.value)) {
+          allPosts.value = [fullRecord, ...allPosts.value];
+          totalItems.value++;
+        }
+      } else if (action === 'update') {
+        if (index !== -1) {
+          if (!fullRecord.published && !canViewDrafts.value) {
+            allPosts.value.splice(index, 1);
+            totalItems.value--;
+          } else {
+            // 使用带 expand 的完整数据更新
+            allPosts.value[index] = fullRecord;
+          }
+        }
+      } else if (action === 'delete') {
+        if (index !== -1) {
+          allPosts.value.splice(index, 1);
+          totalItems.value--;
+        }
+      }
+    }
+  });
 });
 </script>

@@ -22,6 +22,8 @@ export interface PostRecord {
       avatar?: string;
     };
   };
+  collectionId: string;
+  collectionName: string;
 }
 
 /**

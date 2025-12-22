@@ -2,59 +2,38 @@
   <form @submit.prevent="handleSubmit">
     <div
       class="bg-neutral-50 dark:bg-neutral-950/50 border border-neutral-200/90 dark:border-neutral-800/70 rounded-lg p-1">
-      <UTextarea
-        ref="textareaRef"
-        v-model="form.comment"
-        id="comment"
-        color="neutral"
-        variant="none"
-        autoresize
-        :rows="2"
-        :maxrows="6"
-        :padded="false"
-        size="xl"
-        class="text-neutral-300 w-full py-2"
-        :maxlength="maxLimit"
-        :disabled="isSubmitting"
+      <UTextarea ref="textareaRef" v-model="form.comment" id="comment" color="neutral"
+        variant="none" autoresize :rows="2" :maxrows="6" :padded="false" size="xl"
+        class="text-neutral-300 w-full py-2" :maxlength="maxLimit" :disabled="isSubmitting"
         placeholder="说点什么 ..." />
 
       <div class="flex justify-between items-center px-3 py-1">
         <div class="flex items-center space-x-3">
           <CommonEmojiSelector @emoji="insertEmoji" />
-          <UPopover
-            arrow
-            :content="{
-              align: 'start',
-              side: 'bottom',
-              sideOffset: 6,
-            }">
+          <UPopover arrow :content="{
+            align: 'start',
+            side: 'bottom',
+            sideOffset: 6,
+          }">
             <template #default="{ open }">
-              <UIcon
-                name="i-hugeicons:at"
+              <UIcon name="i-hugeicons:at"
                 class="size-5.25 text-muted cursor-pointer hover:text-primary transition-colors"
                 :class="{ 'text-primary': open }" />
             </template>
 
             <template #content="{ close }">
               <div class="p-1 w-48 max-h-60 overflow-y-auto">
-                <div
-                  v-if="rawSuggestions.length === 0"
-                  class="p-2 text-sm text-center text-dimmed">
+                <div v-if="rawSuggestions.length === 0" class="p-2 text-sm text-center text-dimmed">
                   暂无可提及的用户
                 </div>
                 <div v-else>
-                  <div
-                    v-for="user in rawSuggestions"
-                    :key="user.id"
-                    @click="
-                      insertMention(user.name);
-                      close();
-                    "
+                  <div v-for="user in rawSuggestions" :key="user.id" @click="
+                    insertMention(user.name);
+                  close();
+                  "
                     class="flex items-center gap-2 p-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded cursor-pointer transition-colors">
                     <div class="size-5 rounded-full overflow-hidden shrink-0">
-                      <CommonGravatar
-                        :avatar-id="user.avatar"
-                        :size="32" />
+                      <CommonGravatar :avatar-id="user.avatar" :size="32" />
                     </div>
                     <span class="text-sm truncate">{{ user.name }}</span>
                   </div>
@@ -63,58 +42,34 @@
             </template>
           </UPopover>
 
-          <span
-            v-if="rawSuggestions.length > 0"
-            class="text-sm text-primary">
+          <span v-if="rawSuggestions.length > 0" class="text-sm text-primary">
             可提及 {{ rawSuggestions.length }} 个用户
           </span>
         </div>
 
         <div class="flex items-center space-x-6">
-          <span
-            class="text-sm tabular-nums select-none"
-            :class="
-              form.comment.length >= maxLimit
-                ? 'text-red-600'
-                : 'text-neutral-400 dark:text-neutral-600'
+          <span class="text-sm tabular-nums select-none" :class="form.comment.length >= maxLimit
+            ? 'text-red-600'
+            : 'text-neutral-400 dark:text-neutral-600'
             ">
             {{ form.comment.length }} / {{ maxLimit }}
           </span>
-          <UButton
-            type="submit"
-            color="neutral"
-            size="lg"
-            variant="ghost"
+          <UButton type="submit" color="neutral" size="lg" variant="ghost"
             class="hover:bg-transparent! cursor-pointer px-0 text-neutral-500"
-            :loading="isSubmitting"
-            :icon="
-              !isSubmitting && !(form.comment.length >= maxLimit) && form.comment.trim() !== ''
-                ? 'i-hugeicons:comment-add-02'
-                : 'i-hugeicons:comment-block-02'
-            "
-            :disabled="
-              isSubmitting || form.comment.length >= maxLimit || form.comment.trim() === ''
-            "
-            :ui="{ leadingIcon: 'size-5' }" />
+            :loading="isSubmitting" :icon="!isSubmitting && !(form.comment.length >= maxLimit) && form.comment.trim() !== ''
+              ? 'i-hugeicons:comment-add-02'
+              : 'i-hugeicons:comment-block-02'
+              " :disabled="isSubmitting || form.comment.length >= maxLimit || form.comment.trim() === ''
+                " :ui="{ leadingIcon: 'size-5' }" />
         </div>
       </div>
     </div>
 
-    <UAlert
-      v-if="errors.comment"
-      icon="i-hugeicons:alert-02"
-      color="error"
-      variant="soft"
-      :title="errors.comment"
-      class="mt-4" />
+    <UAlert v-if="errors.comment" icon="i-hugeicons:alert-02" color="error" variant="soft"
+      :title="errors.comment" class="mt-4" />
 
-    <UAlert
-      v-if="globalError"
-      icon="i-hugeicons:alert-02"
-      color="error"
-      variant="soft"
-      :title="globalError"
-      class="mt-4" />
+    <UAlert v-if="globalError" icon="i-hugeicons:alert-02" color="error" variant="soft"
+      :title="globalError" class="mt-4" />
   </form>
 </template>
 
@@ -192,23 +147,20 @@ const handleSubmit = async () => {
   globalError.value = "";
 
   try {
+    // 1. 发送请求，不再需要等待 refreshNuxtData
     const response = await $fetch<any>("/api/collections/comments", {
       method: "POST",
       body: {
-        ...form,
-        comment: form.comment.trim(), // 发送前去空格
+        post: form.post,
+        comment: form.comment.trim(),
       },
     });
 
-    // 2. 按照后端 { data: { comment } } 结构解析
     const newComment = response.data?.comment;
 
     if (newComment) {
-      // 刷新数据（这将触发评论列表更新）
-      await refreshNuxtData(`comments-data-${props.postId}`);
-
-      // 3. 构造完整的评论对象用于“乐观更新”
-      const commentWithUser: CommentRecord = {
+      // 2. 构造乐观更新数据 (让用户立刻看到自己的评论，不等实时推送)
+      const optimisticComment: CommentRecord = {
         ...newComment,
         expand: {
           user: {
@@ -219,10 +171,13 @@ const handleSubmit = async () => {
         },
       };
 
-      // 4. 重置状态
+      // 3. 立即重置输入框
       form.comment = "";
-      emit("comment-created", commentWithUser);
 
+      // 4. 通知列表进行乐观展示 (CommentList 的去重逻辑会处理后续到来的实时推送)
+      emit("comment-created", optimisticComment);
+
+      // 5. 简约的 Toast (不再提示“刷新页面”)
       toast.add({
         title: "评论发表成功",
         description: "评论通常实时展示；若未显示，刷新页面。",
@@ -231,8 +186,7 @@ const handleSubmit = async () => {
       });
     }
   } catch (error: any) {
-    // 5. 统一从后端 message 读取错误
-    globalError.value = error.data?.message || "网络请求失败，请稍后再试";
+    globalError.value = error.data?.message || "发送失败，请稍后再试";
   } finally {
     isSubmitting.value = false;
   }

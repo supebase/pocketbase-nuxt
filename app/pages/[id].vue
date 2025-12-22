@@ -19,7 +19,12 @@
                 <CommonGravatar :avatar-id="postWithRelativeTime.expand?.user?.avatar" :size="64" />
               </div>
               <div class="text-dimmed">
-                {{ postWithRelativeTime.relativeTime }}
+                <ClientOnly>
+                  {{ postWithRelativeTime.relativeTime }}
+                  <template #fallback>
+                    <span>...</span>
+                  </template>
+                </ClientOnly>
                 <span class="mx-1.5">&bull;</span>
                 {{ useReadingTime(postWithRelativeTime.content) }}
               </div>
@@ -57,10 +62,12 @@
           'transition-all duration-700 delay-300',
           mdcReady ? 'opacity-100' : 'opacity-0',
         ]">
-          <CommentsCommentForm
-            v-if="loggedIn && !isListLoading && postWithRelativeTime.allow_comment"
-            :post-id="postWithRelativeTime.id" :raw-suggestions="commenters"
-            @comment-created="onCommentSuccess" class="mt-8" />
+          <ClientOnly>
+            <CommentsCommentForm
+              v-if="loggedIn && !isListLoading && postWithRelativeTime.allow_comment"
+              :post-id="postWithRelativeTime.id" :raw-suggestions="commenters"
+              @comment-created="onCommentSuccess" class="mt-8" />
+          </ClientOnly>
 
           <CommentsCommentList ref="commentListRef" :post-id="postWithRelativeTime.id"
             :allow-comment="postWithRelativeTime.allow_comment"
@@ -172,7 +179,8 @@ const { showHeaderBack } = useHeader();
 const authorRow = ref<HTMLElement | null>(null);
 
 const isContentReady = computed(() => {
-  return status.value === "success" && mdcReady.value && authorRow.value !== null;
+  // 增加 import.meta.client 确保只在客户端逻辑中触发
+  return import.meta.client && status.value === "success" && mdcReady.value && authorRow.value !== null;
 });
 
 // 1. 页面销毁时重置
@@ -239,6 +247,14 @@ onActivated(async () => {
     // 3. 消费掉标记
     clearUpdateMark(currentId);
     isSilentRefreshing.value = false;
+  }
+});
+
+onMounted(() => {
+  // 只有当不是因为从缓存激活（onActivated）且标记了更新时，才设为 true
+  // 简单说：正常的初次进入页面，直接显示
+  if (!isUpdateRefresh.value) {
+    mdcReady.value = true;
   }
 });
 
