@@ -5,7 +5,9 @@
       class="flex items-center justify-center w-full gap-3"
     >
       <div class="flex items-center gap-1 text-base tracking-widest text-dimmed font-semibold">
-        <CommonAnimateNumber :value="visibleTotalItems" /> 条贴文
+        <ClientOnly placeholder="加载中...">
+          <CommonAnimateNumber :value="visibleTotalItems" /> 条贴文/分享
+        </ClientOnly>
       </div>
       <UIcon
         v-if="isRefreshing"
@@ -73,26 +75,23 @@
         <template #title="{ item }">
           <div class="flex items-center gap-3">
             <div class="text-base">{{ item.title }}</div>
+            <div v-if="!item.published && canViewDrafts" class="text-sm text-warning">待发布稿</div>
+            <div v-else-if="item.action === 'dit'" class="text-sm text-dimmed/80">贴文</div>
+            <div v-else class="text-sm text-dimmed/80">分享互联网</div>
           </div>
         </template>
 
         <template #date="{ item }">
           <div class="flex items-center gap-2.5">
-            <UBadge
-              v-if="!item.published && canViewDrafts"
-              variant="subtle"
-              size="sm"
-              color="warning"
-              label="草稿"
-            />
-            {{ item.date }}
             <UButton
               v-if="canViewDrafts"
               variant="link"
-              icon="i-hugeicons:more-horizontal"
-              class="size-5"
+              color="neutral"
+              icon="i-hugeicons:pencil-edit-01"
+              class="size-5 mr-1.5 text-dimmed"
               :to="`/edit/${item.id}`"
             />
+            <span class="text-dimmed/80">{{ item.date }}</span>
           </div>
         </template>
 
@@ -165,7 +164,7 @@
         >
           加载更多
         </UButton>
-        <USeparator v-else label="已经到底了" type="dashed" />
+        <USeparator v-else label="已经到底了" type="dashed" class="text-dimmed" />
       </div>
     </div>
   </div>

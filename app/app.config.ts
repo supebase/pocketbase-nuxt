@@ -40,7 +40,7 @@ export default defineAppConfig({
     },
     separator: {
       slots: {
-        label: 'text-sm text-dimmed',
+        label: 'text-sm text-dimmed/60',
       },
     },
     radioGroup: {

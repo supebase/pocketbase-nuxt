@@ -71,21 +71,27 @@
           v-model="form.published"
           :disabled="isSubmitting"
           color="neutral"
-          :label="form.published ? '正式发布' : '草稿保存'"
+          :label="form.published ? '立即对外正式发布' : '临时保存为草稿'"
         />
 
         <USwitch
           v-model="form.allow_comment"
           :disabled="isSubmitting"
           color="neutral"
-          label="允许评论"
+          label="允许用户发表评论"
         />
       </div>
 
       <div class="flex items-center justify-between">
         <UButton type="button" color="neutral" variant="soft" to="/"> 取消 </UButton>
 
-        <UButton type="submit" color="neutral" :loading="isSubmitting" :disabled="isSubmitting">
+        <UButton
+          type="submit"
+          color="neutral"
+          :loading="isSubmitting"
+          :disabled="isSubmitting"
+          class="cursor-pointer"
+        >
           <span v-if="!isSubmitting">
             {{ form.action === 'partager' ? '分享互联网' : '发表新贴文' }}
           </span>

@@ -17,7 +17,7 @@
         </div>
         <span class="text-xs font-medium text-dimmed">{{
           usersToShow[0]?.expand?.user?.name
-        }}</span>
+        }} 发表了评论</span>
       </div>
     </template>
 

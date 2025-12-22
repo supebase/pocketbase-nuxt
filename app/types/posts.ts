@@ -13,6 +13,7 @@ export interface PostRecord {
   icon?: string;
   action?: string;
   created: string;
+  updated: string;
   relativeTime?: string; // 相对时间，用于前端显示
   expand?: {
     user?: {

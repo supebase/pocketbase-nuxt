@@ -1,11 +1,13 @@
 <template>
   <div
-    class="bg-neutral-50 dark:bg-neutral-950/50 border border-neutral-200/90 dark:border-neutral-800/70 rounded-lg p-4"
+    class="relative bg-neutral-50 dark:bg-neutral-950/50 border border-neutral-200/90 dark:border-neutral-800/70 rounded-lg p-4"
   >
     <div
       v-if="isLoading"
-      class="z-10 absolute top-0 left-0 w-full h-full bg-neutral-100/50 dark:bg-neutral-900/50 backdrop-blur-sm"
-    ></div>
+      class="z-10 absolute inset-0 flex items-center justify-center bg-neutral-100/50 dark:bg-neutral-900/50 backdrop-blur-sm rounded-lg"
+    >
+      <UIcon name="i-hugeicons:loading-02" class="animate-spin text-2xl" />
+    </div>
 
     <form @submit.prevent="handleSubmit" class="space-y-6">
       <URadioGroup
@@ -14,16 +16,8 @@
         orientation="horizontal"
         variant="card"
         :items="[
-          {
-            label: '贴文',
-            description: '发布原创内容，记录观点、动态与生活。',
-            value: 'dit',
-          },
-          {
-            label: '分享',
-            description: '转发优质内容，传递价值与趣味给用户。',
-            value: 'partager',
-          },
+          { label: '贴文', description: '发布原创内容。', value: 'dit' },
+          { label: '分享', description: '转发优质内容。', value: 'partager' },
         ]"
       />
 
@@ -35,37 +29,18 @@
         autoresize
         color="neutral"
         variant="none"
-        :placeholder="
-          form.action === 'partager'
-            ? '粘贴链接或内容，转发给他人 ...'
-            : '输入原创内容，分享你的观点 ...'
-        "
+        :placeholder="form.action === 'partager' ? '粘贴链接...' : '输入内容...'"
         size="xl"
         :rows="10"
-        :maxrows="18"
-        :disabled="isSubmitting"
         class="w-full"
       />
 
       <div v-show="form.action === 'partager'" class="flex items-center gap-2.5">
         <UInput
           v-model="form.icon"
-          id="icon"
           placeholder="图标，例如：i-simple-icons:nuxt"
           variant="subtle"
-          color="neutral"
-          :disabled="isSubmitting"
-          size="lg"
           class="w-full"
-        />
-
-        <UButton
-          to="https://icones.js.org/collection/simple-icons"
-          target="_blank"
-          variant="link"
-          color="neutral"
-          icon="i-hugeicons:search-area"
-          label="查找图标"
         />
       </div>
 
@@ -74,36 +49,18 @@
       <div class="flex flex-col gap-4">
         <USwitch
           v-model="form.published"
-          :disabled="isSubmitting"
           color="neutral"
-          :label="form.published ? '正式发布' : '草稿保存'"
+          :label="form.published ? '立即对外正式发布' : '临时保存为草稿'"
         />
-
-        <USwitch
-          v-model="form.allow_comment"
-          :disabled="isSubmitting"
-          color="neutral"
-          label="允许评论"
-        />
+        <USwitch v-model="form.allow_comment" color="neutral" label="允许用户发表评论" />
       </div>
 
       <div class="flex items-center justify-between">
         <UButton type="button" color="neutral" variant="soft" to="/"> 取消 </UButton>
-
-        <UButton type="submit" color="neutral" :loading="isSubmitting" :disabled="isSubmitting">
-          <span v-if="!isSubmitting"> 编辑完成 </span>
-          <span v-else>正在发布...</span>
+        <UButton type="submit" color="neutral" :loading="isSubmitting" class="cursor-pointer">
+          编辑完成
         </UButton>
       </div>
-
-      <UAlert
-        v-if="errors.content"
-        icon="i-hugeicons:alert-02"
-        color="error"
-        variant="soft"
-        :description="errors.content"
-        class="mt-4"
-      />
 
       <UAlert
         v-if="globalError"
@@ -118,157 +75,85 @@
 </template>
 
 <script setup lang="ts">
-  import type { PostRecord } from '~/types/posts';
+  const { markAsUpdated } = usePostUpdateTracker();
 
   const route = useRoute();
-  const { id } = route.params;
+  const id = route.params.id as string;
 
-  // --- 1. 初始化与数据定义 ---
-
-  const initialForm = {
+  // --- 1. 表单响应式数据 ---
+  const form = ref({
     content: '',
     allow_comment: true,
     published: true,
     icon: '',
     action: 'dit',
-  };
-
-  const form = reactive({ ...initialForm });
-
-  const errors = reactive({
-    content: '',
   });
 
   const isLoading = ref(false);
   const isSubmitting = ref(false);
   const globalError = ref('');
-  const hasDataLoaded = ref(false); // 新增：标记数据是否已加载
 
+  /**
+   * 加载数据并映射字段
+   */
   const loadPostData = async () => {
-    // 防止重复加载
-    if (hasDataLoaded.value && form.content) {
-      return;
-    }
-
+    if (!id) return;
     isLoading.value = true;
-    globalError.value = '';
 
     try {
-      const result = await $fetch<PostRecord>(`/api/collections/post/${id}`);
-      if (result) {
-        form.content = result.content || '';
-        form.allow_comment = result.allow_comment ?? true;
-        form.published = result.published ?? true;
-        form.icon = result.icon || '';
-        form.action = result.action || 'dit';
-        hasDataLoaded.value = true; // 标记数据已加载
+      // 1. 获取原始数据
+      const response = await $fetch<any>(`/api/collections/post/${id}`);
+
+      // 2. 关键修复：兼容 PocketBase 或其他包装过的 API 结构
+      // 有些 API 返回的是 { data: { ... } }，有些直接返回内容
+      const data = response?.data || response;
+
+      if (data) {
+        // 3. 显式手动映射，防止后端字段名不匹配
+        form.value = {
+          content: data.content || '',
+          allow_comment: data.allow_comment ?? true,
+          published: data.published ?? true,
+          icon: data.icon || '',
+          action: data.action || 'dit',
+        };
       }
-    } catch (err) {
-      console.error('加载数据失败:', err);
-      globalError.value = '加载文章数据失败';
+    } catch (err: any) {
+      console.error('加载失败:', err);
+      globalError.value = '无法加载文章数据，请重试';
     } finally {
       isLoading.value = false;
     }
   };
 
-  // --- 2. 核心逻辑函数 ---
-
   /**
-   * 重置表单到初始状态
-   */
-  const resetForm = () => {
-    Object.assign(form, initialForm);
-    errors.content = '';
-    globalError.value = '';
-    hasDataLoaded.value = false; // 重置标记
-  };
-
-  /**
-   * 表单验证
-   */
-  const validateForm = () => {
-    let isValid = true;
-    errors.content = '';
-    globalError.value = '';
-
-    if (!form.content.trim()) {
-      errors.content = '内容不能为空';
-      isValid = false;
-    } else if (form.content.length > 10000) {
-      errors.content = '内容长度不能超过 10000 字符';
-      isValid = false;
-    }
-
-    return isValid;
-  };
-
-  /**
-   * 提交表单
+   * 提交更新
    */
   const handleSubmit = async () => {
-    if (!validateForm()) return;
+    if (!form.value.content.trim()) {
+      globalError.value = '内容不能为空';
+      return;
+    }
 
     isSubmitting.value = true;
-    globalError.value = '';
-
     try {
-      const updateData: any = {};
-
-      // 构建更新数据
-      if (form.content !== undefined) updateData.content = form.content;
-      if (form.allow_comment !== undefined) updateData.allow_comment = form.allow_comment;
-      if (form.published !== undefined) updateData.published = form.published;
-      if (form.icon !== undefined) updateData.icon = form.icon;
-      if (form.action !== undefined) updateData.action = form.action;
-
       await $fetch(`/api/collections/post/${id}`, {
         method: 'PUT',
-        body: updateData,
+        body: form.value, // 发送的是映射后的干净数据
       });
-
-      // 提交成功后重置表单
-      resetForm();
-
-      // 刷新数据并跳转
       await refreshNuxtData('posts-list-data');
+      // 4. 标记为已更新
+      markAsUpdated(id);
       await navigateTo('/');
     } catch (err: any) {
-      // 错误处理保持不变
-      if (err.data?.message) {
-        globalError.value = err.data.message;
-      } else if (err.data?.data) {
-        const firstError = Object.values(err.data.data)[0] as any;
-        globalError.value = firstError?.message || '输入信息有误';
-      } else {
-        globalError.value = err.message?.includes('fetch')
-          ? '网络连接失败，请稍后再试'
-          : '编辑失败，请检查网络或联系管理员';
-      }
-      console.error('Post Error Details:', err.data);
+      globalError.value = err.data?.message || '保存失败';
     } finally {
       isSubmitting.value = false;
     }
   };
 
-  // --- 3. 生命周期钩子 ---
-
-  // 使用 watchEffect 自动响应依赖变化
-  watchEffect(() => {
-    const postId = route.params.id;
-    if (postId && !hasDataLoaded.value) {
-      loadPostData();
-    }
+  // 挂载时加载
+  onMounted(() => {
+    loadPostData();
   });
-
-  // 或者使用 watch 监听 id 变化
-  watch(
-    () => route.params.id,
-    (newId) => {
-      if (newId) {
-        resetForm();
-        loadPostData();
-      }
-    },
-    { immediate: true } // 立即执行一次
-  );
 </script>
