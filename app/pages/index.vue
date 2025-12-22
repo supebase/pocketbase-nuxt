@@ -6,7 +6,7 @@
     >
       <div class="flex items-center gap-1 text-base tracking-widest text-dimmed font-semibold">
         <ClientOnly placeholder="加载中...">
-          <CommonAnimateNumber :value="visibleTotalItems" /> 条贴文/分享
+          <CommonAnimateNumber :value="visibleTotalItems" /> 条贴文和分享
         </ClientOnly>
       </div>
       <UIcon
@@ -75,9 +75,9 @@
         <template #title="{ item }">
           <div class="flex items-center gap-3">
             <div class="text-base">{{ item.title }}</div>
-            <div v-if="!item.published && canViewDrafts" class="text-sm text-warning">待发布稿</div>
-            <div v-else-if="item.action === 'dit'" class="text-sm text-dimmed/80">贴文</div>
-            <div v-else class="text-sm text-dimmed/80">分享互联网</div>
+            <div v-if="!item.published && canViewDrafts" class="text-warning">待发布稿</div>
+            <div v-else-if="item.action === 'dit'" class="text-dimmed/80">贴文</div>
+            <div v-else class="text-dimmed/80">分享互联网</div>
           </div>
         </template>
 
@@ -101,7 +101,7 @@
             class="record-item-animate"
             :style="{ '--delay': `${(index % 10) * 0.08}s` }"
           >
-            <ULink :to="`/${item.id}`" class="line-clamp-5">
+            <ULink :to="`/${item.id}`" class="line-clamp-5 tracking-wide">
               {{ cleanMarkdown(item.description) }}
             </ULink>
 

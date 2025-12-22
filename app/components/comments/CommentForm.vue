@@ -12,7 +12,7 @@
         :rows="2"
         :maxrows="6"
         :padded="false"
-        size="lg"
+        size="xl"
         class="text-neutral-300 w-full py-2"
         :maxlength="maxLimit"
         :disabled="isSubmitting"
@@ -39,7 +39,7 @@
               <div class="p-1 w-48 max-h-60 overflow-y-auto">
                 <div
                   v-if="rawSuggestions.length === 0"
-                  class="p-2 text-xs text-center text-dimmed">
+                  class="p-2 text-sm text-center text-dimmed">
                   暂无可提及的用户
                 </div>
                 <div v-else>
@@ -65,14 +65,14 @@
 
           <span
             v-if="rawSuggestions.length > 0"
-            class="text-xs text-primary">
+            class="text-sm text-primary">
             可提及 {{ rawSuggestions.length }} 个用户
           </span>
         </div>
 
         <div class="flex items-center space-x-6">
           <span
-            class="text-[13px] tabular-nums select-none"
+            class="text-sm tabular-nums select-none"
             :class="
               form.comment.length >= maxLimit
                 ? 'text-red-600'

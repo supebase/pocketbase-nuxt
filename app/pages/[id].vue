@@ -37,7 +37,7 @@
                   :avatar-id="postWithRelativeTime.expand?.user?.avatar"
                   :size="64" />
               </div>
-              <div class="text-sm text-dimmed">
+              <div class="text-dimmed">
                 {{ postWithRelativeTime.relativeTime }}
                 <span class="mx-1.5">&bull;</span>
                 {{ useReadingTime(postWithRelativeTime.content) }}
@@ -47,7 +47,7 @@
             <div>
               <UIcon
                 name="i-hugeicons:arrow-turn-backward"
-                class="size-6 text-dimmed cursor-pointer"
+                class="size-6.5 text-dimmed cursor-pointer"
                 @click="$router.back()" />
             </div>
           </div>
@@ -61,7 +61,7 @@
               <UIcon
                 name="i-hugeicons:refresh"
                 class="size-5 mr-2 animate-spin" />
-              <span class="text-sm font-medium">
+              <span class="font-medium">
                 {{ isUpdateRefresh ? '正在同步内容改动' : '沉浸式梳理内容' }}
               </span>
             </div>
@@ -76,7 +76,7 @@
               :key="postWithRelativeTime.id + postWithRelativeTime.updated"
               :value="postWithRelativeTime.content || ''"
               @vue:mounted="handleMdcMounted"
-              class="prose prose-neutral dark:prose-invert prose-img:rounded-xl prose-img:ring-1 prose-img:ring-neutral-200 prose-img:dark:ring-neutral-800" />
+              class="prose prose-neutral prose-lg sm:prose-[18px] dark:prose-invert prose-img:rounded-xl prose-img:ring-1 prose-img:ring-neutral-200 prose-img:dark:ring-neutral-800" />
           </div>
         </div>
 
@@ -270,6 +270,10 @@ onActivated(async () => {
     
     // 2. 数据拿到了，这时候再重置 mdcReady，触发你那个“沉浸式梳理”的遮罩和动画
     mdcReady.value = false;
+
+    if (commentListRef.value) {
+      commentListRef.value.fetchComments(true); 
+    }
     
     // 3. 消费掉标记
     clearUpdateMark(currentId);

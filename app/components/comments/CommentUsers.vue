@@ -15,7 +15,7 @@
             :avatar-id="usersToShow[0]?.expand?.user?.avatar"
             :size="32" />
         </div>
-        <span class="text-xs font-medium text-dimmed">{{
+        <span class="text-sm font-medium text-dimmed">{{
           usersToShow[0]?.expand?.user?.name
         }} 发表了评论</span>
       </div>
@@ -49,7 +49,7 @@
       <UIcon
         name="i-hugeicons:comment-block-02"
         class="size-4.5" />
-      <span class="text-xs">评论已关闭</span>
+      <span class="text-sm">评论已关闭</span>
     </div>
 
     <div
@@ -58,7 +58,7 @@
       <UIcon
         name="i-hugeicons:comment-02"
         class="size-4.5" />
-      <span class="text-xs">暂无评论</span>
+      <span class="text-sm">暂无评论</span>
     </div>
   </div>
 </template>

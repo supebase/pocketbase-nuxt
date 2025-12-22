@@ -104,12 +104,21 @@ const fetchCommentsApi = async (page: number) => {
   return { items, total: res.data?.totalItems || 0 };
 };
 
+const lastLoadedPostId = ref<string | null>(null);
+
 // 初始化获取
 const fetchComments = async (isSilent = false) => {
+  // 如果是同一个 ID 且已经有数据，且不是强制刷新，则跳过
+  if (!isSilent && lastLoadedPostId.value === props.postId && comments.value.length > 0) {
+    return;
+  }
+
   if (!isSilent) loading.value = true;
+
   try {
     const result = await fetchCommentsApi(1);
     resetPagination(result.items, result.total);
+    lastLoadedPostId.value = props.postId; // 更新最后加载的 ID
     emit("update-commenters", comments.value);
   } finally {
     loading.value = false;
@@ -121,9 +130,14 @@ const handleLoadMore = () => loadMore(fetchCommentsApi);
 
 // 检查更新
 const checkAndRefresh = async () => {
-  if (comments.value.length === 0) return fetchComments();
+  // 如果 ID 变了，直接重新完整加载
+  if (lastLoadedPostId.value !== props.postId) {
+    return fetchComments();
+  }
+
   try {
     const result = await fetchCommentsApi(1); // 检查第一页数据
+
     if (result.total !== totalItems.value) {
       toast.add({
         title: "发现评论更新",
@@ -131,7 +145,10 @@ const checkAndRefresh = async () => {
         icon: "i-hugeicons:comment-02",
         color: "info",
       });
-      await fetchComments(true);
+
+      // 数量不一致，说明有新评论，静默刷新
+      resetPagination(result.items, result.total);
+      emit("update-commenters", comments.value);
     }
   } catch (e) {
     console.warn(e);
@@ -164,9 +181,9 @@ const handleLikeChange = (liked: boolean, likes: number, commentId: string) => {
 defineExpose({ handleCommentCreated, fetchComments });
 
 onMounted(fetchComments);
+
 onActivated(() => {
   checkAndRefresh();
-  emit("update-commenters", comments.value);
 });
 
 watch(loading, (val) => emit("loading-change", val));
