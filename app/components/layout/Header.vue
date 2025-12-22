@@ -1,40 +1,22 @@
 <template>
   <div>
-    <div class="flex items-center gap-3">
-      <UButton
-        to="/auth"
-        color="neutral"
-        variant="link"
-        icon="i-hugeicons:lock-key"
-        class="rounded-full"
-        v-if="!loggedIn" />
+    <div class="flex items-center gap-3 select-none">
+      <UButton to="/auth" color="neutral" variant="link" icon="i-hugeicons:lock-key"
+        class="rounded-full" v-if="!loggedIn" />
 
-      <div
-        class="flex items-center gap-3"
-        v-else>
-        <UUser
-          :name="user?.name"
-          size="sm">
+      <div class="flex items-center gap-3" v-else>
+        <UUser :name="user?.name" size="sm">
           <template #avatar>
             <div class="size-7 rounded-full overflow-hidden">
-              <CommonGravatar
-                :avatar-id="user?.avatar"
-                :size="56" />
+              <CommonGravatar :avatar-id="user?.avatar" :size="56" />
             </div>
           </template>
         </UUser>
 
-        <USeparator
-          orientation="vertical"
-          class="h-6 ml-2" />
+        <USeparator orientation="vertical" class="h-6 ml-2" />
 
-        <UButton
-          to="/new"
-          color="neutral"
-          variant="link"
-          icon="i-hugeicons:add-circle-half-dot"
-          class="rounded-full"
-          v-if="user?.verified" />
+        <UButton to="/new" color="neutral" variant="link" icon="i-hugeicons:add-circle-half-dot"
+          class="rounded-full" v-if="user?.verified" />
 
         <AuthLogoutButton />
       </div>

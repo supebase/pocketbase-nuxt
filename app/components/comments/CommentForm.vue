@@ -226,7 +226,7 @@ const handleSubmit = async () => {
       toast.add({
         title: "评论发表成功",
         description: "评论通常实时展示；若未显示，刷新页面。",
-        icon: "i-hugeicons:comment-02",
+        icon: "i-hugeicons:checkmark-circle-03",
         color: "success",
       });
     }

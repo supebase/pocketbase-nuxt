@@ -9,9 +9,7 @@ export default defineNuxtConfig({
       password: import.meta.env.NUXT_SESSION_PASSWORD,
       maxAge: 60 * 60 * 24 * 7,
     },
-    public: {
-      POCKETBASE_URL: import.meta.env.POCKETBASE_URL,
-    },
+    pocketbaseUrl: import.meta.env.NUXT_POCKETBASE_URL
   },
   app: {
     keepalive: {

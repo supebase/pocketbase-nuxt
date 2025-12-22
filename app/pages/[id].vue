@@ -1,41 +1,22 @@
 <template>
   <div class="container mx-auto">
-    <UAlert
-      v-if="error"
-      :description="error.data?.message || '获取内容失败，请稍后重试'"
-      variant="soft"
-      icon="i-hugeicons:alert-02"
-      color="error"
-      class="mb-4" />
+    <UAlert v-if="error" :description="error.data?.message || '获取内容失败，请稍后重试'" variant="soft"
+      icon="i-hugeicons:alert-02" color="error" class="mb-4" />
 
-    <Transition
-      name="fade"
-      mode="out-in">
-      <div
-        v-if="status === 'pending'&& !postWithRelativeTime"
-        key="loading"
+    <Transition name="fade" mode="out-in">
+      <div v-if="status === 'pending' && !postWithRelativeTime" key="loading"
         class="flex flex-col gap-6 mt-4">
         <SkeletonPost />
       </div>
 
-      <div
-        v-else-if="postWithRelativeTime"
-        key="content">
-        <div
-          ref="authorRow"
-          class="flex flex-col items-center justify-center gap-3">
+      <div v-else-if="postWithRelativeTime" key="content">
+        <div ref="authorRow" class="flex flex-col items-center justify-center gap-3 select-none">
           <div class="flex items-center justify-between gap-2 w-full">
             <div class="flex items-center gap-3">
-              <UIcon
-                v-if="postWithRelativeTime.icon"
-                :name="postWithRelativeTime.icon"
+              <UIcon v-if="postWithRelativeTime.icon" :name="postWithRelativeTime.icon"
                 class="size-8 text-primary" />
-              <div
-                v-else
-                class="size-8">
-                <CommonGravatar
-                  :avatar-id="postWithRelativeTime.expand?.user?.avatar"
-                  :size="64" />
+              <div v-else class="size-8">
+                <CommonGravatar :avatar-id="postWithRelativeTime.expand?.user?.avatar" :size="64" />
               </div>
               <div class="text-dimmed">
                 {{ postWithRelativeTime.relativeTime }}
@@ -45,77 +26,57 @@
             </div>
 
             <div>
-              <UIcon
-                name="i-hugeicons:arrow-turn-backward"
-                class="size-6.5 text-dimmed cursor-pointer"
-                @click="$router.back()" />
+              <UIcon name="i-hugeicons:arrow-turn-backward"
+                class="size-6.5 text-dimmed cursor-pointer" @click="$router.back()" />
             </div>
           </div>
         </div>
 
         <div class="relative mt-6">
           <Transition leave-active-class="transition duration-300 opacity-0">
-            <div
-              v-if="!mdcReady"
-              class="absolute inset-0 h-40 flex items-center justify-center bg-white/50 dark:bg-neutral-900/50 z-10 backdrop-blur-sm rounded-lg">
-              <UIcon
-                name="i-hugeicons:refresh"
-                class="size-5 mr-2 animate-spin" />
+            <div v-if="!mdcReady"
+              class="absolute inset-0 h-40 flex items-center justify-center bg-white/50 dark:bg-neutral-900/50 z-10 backdrop-blur-sm rounded-lg select-none">
+              <UIcon name="i-hugeicons:refresh" class="size-5 mr-2 animate-spin" />
               <span class="font-medium">
                 {{ isUpdateRefresh ? '正在同步内容改动' : '沉浸式梳理内容' }}
               </span>
             </div>
           </Transition>
 
-          <div
-            :class="[
-              'transition-all duration-500',
-              mdcReady ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4',
-            ]">
-            <MDC
-              :key="postWithRelativeTime.id + postWithRelativeTime.updated"
-              :value="postWithRelativeTime.content || ''"
-              @vue:mounted="handleMdcMounted"
+          <div :class="[
+            'transition-all duration-500',
+            mdcReady ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4',
+          ]">
+            <MDC :key="postWithRelativeTime.id + postWithRelativeTime.updated"
+              :value="postWithRelativeTime.content || ''" @vue:mounted="handleMdcMounted"
               class="prose prose-neutral prose-lg sm:prose-[18px] dark:prose-invert prose-img:rounded-xl prose-img:ring-1 prose-img:ring-neutral-200 prose-img:dark:ring-neutral-800" />
           </div>
         </div>
 
-        <div
-          :class="[
-            'transition-all duration-700 delay-300',
-            mdcReady ? 'opacity-100' : 'opacity-0',
-          ]">
+        <div :class="[
+          'transition-all duration-700 delay-300',
+          mdcReady ? 'opacity-100' : 'opacity-0',
+        ]">
           <CommentsCommentForm
             v-if="loggedIn && !isListLoading && postWithRelativeTime.allow_comment"
-            :post-id="postWithRelativeTime.id"
-            :raw-suggestions="commenters"
-            @comment-created="onCommentSuccess"
-            class="mt-8" />
+            :post-id="postWithRelativeTime.id" :raw-suggestions="commenters"
+            @comment-created="onCommentSuccess" class="mt-8" />
 
-          <CommentsCommentList
-            ref="commentListRef"
-            :post-id="postWithRelativeTime.id"
+          <CommentsCommentList ref="commentListRef" :post-id="postWithRelativeTime.id"
             :allow-comment="postWithRelativeTime.allow_comment"
             @loading-change="(val) => (isListLoading = val)"
             @update-commenters="handleUpdateCommenters" />
         </div>
       </div>
 
-      <div
-        v-else
-        key="empty"
-        class="flex flex-col items-center justify-center py-20">
-        <UEmpty
-          variant="naked"
-          title="内容无法找到"
-          description="当前访问的内容已不存在，建议返回首页浏览其他内容"
-          :actions="[
-            {
-              label: '返回首页',
-              color: 'neutral',
-              to: '/',
-            },
-          ]" />
+      <div v-else key="empty" class="flex flex-col items-center justify-center py-20 select-none">
+        <UEmpty variant="naked" title="内容无法找到" description="当前访问的内容出现问题，返回首页浏览其他内容" :actions="[
+          {
+            label: '返回首页',
+            color: 'neutral',
+            to: '/',
+          },
+        ]" />
       </div>
     </Transition>
   </div>
@@ -259,22 +220,22 @@ const isUpdateRefresh = ref(false);
 
 onActivated(async () => {
   const currentId = route.params.id as string;
-  
+
   if (updatedPostIds.value.has(currentId)) {
     // 标记正在静默刷新，此时 status 会变 pending，但由于我们改了 v-if，骨架屏不会闪现
     isSilentRefreshing.value = true;
     isUpdateRefresh.value = true;
-    
+
     // 1. 在后台悄悄拉取新数据，此时界面依然显示旧的 postWithRelativeTime 内容
-    await refresh(); 
-    
+    await refresh();
+
     // 2. 数据拿到了，这时候再重置 mdcReady，触发你那个“沉浸式梳理”的遮罩和动画
     mdcReady.value = false;
 
     if (commentListRef.value) {
-      commentListRef.value.fetchComments(true); 
+      commentListRef.value.fetchComments(true);
     }
-    
+
     // 3. 消费掉标记
     clearUpdateMark(currentId);
     isSilentRefreshing.value = false;
@@ -307,6 +268,7 @@ const handleMdcMounted = () => {
 
 /* 3. 骨架屏特有的脉冲速度优化 (可选) */
 :deep(.animate-pulse) {
-  animation-duration: 1.2s; /* 让骨架屏闪烁得更慢一点，显得更优雅不急促 */
+  animation-duration: 1.2s;
+  /* 让骨架屏闪烁得更慢一点，显得更优雅不急促 */
 }
 </style>

@@ -37,6 +37,7 @@ export default defineEventHandler(async (event) => {
       'h1',
       'h2',
       'span',
+      'iframe',
     ],
     allowedAttributes: {
       ...sanitizeHtml.defaults.allowedAttributes,
@@ -44,6 +45,7 @@ export default defineEventHandler(async (event) => {
       code: ['class'],
       span: ['class'],
       div: ['class'],
+      iframe: ['*'],
     },
     transformTags: {
       a: sanitizeHtml.simpleTransform('a', { rel: 'nofollow' }),

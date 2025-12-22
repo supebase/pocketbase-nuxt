@@ -2,7 +2,7 @@ import PocketBase from 'pocketbase';
 import { createHash } from 'node:crypto';
 
 const config = useRuntimeConfig();
-const POCKETBASE_URL = config.public.POCKETBASE_URL;
+const POCKETBASE_URL = config.pocketbaseUrl;
 
 if (!POCKETBASE_URL) {
   throw new Error('POCKETBASE_URL 未配置正确');

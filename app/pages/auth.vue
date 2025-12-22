@@ -1,26 +1,13 @@
 <template>
-  <UCard
-    variant="subtle"
-    class="mx-auto max-w-md">
-    <UTabs
-      v-model="activeTab"
-      :items="items"
-      :content="false"
-      :ui="{ trigger: 'grow cursor-pointer' }"
-      variant="link"
-      size="lg"
-      color="primary"
+  <UCard variant="subtle" class="mx-auto max-w-md select-none">
+    <UTabs v-model="activeTab" :items="items" :content="false"
+      :ui="{ trigger: 'grow cursor-pointer' }" variant="link" size="lg" color="primary"
       class="w-full gap-4" />
 
     <div class="mt-4 space-y-4">
-      <UAlert
-        :title="currentTabItem?.description"
-        variant="outline"
-        color="neutral" />
+      <UAlert :title="currentTabItem?.description" variant="outline" color="neutral" />
 
-      <AuthForm
-        :key="activeTab"
-        :is-login-mode="activeTab === 'login'" />
+      <AuthForm :key="activeTab" :is-login-mode="activeTab === 'login'" />
     </div>
   </UCard>
 </template>
@@ -33,7 +20,7 @@ const items = [
   {
     label: "登录我的账户",
     icon: "i-hugeicons:login-02",
-    value: "login", // 必须与 activeTab 的值对应
+    value: "login",
     description: "使用电子邮件和密码登录到您的账户。",
   },
   {
@@ -44,10 +31,9 @@ const items = [
   },
 ];
 
-// 计算属性控制 activeTab
 const activeTab = computed({
   get() {
-    // 默认返回 'login'，解决“退出后默认显示登录”的问题
+    // 退出后默认显示登录
     return (route.query.tab as string) || "login";
   },
   set(val) {
@@ -58,6 +44,6 @@ const activeTab = computed({
   },
 });
 
-// 获取当前选中的配置项（用于显示 Description）
+// 获取当前选中的配置项
 const currentTabItem = computed(() => items.find((i) => i.value === activeTab.value));
 </script>

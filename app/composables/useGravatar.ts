@@ -1,3 +1,5 @@
+import { ref, computed, toValue, watch, type MaybeRefOrGetter } from 'vue'
+
 export interface GravatarOptions {
   size?: number;
   rank?: string;
@@ -8,14 +10,18 @@ export function useGravatar(
   options: GravatarOptions = {}
 ) {
   const { size = 64, rank = 'G' } = options;
-  const isLoading = ref(false); // 默认为 false，由 watch 决定何时开启
+
+  // 如果初始就有 ID，则默认为加载中
+  const isLoading = ref(!!toValue(avatarIdSource));
   const hasError = ref(false);
 
   const avatarUrl = computed(() => {
     const id = toValue(avatarIdSource);
+    // 使用 gravatar.loli.net 镜像源
     return id ? `https://gravatar.loli.net/avatar/${id}?s=${size}&r=${rank}` : '';
   });
 
+  // 监听 ID 变化，重置状态
   watch(
     () => toValue(avatarIdSource),
     (newId) => {
@@ -24,9 +30,9 @@ export function useGravatar(
         hasError.value = false;
       } else {
         isLoading.value = false;
+        hasError.value = false;
       }
-    },
-    { immediate: true }
+    }
   );
 
   const handleLoad = () => {

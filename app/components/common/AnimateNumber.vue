@@ -1,19 +1,13 @@
 <template>
-  <div class="flex items-center tabular-nums overflow-hidden">
+  <div class="flex items-center tabular-nums overflow-hidden select-none">
     <div class="flex flex-row-reverse items-center">
-      <div
-        v-for="item in processedDigits"
-        :key="item.id"
-        :class="[item.isComma ? 'comma' : 'number-column']"
-        class="relative">
+      <div v-for="item in processedDigits" :key="item.id"
+        :class="[item.isComma ? 'comma' : 'number-column']" class="relative">
         <template v-if="item.isComma"> , </template>
         <template v-else>
-          <div
-            class="number-scroll transition-transform duration-500 ease-out"
+          <div class="number-scroll transition-transform duration-500 ease-out"
             :style="{ transform: `translateY(${Number(item.digit) * -10}%)` }">
-            <div
-              v-for="n in 10"
-              :key="n"
+            <div v-for="n in 10" :key="n"
               class="number-cell flex justify-center items-center h-[1em]">
               {{ n - 1 }}
             </div>

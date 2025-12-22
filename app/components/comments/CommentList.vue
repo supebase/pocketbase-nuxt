@@ -1,44 +1,28 @@
 <template>
   <div class="mt-6">
-    <div
-      v-if="loading && comments.length === 0"
-      class="flex justify-center py-8">
-      <UIcon
-        name="i-hugeicons:refresh"
-        class="size-6 text-primary animate-spin" />
+    <div v-if="loading && comments.length === 0" class="flex justify-center py-8">
+      <UIcon name="i-hugeicons:refresh" class="size-6 text-primary animate-spin" />
     </div>
 
     <div v-else-if="comments.length > 0">
-      <USeparator
-        type="dashed"
-        class="mb-6">
-        <CommonAnimateNumber
-          :value="totalItems"
-          class="text-dimmed mx-1.5" />
+      <USeparator type="dashed" class="mb-6 select-none">
+        <CommonAnimateNumber :value="totalItems" class="text-dimmed mx-1.5" />
         <div class="text-dimmed">条评论</div>
       </USeparator>
 
-      <CommonMotionTimeline
-        :items="comments"
-        line-offset="15px"
-        :trigger-ratio="0.55">
+      <CommonMotionTimeline :items="comments" line-offset="15px" :trigger-ratio="0.55">
         <template #indicator="{ item }">
           <div
             class="size-8 rounded-full ring-4 ring-white dark:ring-neutral-900 shadow-sm overflow-hidden">
-            <CommonGravatar
-              :avatar-id="item.expand?.user?.avatar"
-              :size="64" />
+            <CommonGravatar :avatar-id="item.expand?.user?.avatar" :size="64" />
           </div>
         </template>
 
         <template #title="{ item }">
           <div class="flex items-center justify-between text-base font-medium">
             {{ item.expand?.user?.name }}
-            <CommonLikeButton
-              :key="item.id"
-              :comment-id="String(item.id)"
-              :initial-likes="item.likes || 0"
-              :is-liked="item.isLiked || false"
+            <CommonLikeButton :key="item.id" :comment-id="String(item.id)"
+              :initial-likes="item.likes || 0" :is-liked="item.isLiked || false"
               @like-change="(liked, likes) => handleLikeChange(liked, likes, item.id)" />
           </div>
         </template>
@@ -49,19 +33,12 @@
         </template>
       </CommonMotionTimeline>
 
-      <div class="flex justify-center mt-8 mb-4">
-        <UButton
-          v-if="hasMore"
-          :loading="isLoadingMore"
-          variant="soft"
-          color="neutral"
+      <div class="flex justify-center mt-8 mb-4 select-none">
+        <UButton v-if="hasMore" :loading="isLoadingMore" variant="soft" color="neutral"
           @click="handleLoadMore">
           加载更多评论
         </UButton>
-        <USeparator
-          v-else
-          label="已经到底了"
-          type="dashed" />
+        <USeparator v-else label="已经到底了" type="dashed" />
       </div>
     </div>
   </div>

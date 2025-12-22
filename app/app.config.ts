@@ -45,7 +45,7 @@ export default defineAppConfig({
     },
     radioGroup: {
       slots: {
-        item: 'rounded-lg border has-data-[state=checked]:shadow-lg has-data-[state=checked]:shadow-primary/30 w-full cursor-pointer',
+        item: 'rounded-lg border has-data-[state=checked]:shadow-lg has-data-[state=checked]:shadow-primary/50 w-full cursor-pointer',
         label: 'text-base',
         description: 'text-muted/80',
         fieldset: 'gap-3 justify-center',
@@ -62,9 +62,9 @@ export default defineAppConfig({
   },
 
   toaster: {
-    position: 'top-right' as const,
+    position: 'bottom-right' as const,
     expand: false,
     duration: 5000,
-    progress: false,
+    // progress: false,
   },
 });

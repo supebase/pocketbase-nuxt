@@ -29,7 +29,11 @@ export function cleanMarkdown(text: string): string {
       .replace(/\n\s*[-*+]\s/g, '\n')
       .replace(/\n\s*\d+\.\s/g, '\n')
 
-      // 6. 其他清理
+      // 6. 仅移除 iframe 相关标签
+      .replace(/<iframe[^>]*>.*?<\/iframe>/gis, '')
+      .replace(/<iframe[^>]*\/?>/gi, '')
+
+      // 7. 其他清理
       .replace(/::.*?::/gs, '')
       .trim()
   );
