@@ -1,44 +1,50 @@
 import { toggleLike } from '../../services/likes.service';
 import { handlePocketBaseError } from '../../utils/errorHandler';
+// 导入点赞相关的业务类型
+import type { ToggleLikeRequest, ToggleLikeResponse } from '~/types/likes';
 
-export default defineEventHandler(async (event) => {
-  // 1. 获取当前登录用户
+export default defineEventHandler(async (event): Promise<ToggleLikeResponse> => {
+  // 1. 获取当前登录用户并校验
   const session = await getUserSession(event);
   const user = session?.user;
 
-  if (!user) {
+  if (!user?.id) {
     throw createError({
       statusCode: 401,
-      // 这里的修改确保前端 err.data.message 能拿到正确提示
-      message: '请先登录后操作',
+      message: '请先登录后再进行点赞操作',
       statusMessage: 'Unauthorized',
     });
   }
 
-  // 2. 读取请求体
-  const { comment: commentId } = await readBody(event);
+  // 2. 读取并标注请求体类型
+  const body = await readBody<ToggleLikeRequest>(event);
+  const { comment: commentId } = body;
 
-  // 3. 参数验证
+  // 3. 基础参数验证
   if (!commentId || typeof commentId !== 'string') {
     throw createError({
       statusCode: 400,
-      message: '评论 ID 无效或不能为空',
+      message: '评论 ID 不能为空',
       statusMessage: 'Bad Request',
     });
   }
 
   try {
-    // 4. 切换点赞状态
-    // toggleLike 内部通常会处理创建/删除 PocketBase 的 likes 记录
+    // 4. 执行切换点赞逻辑
+    // toggleLike 内部会利用 PBLikesResponse 类型确保字段操作安全
     const result = await toggleLike(commentId, user.id);
 
-    // 5. 统一返回格式 { message, data }
+    // 5. 返回符合 ToggleLikeResponse 接口的标准化响应
     return {
       message: result.liked ? '点赞成功' : '已取消点赞',
-      data: result, // result 通常包含 { liked: boolean, count: number }
+      data: {
+        liked: result.liked,
+        likes: result.likes,
+        commentId: result.commentId,
+      },
     };
   } catch (error) {
-    // 这里内部会自动根据 PB 报错生成 message
-    handlePocketBaseError(error, '点赞操作失败，请稍后再试');
+    // 自动捕获 PocketBase 错误（如评论已被删除导致的点赞失败等）
+    return handlePocketBaseError(error, '点赞操作异常，请稍后再试');
   }
 });

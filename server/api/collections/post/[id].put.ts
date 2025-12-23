@@ -1,103 +1,97 @@
-import { updatePost } from '../../../services/posts.service';
+import { updatePost, getPostById } from '../../../services/posts.service';
 import { handlePocketBaseError } from '../../../utils/errorHandler';
 import sanitizeHtml from 'sanitize-html';
+// 导入业务类型
+import type { PostsListResponse, CreatePostRequest } from '~/types/posts';
+import type { Update } from '~/types/pocketbase-types';
 
-export default defineEventHandler(async (event) => {
-    // 1. 获取当前登录用户
-    const session = await getUserSession(event);
-    const user = session?.user;
+export default defineEventHandler(async (event): Promise<PostsListResponse> => {
+  // 1. 身份校验
+  const session = await getUserSession(event);
+  const user = session?.user;
 
-    if (!user) {
-        throw createError({
-            statusCode: 401,
-            message: '请先登录后操作', // 改为 message
-            statusMessage: 'Unauthorized',
-        });
+  if (!user?.id) {
+    throw createError({
+      statusCode: 401,
+      message: '请先登录后再进行操作',
+      statusMessage: 'Unauthorized',
+    });
+  }
+
+  // 2. 获取参数
+  const postId = getRouterParam(event, 'id');
+  if (!postId) {
+    throw createError({
+      statusCode: 400,
+      message: '内容 ID 不能为空',
+    });
+  }
+
+  // 3. 读取并处理内容
+  const body = await readBody<Partial<CreatePostRequest>>(event);
+  let cleanContent: string | undefined;
+
+  // 只有当传了 content 时才进行清洗和校验
+  if (body.content !== undefined) {
+    if (typeof body.content !== 'string' || body.content.trim() === '') {
+      throw createError({ statusCode: 400, message: '有效内容不能为空' });
     }
 
-    // 获取路由参数
-    const postId = getRouterParam(event, 'id');
-
-    // 参数验证
-    if (!postId) {
-        throw createError({
-            statusCode: 400,
-            // 遵循新标准：message 存放中文，statusMessage 存放简短英文
-            message: '文章 ID 不能为空',
-            statusMessage: 'Bad Request',
-        });
-    }
-
-    // 2. 读取请求体
-    const { content, allow_comment, published, icon, action } = await readBody(event);
-
-    // 3. 参数验证 (初步)
-    if (!content || typeof content !== 'string') {
-        throw createError({
-            statusCode: 400,
-            message: '内容不能为空', // 改为 message
-            statusMessage: 'Bad Request',
-        });
-    }
-
-    // 4. HTML 清洗
-    const cleanContent = sanitizeHtml(content, {
-        allowedTags: [
-            ...sanitizeHtml.defaults.allowedTags,
-            'img',
-            'details',
-            'summary',
-            'h1',
-            'h2',
-            'span',
-        ],
-        allowedAttributes: {
-            ...sanitizeHtml.defaults.allowedAttributes,
-            img: ['src', 'alt', 'title', 'width', 'height', 'loading'],
-            code: ['class'],
-            span: ['class'],
-            div: ['class'],
-        },
-        transformTags: {
-            a: sanitizeHtml.simpleTransform('a', { rel: 'nofollow' }),
-        },
+    cleanContent = sanitizeHtml(body.content, {
+      allowedTags: [
+        ...sanitizeHtml.defaults.allowedTags,
+        'img',
+        'details',
+        'summary',
+        'h1',
+        'h2',
+        'span',
+      ],
+      allowedAttributes: {
+        ...sanitizeHtml.defaults.allowedAttributes,
+        img: ['src', 'alt', 'title', 'width', 'height', 'loading'],
+        code: ['class'],
+        span: ['class'],
+        div: ['class'],
+      },
+      transformTags: { a: sanitizeHtml.simpleTransform('a', { rel: 'nofollow' }) },
     });
 
-    // 5. 内容长度限制 (使用清洗后的内容)
-    // 注意：如果清洗后只剩下空白字符，也应该拦截
-    if (cleanContent.trim().length === 0) {
-        throw createError({
-            statusCode: 400,
-            message: '有效内容不能为空',
-            statusMessage: 'Bad Request',
-        });
-    }
-
     if (cleanContent.length > 10000) {
-        throw createError({
-            statusCode: 400,
-            message: '内容长度不能超过 10000 字符',
-            statusMessage: 'Payload Too Large',
-        });
+      throw createError({ statusCode: 400, message: '内容长度超出限制' });
+    }
+  }
+
+  try {
+    // 4. 安全校验：检查文章是否存在且是否为当前用户所有
+    const existingPost = await getPostById(postId);
+    // 注意：PocketBase 返回的字段可能在 expand 或直接在记录中，这里取决于你的 PB 结构
+    // 通常 PB 的记录包含 user 字段（存放 ID）
+    if ((existingPost as any).user !== user.id) {
+      throw createError({
+        statusCode: 403,
+        message: '您没有权限修改此内容',
+        statusMessage: 'Forbidden',
+      });
     }
 
-    try {
-        // 6. 更新文章记录
-        const post = await updatePost(postId, {
-            content: cleanContent,
-            user: user.id,
-            allow_comment: allow_comment,
-            published: published,
-            icon: icon,
-            action: action,
-        });
+    // 5. 构造更新载荷
+    const updateData: Update<'posts'> = {
+      ...(cleanContent !== undefined && { content: cleanContent }),
+      ...(body.allow_comment !== undefined && { allow_comment: body.allow_comment }),
+      ...(body.published !== undefined && { published: body.published }),
+      ...(body.icon !== undefined && { icon: body.icon }),
+      ...(body.action !== undefined && { action: body.action }),
+    };
 
-        return {
-            message: '内容更新成功',
-            data: { post }, // 保持与 AuthResponse 类似的 data 结构（可选）
-        };
-    } catch (error) {
-        // 这里内部已经按照我们的新标准抛出 message 了
-        handlePocketBaseError(error, '内容更新失败');
-    }
+    // 6. 执行更新
+    const post = await updatePost(postId, updateData);
+
+    return {
+      message: '内容已成功更新',
+      data: post as any,
+    };
+  } catch (error) {
+    return handlePocketBaseError(error, '内容更新异常');
+  }
 });

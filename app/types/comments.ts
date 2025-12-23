@@ -1,40 +1,23 @@
-/**
- * 评论相关类型定义
- */
+import type {
+  CommentsResponse as PBCommentResponse,
+  UsersResponse,
+  PostsResponse,
+} from './pocketbase-types';
 
-/**
- * 评论记录类型
- */
-export interface CommentRecord {
-  post: string; // 关联的文章ID
-  id: string;
-  comment: string;
-  created: string;
-  relativeTime?: string; // 相对时间，用于前端显示
-  likes?: number; // 点赞数
-  isLiked?: boolean; // 当前用户是否已点赞
-  isNew?: boolean; // 是否是刚发表的评论
-  initialized?: boolean; // 是否已初始化，用于动画效果
-  expand?: {
-    post?: {
-      id?: string;
-      content?: string;
-    };
-    user?: {
-      id?: string;
-      name?: string;
-      verified?: boolean;
-      avatar?: string;
-    };
-  };
-  collectionId: string;
-  collectionName: string;
+export interface CommentExpand {
+  user?: Pick<UsersResponse, 'id' | 'name' | 'verified' | 'avatar'>;
+  post?: Pick<PostsResponse, 'id' | 'content'>;
 }
 
-/**
- * 评论列表响应类型
- */
-export interface CommentsResponse {
+export interface CommentRecord extends PBCommentResponse<CommentExpand> {
+  relativeTime?: string;
+  likes?: number;
+  isLiked?: boolean;
+  isNew?: boolean;
+  initialized?: boolean;
+}
+
+export interface CommentsListResponse {
   message: string;
   data: {
     comments: CommentRecord[];
@@ -44,9 +27,6 @@ export interface CommentsResponse {
   };
 }
 
-/**
- * 创建评论请求类型
- */
 export interface CreateCommentRequest {
   comment: string;
   post: string;

@@ -8,7 +8,8 @@
 
       <div class="flex-1 space-y-4 pb-4">
         <div class="flex items-center justify-between mt-1">
-          <USkeleton class="h-5 w-32" /> <USkeleton class="h-4 w-20" />
+          <USkeleton class="h-5 w-32" />
+          <USkeleton class="h-4 w-20" />
         </div>
 
         <div class="space-y-2">
@@ -29,10 +30,10 @@
 </template>
 
 <script setup lang="ts">
-  defineProps({
-    count: {
-      type: Number,
-      default: 1,
-    },
-  });
+defineProps({
+  count: {
+    type: Number,
+    default: 1,
+  },
+});
 </script>

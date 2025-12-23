@@ -1,35 +1,20 @@
-/**
- * 文章相关类型定义
- */
+import type { PostsResponse as PBPostResponse, UsersResponse } from './pocketbase-types';
 
 /**
- * 文章记录类型
+ * 扩展 Expand 类型定义
  */
-export interface PostRecord {
-  id: string;
-  content: string;
-  allow_comment: boolean;
-  published: boolean;
-  icon?: string;
-  action?: string;
-  created: string;
-  updated: string;
-  relativeTime?: string; // 相对时间，用于前端显示
-  expand?: {
-    user?: {
-      name?: string;
-      verified?: boolean;
-      avatar?: string;
-    };
-  };
-  collectionId: string;
-  collectionName: string;
+export interface PostExpand {
+  user?: Pick<UsersResponse, 'name' | 'verified' | 'avatar'>;
 }
 
 /**
- * 文章列表响应类型
+ * 业务文章记录：继承自 PB 自动生成的 Response
  */
-export interface PostsResponse {
+export interface PostRecord extends PBPostResponse<PostExpand> {
+  relativeTime?: string; // 仅前端展示使用
+}
+
+export interface PostsListResponse {
   message: string;
   data: {
     posts: PostRecord[];
@@ -39,21 +24,13 @@ export interface PostsResponse {
   };
 }
 
-/**
- * 单篇文章响应类型
- */
-export interface PostResponse {
+export interface SinglePostResponse {
   message: string;
   data: PostRecord;
 }
 
-/**
- * 创建文章请求类型
- */
-export interface CreatePostRequest {
-  content: string;
-  allow_comment: boolean;
-  published: boolean;
-  icon?: string;
-  action?: string;
-}
+// 创建请求可以直接使用 Pick
+export type CreatePostRequest = Pick<
+  PBPostResponse,
+  'content' | 'allow_comment' | 'published' | 'icon' | 'action'
+>;

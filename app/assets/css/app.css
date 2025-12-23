@@ -1,5 +1,5 @@
-@import "tailwindcss";
-@import "@nuxt/ui";
+@import 'tailwindcss';
+@import '@nuxt/ui';
 
 @plugin "@tailwindcss/typography";
 
@@ -138,11 +138,7 @@ body {
 
   /* 2. 动画核心代码 */
   display: inline;
-  background-image: linear-gradient(
-    to right,
-    var(--ui-primary),
-    var(--ui-primary)
-  );
+  background-image: linear-gradient(to right, var(--ui-primary), var(--ui-primary));
   background-size: 0% 2px;
   background-repeat: no-repeat;
   background-position: left 100%; /* 确保在文字最下方 */
@@ -156,7 +152,7 @@ body {
   background-size: 100% 2px;
 }
 
-.prose :where(img):not(:where([class~="not-prose"], [class~="not-prose"] *)) {
+.prose :where(img):not(:where([class~='not-prose'], [class~='not-prose'] *)) {
   width: 100%;
   height: auto;
   aspect-ratio: 16 / 9;

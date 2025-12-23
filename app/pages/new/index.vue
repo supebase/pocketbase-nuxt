@@ -43,7 +43,8 @@
       </div>
 
       <div class="flex items-center justify-between select-none">
-        <UButton type="button" color="neutral" variant="soft" to="/"> 取消 </UButton>
+        <UButton type="button" color="neutral" variant="soft" class="cursor-pointer"
+          @click="$router.back()"> 取消 </UButton>
 
         <UButton type="submit" color="neutral" :loading="isSubmitting" :disabled="isSubmitting"
           class="cursor-pointer">
@@ -54,26 +55,30 @@
         </UButton>
       </div>
 
-      <UAlert v-if="errors.content" icon="i-hugeicons:alert-02" color="error" variant="soft"
-        :description="errors.content" class="mt-4" />
+      <div class="space-y-2 mt-4">
+        <UAlert v-if="errors.content" icon="i-hugeicons:alert-02" color="error" variant="soft"
+          :description="errors.content" />
 
-      <UAlert v-if="globalError" icon="i-hugeicons:alert-02" color="error" variant="soft"
-        :description="globalError" class="mt-4" />
+        <UAlert v-if="globalError" icon="i-hugeicons:alert-02" color="error" variant="soft"
+          :description="globalError" />
+      </div>
     </form>
   </div>
 </template>
 
 <script setup lang="ts">
-// 初始化与数据定义
-const initialForm = {
+/**
+ * 使用工厂函数定义初始值，确保每次重置都是干净的副本
+ */
+const createInitialForm = () => ({
   content: '',
   allow_comment: true,
   published: true,
   icon: '',
   action: 'dit',
-};
+});
 
-const form = reactive({ ...initialForm });
+const form = reactive(createInitialForm());
 
 const errors = reactive({
   content: '',
@@ -83,12 +88,10 @@ const isSubmitting = ref(false);
 const globalError = ref('');
 
 /**
- * 重置表单到初始状态
+ * 重置表单状态
  */
 const resetForm = () => {
-  // 使用 Object.assign 快速重置 reactive 对象
-  Object.assign(form, initialForm);
-  // 清除错误信息
+  Object.assign(form, createInitialForm());
   errors.content = '';
   globalError.value = '';
 };
@@ -105,7 +108,7 @@ const validateForm = () => {
     errors.content = '内容不能为空';
     isValid = false;
   } else if (form.content.length > 10000) {
-    errors.content = '内容长度不能超过 10000 字符';
+    errors.content = '内容长度过长，请精简至 10000 字符以内';
     isValid = false;
   }
 
@@ -122,43 +125,40 @@ const handleSubmit = async () => {
   globalError.value = '';
 
   try {
+    // 路径修改：使用重构后的 API 路径
     await $fetch('/api/collections/posts', {
       method: 'POST',
       body: form,
     });
 
-    // 提交成功后重置表单
+    // 1. 提交成功后重置
     resetForm();
 
-    // 刷新数据并跳转
+    // 2. 刷新首页数据缓存
     await refreshNuxtData('posts-list-data');
+
+    // 3. 跳转回首页
     await navigateTo('/');
   } catch (err: any) {
-    // 1. 优先获取后端 handlePocketBaseError 传回的友好 message
+    // 优先展示后端返回的友好错误信息
     if (err.data?.message) {
       globalError.value = err.data.message;
-    }
-    // 2. 如果是具体的字段错误 (PocketBase 可能会返回 data.data)
-    else if (err.data?.data) {
+    } else if (err.data?.data) {
+      // 处理 PocketBase 的嵌套字段错误
       const firstError = Object.values(err.data.data)[0] as any;
       globalError.value = firstError?.message || '输入信息有误';
-    }
-    // 3. 网络错误或未知错误
-    else {
-      globalError.value = err.message?.includes('fetch')
-        ? '网络连接失败，请稍后再试'
-        : '发布失败，请检查网络或联系管理员';
+    } else {
+      globalError.value = '发布失败，请检查网络或联系管理员';
     }
 
-    console.error('Post Error Details:', err.data);
+    console.error('Post Submit Error:', err);
   } finally {
     isSubmitting.value = false;
   }
 };
 
 /**
- * 处理 KeepAlive 模式下的离开页面重置
- * 当组件被缓存但从视图中移除时触发
+ * 在 KeepAlive 模式下离开页面时重置
  */
 onDeactivated(() => {
   resetForm();

@@ -3,54 +3,58 @@
  */
 import { pb, getMd5Hash } from '../utils/pocketbase';
 import { normalizeEmail, formatDefaultName } from '~/utils/index';
+// 导入生成的类型和业务模型
+import type { UsersResponse, Create } from '~/types/pocketbase-types';
 
 /**
  * 用户登录服务
- * @param email 电子邮件
- * @param password 密码
- * @returns 认证数据
  */
-export async function loginService(email: string, password: string) {
+export async function loginService(email: string, password: string): Promise<UsersResponse> {
   const cleanEmail = normalizeEmail(email);
-  const authData = await pb.collection('users').authWithPassword(cleanEmail, password);
+
+  // 使用泛型确保 authData.record 是 UsersResponse 类型
+  const authData = await pb
+    .collection('users')
+    .authWithPassword<UsersResponse>(cleanEmail, password);
+
   return authData.record;
 }
 
 /**
  * 用户注册服务
- * @param email 电子邮件
- * @param password 密码
- * @param passwordConfirm 确认密码
- * @returns 认证数据
  */
-export async function registerService(email: string, password: string, passwordConfirm: string) {
-  // 1. 预处理邮箱
+export async function registerService(
+  email: string,
+  password: string,
+  passwordConfirm: string
+): Promise<UsersResponse> {
+  // 1. 预处理
   const cleanEmail = normalizeEmail(email);
-
-  // 2. 基于干净的邮箱生成 MD5
   const md5Hash = getMd5Hash(cleanEmail);
-
-  // 3. 处理默认用户名 (例如: "john.doe" -> "John.doe")
   const rawName = cleanEmail.split('@')[0];
   const defaultName = formatDefaultName(rawName);
 
-  // 创建用户
-  await pb.collection('users').create({
+  // 2. 创建用户 - 利用 Create<'users'> 类型确保字段正确性
+  const newUser: Omit<Create<'users'>, 'tokenKey'> = {
     email: cleanEmail,
     password,
     passwordConfirm,
     avatar: md5Hash,
     name: defaultName,
-  });
+  };
 
-  // 自动登录使用同样的 cleanEmail
-  const authData = await pb.collection('users').authWithPassword(cleanEmail, password);
+  await pb.collection('users').create(newUser);
+
+  // 3. 自动登录
+  const authData = await pb
+    .collection('users')
+    .authWithPassword<UsersResponse>(cleanEmail, password);
   return authData.record;
 }
 
 /**
  * 用户登出服务
  */
-export async function logoutService() {
+export async function logoutService(): Promise<void> {
   pb.authStore.clear();
 }

@@ -21,9 +21,7 @@
               <div class="text-dimmed">
                 <ClientOnly>
                   {{ postWithRelativeTime.relativeTime }}
-                  <template #fallback>
-                    <span>...</span>
-                  </template>
+                  <template #fallback><span>刚刚</span></template>
                 </ClientOnly>
                 <span class="mx-1.5">&bull;</span>
                 {{ useReadingTime(postWithRelativeTime.content) }}
@@ -32,7 +30,8 @@
 
             <div>
               <UIcon name="i-hugeicons:arrow-turn-backward"
-                class="size-6.5 text-dimmed cursor-pointer" @click="$router.back()" />
+                class="size-6.5 text-dimmed cursor-pointer hover:text-primary transition-colors"
+                @click="$router.back()" />
             </div>
           </div>
         </div>
@@ -40,7 +39,7 @@
         <div class="relative mt-6">
           <Transition leave-active-class="transition duration-300 opacity-0">
             <div v-if="!mdcReady"
-              class="absolute inset-0 h-40 flex items-center justify-center bg-white/50 dark:bg-neutral-900/50 z-10 backdrop-blur-sm rounded-lg select-none">
+              class="absolute inset-0 h-40 flex items-center justify-center bg-white/50 dark:bg-neutral-900/50 z-10 backdrop-blur-sm rounded-lg select-none pointer-events-none">
               <UIcon name="i-hugeicons:refresh" class="size-5 mr-2 animate-spin" />
               <span class="font-medium">
                 {{ isUpdateRefresh ? '正在同步内容改动' : '沉浸式梳理内容' }}
@@ -50,7 +49,7 @@
 
           <div :class="[
             'transition-all duration-500',
-            mdcReady ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4',
+            mdcReady ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none',
           ]">
             <MDC :key="postWithRelativeTime.id + postWithRelativeTime.updated"
               :value="postWithRelativeTime.content || ''" @vue:mounted="handleMdcMounted"
@@ -60,7 +59,7 @@
 
         <div :class="[
           'transition-all duration-700 delay-300',
-          mdcReady ? 'opacity-100' : 'opacity-0',
+          mdcReady ? 'opacity-100' : 'opacity-0 pointer-events-none',
         ]">
           <ClientOnly>
             <CommentsCommentForm
@@ -77,12 +76,8 @@
       </div>
 
       <div v-else key="empty" class="flex flex-col items-center justify-center py-20 select-none">
-        <UEmpty variant="naked" title="内容无法找到" description="当前访问的内容出现问题，返回首页浏览其他内容" :actions="[
-          {
-            label: '返回首页',
-            color: 'neutral',
-            to: '/',
-          },
+        <UEmpty variant="naked" title="内容无法找到" description="当前访问的内容可能已被删除，返回首页浏览更多" :actions="[
+          { label: '返回首页', color: 'neutral', to: '/' },
         ]" />
       </div>
     </Transition>
@@ -90,8 +85,7 @@
 </template>
 
 <script setup lang="ts">
-import type { PostRecord } from "~/types/posts";
-import type { CommentRecord } from "~/types/comments";
+import type { SinglePostResponse } from "~/types/posts";
 import { useIntersectionObserver } from "@vueuse/core";
 
 const { updatedPostIds, clearUpdateMark } = usePostUpdateTracker();
@@ -103,179 +97,104 @@ const isListLoading = ref(false);
 const mdcReady = ref(false);
 const commentListRef = ref();
 const commenters = ref<any[]>([]);
+const isUpdateRefresh = ref(false);
+const authorRow = ref<HTMLElement | null>(null);
 
-const { data, status, refresh, error } = await useLazyFetch<{ data: PostRecord }>(
+const { data, status, refresh, error } = await useLazyFetch<SinglePostResponse>(
   `/api/collections/post/${id}`,
-  {
-    server: true,
-  }
+  { server: true }
 );
-
-const isSilentRefreshing = ref(false);
 
 const postWithRelativeTime = computed(() => {
   const postData = data.value?.data;
   if (!postData) return null;
-
   return {
     ...postData,
     relativeTime: useRelativeTime(postData.created).value,
   };
 });
 
-// 记录原始评论数据，以便在登录状态切换时重新过滤
-const rawCommentsCache = ref<CommentRecord[]>([]);
-
-const handleUpdateCommenters = (rawComments: CommentRecord[]) => {
-  // 存一份备份
-  rawCommentsCache.value = rawComments;
-
+const handleUpdateCommenters = (rawComments: any[]) => {
   const userMap = new Map();
   rawComments.forEach((comment) => {
-    const user = comment.expand?.user;
-    if (user && user.id !== currentUser.value?.id) {
-      userMap.set(user.id, { id: user.id, name: user.name, avatar: user.avatar });
+    const u = comment.expand?.user;
+    if (u && u.id !== currentUser.value?.id) {
+      userMap.set(u.id, { id: u.id, name: u.name, avatar: u.avatar });
     }
   });
   commenters.value = Array.from(userMap.values());
 };
 
-watch(
-  currentUser,
-  () => {
-    if (rawCommentsCache.value.length > 0) {
-      handleUpdateCommenters(rawCommentsCache.value);
-    }
-  },
-  { deep: true }
-);
-
-const onCommentSuccess = (newComment: CommentRecord) => {
+const onCommentSuccess = (newComment: any) => {
   if (commentListRef.value) {
     commentListRef.value.handleCommentCreated(newComment);
   }
   refreshNuxtData(`comments-data-${id}`);
 };
 
-// 监听登录状态变化，刷新评论列表
-watch(
-  loggedIn,
-  () => {
-    // 当登录状态变化时，重新获取评论数据
-    if (commentListRef.value) {
-      // 调用评论列表组件的 fetchComments 方法
-      commentListRef.value.fetchComments();
-    }
-  }
-);
-
-watch(
-  () => route.params.id,
-  () => (mdcReady.value = false)
-);
-
 const { showHeaderBack } = useHeader();
 
-const authorRow = ref<HTMLElement | null>(null);
-
-const isContentReady = computed(() => {
-  return status.value === "success" && mdcReady.value && authorRow.value !== null;
-});
-
-// 1. 页面销毁时重置
-onUnmounted(() => {
-  showHeaderBack.value = false;
-});
-
-// 2. 路由跳转前置重置 (防止返回后 logo 不恢复)
-onBeforeRouteLeave(() => {
-  showHeaderBack.value = false;
-});
-
-// 3. 修改原有的监听逻辑，确保它是准确的
+// 【关键修复 3】：调整观察器逻辑，确保逻辑不被阻塞
 useIntersectionObserver(
   authorRow,
   (entries) => {
-    // 1. 获取第一个条目
     const entry = entries[0];
+    if (!entry) return;
 
-    // 2. 只有当 entry 存在且内容就绪时才执行逻辑
-    if (!entry || !isContentReady.value) return;
-
-    // 3. 此时 entry.isIntersecting 就可以安全访问了
     const { isIntersecting, boundingClientRect } = entry;
 
     if (isIntersecting) {
+      // 只要作者行可见，立刻关闭 HeaderBack，保证点击不被拦截
       showHeaderBack.value = false;
-    } else if (boundingClientRect.top < 0) {
-      // 只有当元素滚出顶部（top 为负）时才显示返回
+    } else if (boundingClientRect.top < 0 && mdcReady.value) {
+      // 只有在内容完全加载且滚出屏幕时才显示 HeaderBack
       showHeaderBack.value = true;
     }
   },
-  {
-    threshold: 0,
-    rootMargin: "-20px 0px 0px 0px",
-  }
+  { threshold: 0, rootMargin: "-20px 0px 0px 0px" }
 );
 
-// 离开页面时必须重置，防止影响到首页
-onBeforeUnmount(() => {
-  showHeaderBack.value = false;
-});
-
-const isUpdateRefresh = ref(false);
+onBeforeRouteLeave(() => { showHeaderBack.value = false; });
+onUnmounted(() => { showHeaderBack.value = false; });
 
 onActivated(async () => {
   const currentId = route.params.id as string;
-
   if (updatedPostIds.value.has(currentId)) {
-    // 标记正在静默刷新，此时 status 会变 pending，但由于我们改了 v-if，骨架屏不会闪现
-    isSilentRefreshing.value = true;
     isUpdateRefresh.value = true;
-
-    // 1. 在后台悄悄拉取新数据，此时界面依然显示旧的 postWithRelativeTime 内容
     await refresh();
-
-    // 2. 数据拿到了，这时候再重置 mdcReady，触发你那个“沉浸式梳理”的遮罩和动画
     mdcReady.value = false;
-
     if (commentListRef.value) {
       commentListRef.value.fetchComments(true);
     }
-
-    // 3. 消费掉标记
     clearUpdateMark(currentId);
-    isSilentRefreshing.value = false;
   }
 });
 
-// 修正 handleMdcMounted，确保它能被重新触发
 const handleMdcMounted = () => {
+  // 适当缩短延迟，增强响应感
   setTimeout(() => {
     mdcReady.value = true;
-    // 2. 动画开始后，延迟重置标记，确保下次进入非更新页面时恢复默认文案
-    setTimeout(() => {
-      isUpdateRefresh.value = false;
-    }, 1700);
-  }, 1500); // 这里的延迟可以根据你喜欢的体感调整
+    setTimeout(() => { isUpdateRefresh.value = false; }, 1000);
+  }, 600);
 };
+
+watch(() => route.params.id, () => {
+  mdcReady.value = false;
+});
 </script>
 
 <style scoped>
-/* 1. 定义过渡过程 */
 .fade-enter-active {
-  /* 进入动画：时间稍长，带有一种顺滑的减速感 */
-  transition: all 0.8s cubic-bezier(0.23, 1, 0.32, 1);
+  transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 .fade-leave-active {
-  /* 离开动画：时间稍短，快速让位 */
-  transition: all 0.3s cubic-bezier(0.4, 0, 1, 1);
+  transition: all 0.3s ease;
 }
 
-/* 3. 骨架屏特有的脉冲速度优化 (可选) */
-:deep(.animate-pulse) {
-  animation-duration: 1.2s;
-  /* 让骨架屏闪烁得更慢一点，显得更优雅不急促 */
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+  transform: translateY(10px);
 }
 </style>

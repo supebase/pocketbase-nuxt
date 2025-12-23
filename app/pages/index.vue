@@ -6,7 +6,7 @@
         <ClientOnly>
           <CommonAnimateNumber :value="visibleTotalItems" /> 条贴文和分享
           <template #fallback>
-            <span>-- 条贴文和分享</span>
+            <span>0 条贴文和分享</span>
           </template>
         </ClientOnly>
       </div>
@@ -65,7 +65,7 @@
             <ClientOnly>
               <span class="text-dimmed/80">{{ item.date }}</span>
               <template #fallback>
-                <span class="text-dimmed/80">...</span>
+                <UIcon name="i-hugeicons:clock-01" class="size-4.5 text-dimmed/80" />
               </template>
             </ClientOnly>
           </div>
@@ -125,14 +125,16 @@
 </template>
 
 <script setup lang="ts">
-import type { PostRecord, PostsResponse } from '~/types/posts';
+import type { PostRecord, PostsListResponse } from '~/types/posts';
+import type { TypedPocketBase } from '~/types/pocketbase-types';
 
-// 获取当前用户认证状态
+// 1. 认证与状态管理
 const { loggedIn, user } = useUserSession();
-
 const { isRefreshing, isResetting, refreshPostsAndComments } = useRefresh();
+const { $pb } = useNuxtApp();
+const pb = $pb as TypedPocketBase;
 
-// 分页逻辑
+// 2. 分页逻辑
 const {
   allItems: allPosts,
   currentPage,
@@ -143,72 +145,76 @@ const {
   resetPagination,
 } = usePagination<PostRecord>();
 
-// 实时逻辑
-const { stream, pb } = usePocketRealtime<PostRecord>('posts');
+// 3. 实时订阅逻辑
+const { stream } = usePocketRealtime<PostRecord>('posts');
 
-// API 获取逻辑
+// 4. API 获取函数
 const fetchPostsApi = async (page: number) => {
   try {
-    const res = await $fetch<PostsResponse>('/api/collections/posts', {
+    const res = await $fetch<PostsListResponse>('/api/collections/posts', {
       query: { page },
     });
-    return { items: res.data.posts, total: res.data.totalItems };
+    return {
+      items: res.data.posts,
+      total: res.data.totalItems
+    };
   } catch (err: any) {
     throw err;
   }
 };
 
-// SSR 初始加载
+// 5. SSR 初始加载 (Lazy 模式)
 const {
   data: fetchResult,
   status,
   error,
   refresh,
-} = await useLazyFetch<PostsResponse>('/api/collections/posts', {
+} = await useLazyFetch<PostsListResponse>('/api/collections/posts', {
   key: 'posts-list-data',
   server: true,
 });
 
-// 监听数据初始化
+// 6. 监听结果初始化分页状态
 watch(
   fetchResult,
   (res) => {
-    if (res?.data.page === 1) {
-      resetPagination(res.data.posts || [], res.data.totalItems || 0);
+    if (res?.data) {
+      // 仅在第一页或重置时更新
+      if (res.data.page === 1) {
+        resetPagination(res.data.posts, res.data.totalItems);
+      }
     }
   },
   { immediate: true }
 );
 
-// 交互逻辑
-const manualRefresh = () => refreshPostsAndComments(refresh, allPosts, currentPage);
-const handleLoadMore = () => loadMore(fetchPostsApi);
+// 7. 权限控制逻辑
+const canViewDrafts = computed(() => loggedIn.value && user.value?.verified);
 
-// 检查用户是否有权限查看草稿
-const canViewDrafts = computed(() => {
-  return loggedIn && user.value?.verified;
-});
-
+// 8. 数据转换逻辑 (用于 Timeline 展示)
 const displayItems = computed(() => {
-  const items = allPosts.value.map((item) => ({
-    id: item.id,
-    title: item.expand?.user?.name,
-    date: useRelativeTime(item.created).value,
-    description: item.content,
-    action: item.action,
-    allowComment: item.allow_comment,
-    published: item.published,
-    icon: item.icon,
-    avatarId: item.expand?.user?.avatar,
-    firstImage: getFirstImageUrl(item.content),
-  }));
+  // 过滤
+  const filtered = canViewDrafts.value
+    ? allPosts.value
+    : allPosts.value.filter(p => p.published);
 
-  // 如果用户无权查看草稿，过滤掉未发布的文章
-  if (!canViewDrafts.value) {
-    return items.filter((item) => item.published);
-  }
-
-  return items;
+  // 【排序关键】：在这里统一处理 -created 排序
+  // 使用 slice() 避免直接修改 allPosts 响应式数组
+  return filtered
+    .slice()
+    .sort((a, b) => new Date(b.created).getTime() - new Date(a.created).getTime())
+    .map((item) => ({
+      id: item.id,
+      title: item.expand?.user?.name || '未知用户',
+      date: useRelativeTime(item.created).value,
+      description: item.content,
+      action: item.action,
+      allowComment: item.allow_comment,
+      published: item.published,
+      icon: item.icon,
+      avatarId: item.expand?.user?.avatar,
+      firstImage: getFirstImageUrl(item.content),
+    }));
 });
 
 // 修改 totalItems 的显示，根据权限调整
@@ -218,50 +224,51 @@ const visibleTotalItems = computed(() => {
     const publishedPosts = allPosts.value.filter((post) => post.published);
     return publishedPosts.length;
   }
+
   return totalItems.value;
 });
 
+// 9. 交互处理
+const manualRefresh = () => refreshPostsAndComments(refresh, allPosts, currentPage);
+const handleLoadMore = () => loadMore(fetchPostsApi);
+
+// 10. 生命周期与实时流
 onActivated(() => {
   if (allPosts.value.length === 0 && status.value !== 'pending') {
     manualRefresh();
   }
 });
 
-// 启动实时流
 onMounted(async () => {
   await stream({
     onUpdate: async ({ action, record }) => {
-      // 核心修正：如果是新建或更新，我们需要获取带 expand 的完整数据
-      let fullRecord = record;
+      let fullRecord: PostRecord = record;
 
       if (action === 'create' || action === 'update') {
         try {
-          // 重新拉取该条记录，并带上 expand 参数
-          fullRecord = await pb.collection('posts').getOne(record.id, {
-            expand: 'user' // 确保这里和你 API 返回的 expand 字段一致
-          });
-        } catch (err) {
-          console.error("无法获取完整的实时记录详情:", err);
-        }
+          fullRecord = await pb.collection('posts').getOne<PostRecord>(record.id, { expand: 'user' });
+        } catch (err) { return; }
       }
 
       const index = allPosts.value.findIndex(p => p.id === fullRecord.id);
 
       if (action === 'create') {
-        const exists = allPosts.value.some(p => p.id === fullRecord.id);
-        if (!exists && (fullRecord.published || canViewDrafts.value)) {
-          allPosts.value = [fullRecord, ...allPosts.value];
+        if (!allPosts.value.some(p => p.id === fullRecord.id)) {
+          allPosts.value.push(fullRecord); // 随手一丢，computed 会排序
           totalItems.value++;
         }
       } else if (action === 'update') {
         if (index !== -1) {
+          // 这里的逻辑依然需要：如果用户无权看草稿，则从仓库移除
           if (!fullRecord.published && !canViewDrafts.value) {
             allPosts.value.splice(index, 1);
             totalItems.value--;
           } else {
-            // 使用带 expand 的完整数据更新
             allPosts.value[index] = fullRecord;
           }
+        } else if (fullRecord.published || canViewDrafts.value) {
+          allPosts.value.push(fullRecord);
+          totalItems.value++;
         }
       } else if (action === 'delete') {
         if (index !== -1) {

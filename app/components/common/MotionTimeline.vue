@@ -1,31 +1,17 @@
 <template>
-  <div
-    ref="timelineContainer"
-    class="relative">
+  <div ref="timelineContainer" class="relative">
     <div
       class="absolute top-8 bottom-8 w-0.5 z-0 bg-neutral-100 dark:bg-neutral-800 overflow-hidden"
       :style="{ left: lineOffset }">
-      <div
-        class="absolute top-0 w-full bg-primary rounded-full will-change-[height]"
-        :class="{
-          'transition-[height] duration-500 ease-out': !loadingMore && !isResetting,
-          'transition-none': loadingMore, // 加载时完全禁用过渡，防止抖动
-        }"
-        :style="{ height: `${progress}%` }" />
+      <div class="absolute top-0 w-full bg-primary rounded-full will-change-[height]" :class="{
+        'transition-[height] duration-500 ease-out': !loadingMore && !isResetting,
+        'transition-none': loadingMore, // 加载时完全禁用过渡，防止抖动
+      }" :style="{ height: `${progress}%` }" />
     </div>
 
-    <UTimeline
-      v-bind="$attrs"
-      :items="itemsWithIndex"
-      :ui="mergedUi"
-      class="relative z-10">
-      <template
-        v-for="(_, name) in $slots"
-        #[name]="slotData">
-        <slot
-          :name="name"
-          v-bind="slotData"
-          :index="slotData.item?.index" />
+    <UTimeline v-bind="$attrs" :items="itemsWithIndex" :ui="mergedUi" class="relative z-10">
+      <template v-for="(_, name) in $slots" #[name]="slotData">
+        <slot :name="name" v-bind="slotData" :index="slotData.item?.index" />
       </template>
     </UTimeline>
   </div>

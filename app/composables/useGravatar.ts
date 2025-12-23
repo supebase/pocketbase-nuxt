@@ -1,5 +1,3 @@
-import { ref, computed, toValue, watch, type MaybeRefOrGetter } from 'vue'
-
 export interface GravatarOptions {
   size?: number;
   rank?: string;

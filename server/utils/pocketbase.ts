@@ -1,4 +1,5 @@
 import PocketBase from 'pocketbase';
+import type { TypedPocketBase } from '~/types/pocketbase-types';
 import { createHash } from 'node:crypto';
 
 const config = useRuntimeConfig();
@@ -8,11 +9,9 @@ if (!POCKETBASE_URL) {
   throw new Error('POCKETBASE_URL 未配置正确');
 }
 
-export const pb = new PocketBase(POCKETBASE_URL as string).autoCancellation(false);
-
-// 可选：确保服务端 PB 客户端始终处于非认证状态
-// pb.authStore.clear();
-// 如果在 server/api 中使用，每次请求都是一个新的上下文，通常不需要这一步。
+export const pb = new PocketBase(POCKETBASE_URL as string).autoCancellation(
+  false
+) as TypedPocketBase;
 
 /**
  * 服务器端 MD5 Hashing (使用 Node.js 内置 crypto)

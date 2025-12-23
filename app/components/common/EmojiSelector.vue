@@ -1,25 +1,14 @@
 <template>
-  <UPopover
-    :ui="{ content: 'ring-0 shadow-none bg-transparent' }"
-    v-model:open="isPickerVisible">
+  <UPopover :ui="{ content: 'ring-0 shadow-none bg-transparent' }" v-model:open="isPickerVisible">
     <div class="mt-1.5">
-      <UIcon
-        name="i-hugeicons:smile"
-        @click.stop="openPicker"
+      <UIcon name="i-hugeicons:smile" @click.stop="openPicker"
         class="size-5 text-muted cursor-pointer hover:text-primary transition-colors" />
     </div>
 
     <template #content>
       <div class="p-2">
-        <NuxtEmojiPicker
-          native
-          hide-search
-          hide-group-icons
-          hide-group-names
-          disable-sticky-group-names
-          disable-skin-tones
-          :theme="theme"
-          @select="handleEmojiSelect"
+        <NuxtEmojiPicker native hide-search hide-group-icons hide-group-names
+          disable-sticky-group-names disable-skin-tones :theme="theme" @select="handleEmojiSelect"
           :disabled-groups="disabledGroups" />
       </div>
     </template>

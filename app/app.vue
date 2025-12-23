@@ -1,31 +1,19 @@
 <template>
-  <UApp
-    :locale="zh_cn"
-    :toaster="appConfig.toaster">
+  <UApp :locale="zh_cn" :toaster="appConfig.toaster">
     <NuxtLoadingIndicator />
     <UHeader :toggle="false">
       <template #title>
-        <Transition
-          mode="out-in"
-          name="header-fade">
-          <div
-            v-if="showHeaderBack"
-            key="back"
-            class="flex items-center cursor-pointer"
-            @click="
-              () => {
-                showHeaderBack = false;
-                $router.back();
-              }
-            ">
-            <UIcon
-              name="i-hugeicons:arrow-turn-backward"
-              class="size-7 text-dimmed" />
+        <Transition mode="out-in" name="header-fade">
+          <div v-if="showHeaderBack" key="back" class="flex items-center cursor-pointer" @click="
+            () => {
+              showHeaderBack = false;
+              $router.back();
+            }
+          ">
+            <UIcon name="i-hugeicons:arrow-turn-backward" class="size-7 text-dimmed" />
           </div>
 
-          <CommonLogo
-            v-else
-            key="logo" />
+          <CommonLogo v-else key="logo" />
         </Transition>
       </template>
       <template #right>
@@ -59,4 +47,3 @@ watch(
   }
 );
 </script>
-

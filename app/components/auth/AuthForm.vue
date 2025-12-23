@@ -88,10 +88,8 @@ const formState = computed(() => ({
 }));
 
 const buttonLabel = computed(() => {
-  if (loading.value) {
-    return props.isLoginMode ? '正在登录' : '创建成功后将自动登录';
-  }
-  return props.isLoginMode ? '登录账户' : '创建账户';
+  if (loading.value) return props.isLoginMode ? '正在验证身份' : '正在创建并登录';
+  return props.isLoginMode ? '登录账户' : '创建新账户';
 });
 
 // 处理表单提交的函数

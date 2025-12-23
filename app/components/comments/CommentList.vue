@@ -118,13 +118,13 @@ const handleLikeChange = (liked: boolean, likes: number, commentId: string, isFr
  */
 const syncSingleComment = (record: any, action: 'create' | 'update' | 'delete') => {
   const index = comments.value.findIndex(c => c.id === record.id);
-  
+
   if (action === 'create') {
     if (index === -1) {
-      comments.value.unshift({ 
-        ...record, 
-        relativeTime: useRelativeTime(record.created).value, 
-        isNew: true 
+      comments.value.unshift({
+        ...record,
+        relativeTime: useRelativeTime(record.created).value,
+        isNew: true
       });
       totalItems.value++;
     }
@@ -132,9 +132,9 @@ const syncSingleComment = (record: any, action: 'create' | 'update' | 'delete') 
     const target = comments.value[index];
     if (target) {
       // 这里的 Object.assign 是安全的，因为它只更新已有属性
-      Object.assign(target, { 
-        ...record, 
-        relativeTime: record.created ? useRelativeTime(record.created).value : target.relativeTime 
+      Object.assign(target, {
+        ...record,
+        relativeTime: record.created ? useRelativeTime(record.created).value : target.relativeTime
       });
     }
   } else if (action === 'delete') {

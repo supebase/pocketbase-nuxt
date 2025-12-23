@@ -1,5 +1,4 @@
 import type { RecordModel, RecordSubscription } from 'pocketbase';
-import { onUnmounted, ref, type Ref } from 'vue';
 
 interface RealtimeOptions<T> {
     topic?: string;

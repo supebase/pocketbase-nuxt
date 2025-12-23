@@ -2,46 +2,41 @@
  * 文章服务层
  */
 import { pb } from '../utils/pocketbase';
+import type { PostExpand } from '~/types/posts';
+import type { Create, Update, PostsResponse as PBPostsResponse } from '~/types/pocketbase-types';
 
 /**
  * 获取文章列表
- * @param page 页码，默认为1
- * @param perPage 每页数量，默认为10
- * @returns 文章列表及分页信息
  */
 export async function getPostsList(page: number = 1, perPage: number = 10) {
-  return await pb.collection('posts').getList(page, perPage, {
+  // 使用 PBPostsResponse<PostExpand> 确保返回结果中 expand 字段拥有正确类型
+  return await pb.collection('posts').getList<PBPostsResponse<PostExpand>>(page, perPage, {
     sort: '-created',
-    expand: 'user',
+    expand: 'user', // 与 PostExpand 结构对应
   });
 }
 
 /**
  * 获取单篇文章详情
- * @param postId 文章ID
- * @returns 文章详情
  */
 export async function getPostById(postId: string) {
-  return await pb.collection('posts').getOne(postId, {
+  return await pb.collection('posts').getOne<PBPostsResponse<PostExpand>>(postId, {
     expand: 'user',
   });
 }
 
 /**
  * 创建新文章
- * @param data 文章数据
- * @returns 创建的文章
+ * @param data 使用 Create<'posts'> 确保提交字段符合数据库定义
  */
-export async function createPost(data: any) {
-  return await pb.collection('posts').create(data);
+export async function createPost(data: Create<'posts'>) {
+  return await pb.collection('posts').create<PBPostsResponse>(data);
 }
 
 /**
  * 更新文章
- * @param postId 文章ID
- * @param data 更新数据
- * @returns 更新后的文章
+ * @param data 使用 Update<'posts'> 允许部分更新字段
  */
-export async function updatePost(postId: string, data: any) {
-  return await pb.collection('posts').update(postId, data);
+export async function updatePost(postId: string, data: Update<'posts'>) {
+  return await pb.collection('posts').update<PBPostsResponse>(postId, data);
 }
