@@ -11,7 +11,7 @@ import type { CommentsResponse as PBCommentsResponse, Create } from '~/types/poc
  */
 export async function getCommentsList(
   page: number = 1,
-  perPage: number = 20,
+  perPage: number = 10,
   filter?: string,
   userId?: string
 ) {

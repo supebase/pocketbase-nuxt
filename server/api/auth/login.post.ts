@@ -28,6 +28,6 @@ export default defineEventHandler(async (event): Promise<AuthResponse> => {
   } catch (error) {
     // 5. 错误捕获
     // handlePocketBaseError 内部会根据 error.status 自动识别 401/404 等并抛出对应中文
-    return handlePocketBaseError(error, '登录失败，请检查账号信息');
+    return handlePocketBaseError(error, '登录失败，请检查账号信息是否正确');
   }
 });

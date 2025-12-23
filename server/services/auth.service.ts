@@ -28,13 +28,11 @@ export async function registerService(
   password: string,
   passwordConfirm: string
 ): Promise<UsersResponse> {
-  // 1. 预处理
   const cleanEmail = normalizeEmail(email);
   const md5Hash = getMd5Hash(cleanEmail);
   const rawName = cleanEmail.split('@')[0];
   const defaultName = formatDefaultName(rawName);
 
-  // 2. 创建用户 - 利用 Create<'users'> 类型确保字段正确性
   const newUser: Omit<Create<'users'>, 'tokenKey'> = {
     email: cleanEmail,
     password,
@@ -43,13 +41,11 @@ export async function registerService(
     name: defaultName,
   };
 
+  // 1. 创建用户
   await pb.collection('users').create(newUser);
 
-  // 3. 自动登录
-  const authData = await pb
-    .collection('users')
-    .authWithPassword<UsersResponse>(cleanEmail, password);
-  return authData.record;
+  // 2. 自动登录
+  return await loginService(cleanEmail, password);
 }
 
 /**

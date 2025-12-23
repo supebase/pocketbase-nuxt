@@ -34,7 +34,7 @@ export default defineEventHandler(async (event): Promise<AuthResponse> => {
 
     // 4. 统一处理成功逻辑并持久化 Session
     // 这里的 pbUser 会被 Pick 出 UserRecord 所需字段存入 Cookie
-    return await handleAuthSuccess(event, pbUser, '注册成功，欢迎加入！');
+    return await handleAuthSuccess(event, pbUser, '注册成功');
   } catch (error) {
     // 5. 处理 PocketBase 错误
     // handlePocketBaseError 会捕获“邮箱已存在(200/400)”、“密码太短”等 PB 特有异常

@@ -40,8 +40,8 @@ export function handlePocketBaseError(
   if (isNetworkError) {
     throw createError({
       statusCode: 503,
-      statusMessage: 'Service Unavailable', // 简短描述
       message: '无法连接到服务器，请检查您的网络连接。', // 详细中文信息
+      statusMessage: 'Service Unavailable', // 简短描述
       data: { _isNetworkError: true },
     });
   }
@@ -51,8 +51,8 @@ export function handlePocketBaseError(
     console.error('非 PB 错误:', error);
     throw createError({
       statusCode,
-      statusMessage: 'Internal Error',
       message: defaultMessage,
+      statusMessage: 'Internal Error',
       fatal: false,
     });
   }
@@ -76,8 +76,8 @@ export function handlePocketBaseError(
 
   throw createError({
     statusCode,
-    statusMessage: technicalMessage.substring(0, 50), // 确保 statusMessage 不会过长
     message: friendlyMessage, // 将中文提示放在 message 中
+    statusMessage: technicalMessage.substring(0, 50), // 确保 statusMessage 不会过长
     data: {
       _isPocketBaseError: true,
       originalError: errorData, // 可选：将原始错误详情传给前端

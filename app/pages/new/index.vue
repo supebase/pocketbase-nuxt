@@ -16,13 +16,22 @@
           },
         ]" />
 
-      <USeparator />
+      <div class="relative">
+        <UTextarea v-model="form.content" id="content" autoresize color="neutral" variant="none"
+          :placeholder="form.action === 'partager'
+            ? '粘贴链接或内容，转发给他人 ...'
+            : '输入原创内容，分享你的观点 ...'
+            " size="xl" :rows="10" :maxrows="18" :disabled="isSubmitting" class="w-full" />
 
-      <UTextarea v-model="form.content" id="content" autoresize color="neutral" variant="none"
-        :placeholder="form.action === 'partager'
-          ? '粘贴链接或内容，转发给他人 ...'
-          : '输入原创内容，分享你的观点 ...'
-          " size="xl" :rows="10" :maxrows="18" :disabled="isSubmitting" class="w-full" />
+        <div class="absolute -bottom-4 right-0 pointer-events-none">
+          <span class="text-xs tabular-nums select-none" :class="form.content.length >= maxLimit
+            ? 'text-red-600 font-bold'
+            : 'text-dimmed'
+            ">
+            {{ form.content.length }} / {{ maxLimit }}
+          </span>
+        </div>
+      </div>
 
       <div v-show="form.action === 'partager'" class="flex items-center gap-2.5 select-none">
         <UInput v-model="form.icon" id="icon" placeholder="图标，例如：i-simple-icons:nuxt"
@@ -46,7 +55,8 @@
         <UButton type="button" color="neutral" variant="soft" class="cursor-pointer"
           @click="$router.back()"> 取消 </UButton>
 
-        <UButton type="submit" color="neutral" :loading="isSubmitting" :disabled="isSubmitting"
+        <UButton type="submit" color="neutral" :loading="isSubmitting"
+          :disabled="isSubmitting || form.content.length >= maxLimit || form.content.trim() === ''"
           class="cursor-pointer">
           <span v-if="!isSubmitting">
             {{ form.action === 'partager' ? '分享互联网' : '发表新贴文' }}
@@ -84,6 +94,8 @@ const errors = reactive({
   content: '',
 });
 
+const maxLimit = 10000; // 设置最大字数与后端一致
+
 const isSubmitting = ref(false);
 const globalError = ref('');
 
@@ -100,26 +112,27 @@ const resetForm = () => {
  * 表单验证
  */
 const validateForm = () => {
-  let isValid = true;
   errors.content = '';
   globalError.value = '';
 
-  if (!form.content.trim()) {
+  const content = form.content.trim();
+  if (!content) {
     errors.content = '内容不能为空';
-    isValid = false;
-  } else if (form.content.length > 10000) {
-    errors.content = '内容长度过长，请精简至 10000 字符以内';
-    isValid = false;
+    return false;
+  }
+  if (content.length > maxLimit) {
+    errors.content = `内容长度超过限制 (${maxLimit} 字符)`;
+    return false;
   }
 
-  return isValid;
+  return true;
 };
 
 /**
  * 提交表单
  */
 const handleSubmit = async () => {
-  if (!validateForm()) return;
+  if (!validateForm() || isSubmitting.value) return;
 
   isSubmitting.value = true;
   globalError.value = '';
