@@ -179,8 +179,7 @@ const { showHeaderBack } = useHeader();
 const authorRow = ref<HTMLElement | null>(null);
 
 const isContentReady = computed(() => {
-  // 增加 import.meta.client 确保只在客户端逻辑中触发
-  return import.meta.client && status.value === "success" && mdcReady.value && authorRow.value !== null;
+  return status.value === "success" && mdcReady.value && authorRow.value !== null;
 });
 
 // 1. 页面销毁时重置
@@ -247,14 +246,6 @@ onActivated(async () => {
     // 3. 消费掉标记
     clearUpdateMark(currentId);
     isSilentRefreshing.value = false;
-  }
-});
-
-onMounted(() => {
-  // 只有当不是因为从缓存激活（onActivated）且标记了更新时，才设为 true
-  // 简单说：正常的初次进入页面，直接显示
-  if (!isUpdateRefresh.value) {
-    mdcReady.value = true;
   }
 });
 

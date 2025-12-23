@@ -45,6 +45,7 @@ export async function toggleLike(commentId: string, userId: string) {
 export async function getCommentLikes(commentId: string) {
   const result = await pb.collection('likes').getList(1, 1, {
     filter: `comment="${commentId}"`,
+    fields: 'id',
     requestKey: null,
   });
 

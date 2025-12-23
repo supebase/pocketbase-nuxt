@@ -46,7 +46,7 @@
 
 <script setup lang="ts">
 import type { CommentRecord } from "~/types/comments";
-import type { LikeRecord } from "~/types/likes";
+import type { LikeRecord, CommentLikesResponse } from "~/types/likes";
 
 const props = defineProps<{ postId: string; allowComment: boolean }>();
 const emit = defineEmits(["loading-change", "update-commenters"]);
@@ -96,33 +96,46 @@ const fetchComments = async (isSilent = false) => {
 
 const handleLoadMore = () => loadMore(fetchCommentsApi);
 
+/**
+ * 核心修复点：使用引用守卫处理点赞变化
+ */
 const handleLikeChange = (liked: boolean, likes: number, commentId: string, isFromRealtime = false) => {
   const index = comments.value.findIndex((c) => String(c.id) === String(commentId));
-  if (index !== -1) {
-    const oldItem = comments.value[index];
-    if (!oldItem) return;
+  const target = comments.value[index];
 
-    const updatedItem: CommentRecord = {
-      ...oldItem,
-      likes: likes,
-      isLiked: isFromRealtime ? (oldItem.isLiked ?? false) : liked
-    };
-
-    comments.value.splice(index, 1, updatedItem);
+  // 检查 target 是否存在以修复 "可能为未定义" 的报错
+  if (target) {
+    target.likes = likes;
+    if (!isFromRealtime) {
+      target.isLiked = liked;
+    }
     emit("update-commenters", comments.value);
   }
 };
 
+/**
+ * 核心修复点：安全地同步单条评论
+ */
 const syncSingleComment = (record: any, action: 'create' | 'update' | 'delete') => {
   const index = comments.value.findIndex(c => c.id === record.id);
+  
   if (action === 'create') {
     if (index === -1) {
-      comments.value.unshift({ ...record, relativeTime: useRelativeTime(record.created).value, isNew: true });
+      comments.value.unshift({ 
+        ...record, 
+        relativeTime: useRelativeTime(record.created).value, 
+        isNew: true 
+      });
       totalItems.value++;
     }
   } else if (action === 'update') {
-    if (index !== -1) {
-      comments.value.splice(index, 1, { ...comments.value[index], ...record });
+    const target = comments.value[index];
+    if (target) {
+      // 这里的 Object.assign 是安全的，因为它只更新已有属性
+      Object.assign(target, { 
+        ...record, 
+        relativeTime: record.created ? useRelativeTime(record.created).value : target.relativeTime 
+      });
     }
   } else if (action === 'delete') {
     if (index !== -1) {
@@ -133,12 +146,12 @@ const syncSingleComment = (record: any, action: 'create' | 'update' | 'delete') 
   emit("update-commenters", comments.value);
 };
 
-// 使用 Map 管理不同评论的防抖定时器，防止评论 A 的点赞刷新了评论 B 的定时器
 const likeTimers = new Map<string, any>();
 
 onMounted(async () => {
   await fetchComments();
 
+  // 1. 监听评论内容实时变更
   await streamComments({
     onUpdate: async ({ action, record }) => {
       if (record.post !== props.postId) return;
@@ -152,30 +165,35 @@ onMounted(async () => {
     }
   });
 
-  // 订阅点赞表
+  // 2. 监听点赞表实时变更
   pb.collection('likes').subscribe('*', async ({ action, record }) => {
     const likeData = record as unknown as LikeRecord;
     const commentId = likeData.comment;
 
-    if (action === 'create' || action === 'delete') {
-      // 获取该评论的专属定时器
-      if (likeTimers.has(commentId)) clearTimeout(likeTimers.get(commentId));
+    const index = comments.value.findIndex(c => c.id === commentId);
+    if (index === -1) return;
 
-      const timer = setTimeout(async () => {
-        const index = comments.value.findIndex(c => c.id === commentId);
-        if (index === -1) return;
+    if (likeTimers.has(commentId)) clearTimeout(likeTimers.get(commentId));
 
-        try {
-          const updatedComment = await pb.collection('comments').getOne<CommentRecord>(commentId);
-          handleLikeChange(false, updatedComment.likes || 0, commentId, true);
-        } catch (e) {
-          console.warn("实时同步点赞数失败", e);
+    const timer = setTimeout(async () => {
+      try {
+        // 请求点赞统计服务
+        const res = await $fetch<CommentLikesResponse>(`/api/collections/likes`, {
+          query: { commentIds: JSON.stringify([commentId]) }
+        });
+
+        const updatedInfo = res.data.likesMap[commentId];
+        if (updatedInfo) {
+          // 调用已封装的安全更新方法
+          handleLikeChange(false, updatedInfo.likes, commentId, true);
         }
-        likeTimers.delete(commentId);
-      }, 300);
+      } catch (e) {
+        console.warn("实时同步点赞数失败", e);
+      }
+      likeTimers.delete(commentId);
+    }, 300);
 
-      likeTimers.set(commentId, timer);
-    }
+    likeTimers.set(commentId, timer);
   });
 });
 
