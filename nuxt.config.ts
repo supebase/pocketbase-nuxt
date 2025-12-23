@@ -57,10 +57,6 @@ export default defineNuxtConfig({
     },
     minify: true,
   },
-  routeRules: {
-    '/api/**': { cache: { maxAge: 60 } },
-    '/[id]': { cache: { maxAge: 300 } },
-  },
   // 图片优化
   image: {
     // 1. 预设尺寸（关键）：解决重复加载
