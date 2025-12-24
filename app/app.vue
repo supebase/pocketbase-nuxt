@@ -8,7 +8,6 @@
             @click="$router.back()">
             <UIcon name="i-hugeicons:arrow-turn-backward" class="size-7 text-dimmed" />
           </div>
-
           <CommonLogo v-else key="logo" />
         </Transition>
       </template>
@@ -31,17 +30,26 @@
 import { zh_cn } from "@nuxt/ui/locale";
 
 const appConfig = useAppConfig();
-
 const route = useRoute();
 const { showHeaderBack } = useHeader();
+const { loggedIn } = useUserSession(); // 💡 获取 nuxt-auth-utils 状态
+const { $pb } = useNuxtApp();
 
+// --- 1. 路由与 Header 逻辑 ---
 watch(
   () => route.path,
   (newPath) => {
-    // 只有回到根路径或特定页面时才自动隐藏
     if (newPath === '/') {
       showHeaderBack.value = false;
     }
   }
 );
+
+// --- 2. 身份状态全局守护 (可选但推荐) ---
+// 逻辑：如果 Nuxt Session 消失了（Cookie 过期），确保客户端 PB 实例也清理掉
+watch(loggedIn, (isLogged) => {
+  if (!isLogged && $pb.authStore.isValid) {
+    $pb.authStore.clear();
+  }
+}, { immediate: true });
 </script>

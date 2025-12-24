@@ -1,5 +1,6 @@
 import { getPostsList } from '../../services/posts.service';
 import { handlePocketBaseError } from '../../utils/errorHandler';
+import { getPocketBaseInstance } from '../../utils/pocketbase'; // 💡 导入实例获取工具
 // 导入业务定义的响应类型
 import type { PostsListResponse } from '~/types/posts';
 
@@ -11,14 +12,21 @@ export default defineEventHandler(async (event): Promise<PostsListResponse> => {
     const requestedPage = Math.max(1, Number(query.page) || 1);
     const perPageLimit = Math.min(100, Number(query.perPage) || 10);
 
-    // 2. 调用服务层 (此时 getPostsList 已具备强类型 expand 提示)
-    const { items, totalItems, page, perPage } = await getPostsList(requestedPage, perPageLimit);
+    // 2. 获取本次请求专用的独立 PB 实例 💡
+    // 它会自动处理匿名或已登录状态
+    const pb = getPocketBaseInstance(event);
 
-    // 3. 返回符合 PostsResponse 结构的响应
+    // 3. 调用服务层 (传入 pb 实例) 💡
+    const { items, totalItems, page, perPage } = await getPostsList(
+      pb,
+      requestedPage,
+      perPageLimit
+    );
+
+    // 4. 返回符合 PostsResponse 结构的响应
     return {
       message: '获取内容列表成功',
       data: {
-        // 此处的 items 已经过 Service 层强类型处理，包含正确的 PostRecord 结构
         posts: items as any,
         totalItems,
         page,
@@ -26,7 +34,6 @@ export default defineEventHandler(async (event): Promise<PostsListResponse> => {
       },
     };
   } catch (error: any) {
-    // 自动捕获如：数据库连接失败、集合不存在等 PB 错误
     return handlePocketBaseError(error, '获取内容列表异常');
   }
 });

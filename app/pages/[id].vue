@@ -38,7 +38,7 @@
 
         <div class="relative mt-6">
           <Transition leave-active-class="transition duration-300 opacity-0">
-            <div v-if="!mdcReady"
+            <div v-if="postWithRelativeTime && !mdcReady"
               class="absolute inset-0 h-40 flex items-center justify-center z-10 select-none pointer-events-none">
               <UIcon name="i-hugeicons:refresh" class="size-5 mr-2 animate-spin text-muted" />
               <span class="font-medium text-muted">
@@ -51,7 +51,8 @@
             'transition-all duration-300 ease-out',
             mdcReady ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2 pointer-events-none',
           ]">
-            <MDC :key="postWithRelativeTime.id + postWithRelativeTime.updated"
+            <MDC v-if="postWithRelativeTime"
+              :key="postWithRelativeTime.id + postWithRelativeTime.updated"
               :value="postWithRelativeTime.content || ''" @vue:mounted="handleMdcMounted"
               class="prose prose-neutral prose-lg sm:prose-[18px] dark:prose-invert prose-img:rounded-xl prose-img:ring-1 prose-img:ring-neutral-200 prose-img:dark:ring-neutral-800" />
           </div>
@@ -110,7 +111,7 @@ const { id } = route.params;
 const isListLoading = ref(false);
 const mdcReady = ref(false);
 const commentListRef = ref();
-const commenters = ref<any[]>([]);
+const commenters = shallowRef<any[]>([]);
 const isUpdateRefresh = ref(false);
 const authorRow = ref<HTMLElement | null>(null);
 
@@ -129,17 +130,18 @@ const postWithRelativeTime = computed(() => {
 });
 
 const handleUpdateCommenters = (rawComments: any[]) => {
-  // 增加防御：如果没数据直接清空
   if (!rawComments || rawComments.length === 0) {
     commenters.value = [];
     return;
   }
 
   const userMap = new Map();
+  const currentUserId = currentUser.value?.id;
 
   rawComments.forEach((comment) => {
     const u = comment.expand?.user;
-    if (u?.id && u.id !== currentUser.value?.id) {
+    // 过滤掉自己，且确保用户数据完整
+    if (u?.id && u.id !== currentUserId) {
       userMap.set(u.id, { id: u.id, name: u.name, avatar: u.avatar });
     }
   });
@@ -176,6 +178,16 @@ useIntersectionObserver(
   { threshold: 0, rootMargin: "-20px 0px 0px 0px" }
 );
 
+const handleMdcMounted = () => {
+  // 稍微加一点点延迟（可选），让梳理文案能被看清，提升“沉浸感”
+  setTimeout(() => {
+    requestAnimationFrame(() => {
+      mdcReady.value = true;
+      isUpdateRefresh.value = false;
+    });
+  }, 300);
+};
+
 onBeforeRouteLeave(() => { showHeaderBack.value = false; });
 onUnmounted(() => { showHeaderBack.value = false; });
 
@@ -192,22 +204,23 @@ onActivated(async () => {
   }
 });
 
-const handleMdcMounted = () => {
-  // requestAnimationFrame 确保在浏览器下次重绘前更新状态，这比 setTimeout(0) 更快且更流畅
-  requestAnimationFrame(() => {
-    mdcReady.value = true;
-    isUpdateRefresh.value = false;
-  });
-};
-
-watch(() => currentUser.value?.id, () => {
-  // 获取当前列表中的原始评论数据
-  const currentComments = commentListRef.value?.comments || [];
-  handleUpdateCommenters(currentComments);
+watch(() => currentUser.value?.id, (newId) => {
+  if (commentListRef.value) {
+    // 切换用户后，重新根据现有列表计算提及人，排除掉“新”的自己
+    handleUpdateCommenters(commentListRef.value.comments || []);
+  }
 }, { immediate: true });
 
+// 监听路由 ID 变化，重置提及列表，防止 A 文章的评论者出现在 B 文章
 watch(() => route.params.id, () => {
   mdcReady.value = false;
+  commenters.value = [];
+});
+
+watch(status, (newStatus) => {
+  if (newStatus === 'pending') {
+    mdcReady.value = false;
+  }
 });
 </script>
 

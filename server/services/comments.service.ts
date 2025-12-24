@@ -1,15 +1,20 @@
 /**
  * 评论服务层
  */
-import { pb } from '../utils/pocketbase';
 import { getCommentsLikesMap } from './likes.service';
 import type { CommentRecord, CommentExpand } from '~/types/comments';
-import type { CommentsResponse as PBCommentsResponse, Create } from '~/types/pocketbase-types';
+import type {
+  CommentsResponse as PBCommentsResponse,
+  Create,
+  TypedPocketBase
+} from '~/types/pocketbase-types';
 
 /**
  * 获取评论列表
+ * @param pb 注入的独立 PB 实例
  */
 export async function getCommentsList(
+  pb: TypedPocketBase,
   page: number = 1,
   perPage: number = 10,
   filter?: string,
@@ -17,32 +22,35 @@ export async function getCommentsList(
 ) {
   const queryOptions: any = {
     sort: '-created',
-    expand: 'user', // 对应 CommentExpand 定义
+    expand: 'user',
   };
 
   if (filter) {
     queryOptions.filter = filter;
   }
 
-  // 使用 PB 生成的 Response 类型并传入 Expand 泛型
+  // 1. 使用传入的 pb 获取评论基础数据
   const result = await pb
     .collection('comments')
     .getList<PBCommentsResponse<CommentExpand>>(page, perPage, queryOptions);
 
-  // 获取评论的点赞信息
+  // 2. 获取评论的点赞信息
   if (result.items.length > 0) {
     const commentIds = result.items.map((comment) => comment.id);
-    const likesMap = await getCommentsLikesMap(commentIds, userId || '');
 
-    // 将原始 PB 记录映射为业务 CommentRecord 类型
+    // 💡 关键：将 pb 实例接力传给 likesService
+    const likesMap = await getCommentsLikesMap(pb, commentIds, userId || '');
+
+    // 3. 映射为业务 CommentRecord 类型
+    // @ts-ignore - 这里的 items 重新赋值需要处理类型兼容或强制断言
     result.items = result.items.map((comment) => {
       const likeInfo = likesMap[comment.id];
       return {
         ...comment,
         likes: likeInfo?.likes || 0,
         isLiked: userId ? likeInfo?.isLiked || false : false,
-        initialized: true, // 默认标记为已初始化
-      } as CommentRecord; // 强制断言以匹配业务 Record 定义
+        initialized: true,
+      } as CommentRecord;
     });
   }
 
@@ -51,10 +59,9 @@ export async function getCommentsList(
 
 /**
  * 创建新评论
- * @param data 推荐使用 Create<'comments'>
  */
-export async function createComment(data: Create<'comments'>) {
-  // 创建评论并返回包含用户信息的完整评论
+export async function createComment(pb: TypedPocketBase, data: Create<'comments'>) {
+  // 💡 使用传入的 pb 实例，会自动关联当前登录用户的 Token
   return await pb.collection('comments').create<PBCommentsResponse<CommentExpand>>(data, {
     expand: 'user',
   });

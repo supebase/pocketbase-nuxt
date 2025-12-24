@@ -88,6 +88,7 @@ const fetchComments = async (isSilent = false) => {
     const result = await fetchCommentsApi(1);
     resetPagination(result.items, result.total);
     lastLoadedPostId.value = props.postId;
+    // 确保加载完成后立即发送给父组件
     emit("update-commenters", comments.value);
   } finally {
     loading.value = false;
@@ -205,7 +206,7 @@ onUnmounted(() => {
 
 const handleCommentCreated = (newComment: CommentRecord) => syncSingleComment(newComment, 'create');
 
-defineExpose({ handleCommentCreated, fetchComments });
+defineExpose({ handleCommentCreated, fetchComments, comments });
 
 onActivated(() => {
   if (lastLoadedPostId.value !== props.postId) fetchComments();

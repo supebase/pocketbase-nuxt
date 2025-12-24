@@ -1,10 +1,11 @@
 import { toggleLike } from '../../services/likes.service';
 import { handlePocketBaseError } from '../../utils/errorHandler';
+import { getPocketBaseInstance } from '../../utils/pocketbase'; // 💡 注入实例获取工具
 // 导入点赞相关的业务类型
 import type { ToggleLikeRequest, ToggleLikeResponse } from '~/types/likes';
 
 export default defineEventHandler(async (event): Promise<ToggleLikeResponse> => {
-  // 1. 获取当前登录用户并校验
+  // 1. 获取当前登录用户并校验 (用于业务判断)
   const session = await getUserSession(event);
   const user = session?.user;
 
@@ -29,12 +30,16 @@ export default defineEventHandler(async (event): Promise<ToggleLikeResponse> => 
     });
   }
 
-  try {
-    // 4. 执行切换点赞逻辑
-    // toggleLike 内部会利用 PBLikesResponse 类型确保字段操作安全
-    const result = await toggleLike(commentId, user.id);
+  // 4. 获取本次请求专用的独立 PB 实例 💡
+  const pb = getPocketBaseInstance(event);
 
-    // 5. 返回符合 ToggleLikeResponse 接口的标准化响应
+  try {
+    // 5. 执行切换点赞逻辑 (传入 pb 实例) 💡
+    // toggleLike 内部会调用 pb.collection('likes')，
+    // 这将自动应用 PocketBase 后台的 API Rules。
+    const result = await toggleLike(pb, commentId, user.id);
+
+    // 6. 返回标准化响应
     return {
       message: result.liked ? '点赞成功' : '已取消点赞',
       data: {
@@ -44,7 +49,7 @@ export default defineEventHandler(async (event): Promise<ToggleLikeResponse> => 
       },
     };
   } catch (error) {
-    // 自动捕获 PocketBase 错误（如评论已被删除导致的点赞失败等）
+    // 自动捕获如：评论已被删除、权限不足等错误
     return handlePocketBaseError(error, '点赞操作异常，请稍后再试');
   }
 });

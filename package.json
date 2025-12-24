@@ -15,7 +15,7 @@
   "dependencies": {
     "@nuxt/image": "2.0.0",
     "@nuxt/ui": "^4.3.0",
-    "@nuxtjs/mdc": "0.19.1",
+    "@nuxtjs/mdc": "0.19.2",
     "nuxt": "^4.2.2",
     "nuxt-auth-utils": "0.5.26",
     "nuxt-emoji-picker": "^1.2.1",

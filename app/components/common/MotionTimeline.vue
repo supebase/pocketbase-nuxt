@@ -39,6 +39,7 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const mergedUi = computed(() => ({
+  wrapper: 'w-full overflow-hidden',
   title: "-mt-0.5",
   date: "float-end ms-1 text-sm text-dimmed",
   description: "mt-2 text-base",

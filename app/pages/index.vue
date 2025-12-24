@@ -88,7 +88,7 @@
                       <img v-bind="imgAttrs" :src="src" :class="[
                         'w-full h-full object-cover transition-all duration-700 ease-in-out',
                         isLoaded ? 'blur-0 scale-100' : 'blur-xl scale-110',
-                        'group-hover:scale-105',
+                        'hover:scale-105',
                       ]" />
 
                       <div v-if="!isLoaded"
@@ -103,7 +103,6 @@
             </ULink>
 
             <CommonLinkCard v-if="item.link_data" :data="item.link_data" />
-
             <CommentsCommentUsers :post-id="item.id" :allow-comment="item.allowComment" />
           </div>
         </template>
@@ -128,16 +127,26 @@
 </template>
 
 <script setup lang="ts">
-import type { PostRecord, PostsListResponse } from '~/types/posts';
-import type { TypedPocketBase } from '~/types/pocketbase-types';
+import type {
+  PostsResponse,
+  UsersResponse,
+  TypedPocketBase
+} from '~/types/pocketbase-types';
+import type { PostsListResponse } from '~/types/posts';
 
-// 1. 认证与状态管理
+// --- 1. 类型定义：核心解决 "user 不存在" 报错 ---
+// 💡 显式声明 Post 记录会通过 expand 携带 User 数据
+type PostWithUser = PostsResponse<{
+  user: UsersResponse
+}>
+
+// --- 2. 状态与认证 ---
 const { loggedIn, user } = useUserSession();
 const { isRefreshing, isResetting, refreshPostsAndComments } = useRefresh();
 const { $pb } = useNuxtApp();
 const pb = $pb as TypedPocketBase;
 
-// 2. 分页逻辑
+// --- 3. 分页逻辑 ---
 const {
   allItems: allPosts,
   currentPage,
@@ -146,19 +155,20 @@ const {
   hasMore,
   loadMore,
   resetPagination,
-} = usePagination<PostRecord>();
+} = usePagination<PostWithUser>(); // 💡 使用增强类型
 
-// 3. 实时订阅逻辑
-const { stream } = usePocketRealtime<PostRecord>('posts');
+// --- 4. 实时订阅 ---
+// 💡 第一个参数是集合名，第二个是上面定义的增强类型
+const { stream } = usePocketRealtime<PostWithUser>('posts');
 
-// 4. API 获取函数
+// --- 5. 获取数据的 API 包装 ---
 const fetchPostsApi = async (page: number) => {
   try {
     const res = await $fetch<PostsListResponse>('/api/collections/posts', {
       query: { page },
     });
     return {
-      items: res.data.posts,
+      items: res.data.posts as PostWithUser[],
       total: res.data.totalItems
     };
   } catch (err: any) {
@@ -166,121 +176,102 @@ const fetchPostsApi = async (page: number) => {
   }
 };
 
-// 5. SSR 初始加载 (Lazy 模式)
-const {
-  data: fetchResult,
-  status,
-  error,
-  refresh,
-} = await useLazyFetch<PostsListResponse>('/api/collections/posts', {
+// --- 6. SSR 初始加载 ---
+const { data: fetchResult, status, error, refresh } = await useLazyFetch<PostsListResponse>('/api/collections/posts', {
   key: 'posts-list-data',
   server: true,
 });
 
-// 6. 监听结果初始化分页状态
-watch(
-  fetchResult,
-  (res) => {
-    if (res?.data) {
-      // 仅在第一页或重置时更新
-      if (res.data.page === 1) {
-        resetPagination(res.data.posts, res.data.totalItems);
-      }
-    }
-  },
-  { immediate: true }
-);
+watch(fetchResult, (res) => {
+  if (res?.data && res.data.page === 1) {
+    resetPagination(res.data.posts as PostWithUser[], res.data.totalItems);
+  }
+}, { immediate: true });
 
-// 7. 权限控制逻辑
+// --- 7. 计算属性与权限控制 ---
 const canViewDrafts = computed(() => loggedIn.value && user.value?.verified);
 
-// 8. 数据转换逻辑 (用于 Timeline 展示)
 const displayItems = computed(() => {
-  // 过滤
-  const filtered = canViewDrafts.value
-    ? allPosts.value
-    : allPosts.value.filter(p => p.published);
+  const filtered = canViewDrafts.value ? allPosts.value : allPosts.value.filter(p => p.published);
 
-  // 【排序关键】：在这里统一处理 -created 排序
-  // 使用 slice() 避免直接修改 allPosts 响应式数组
   return filtered
     .slice()
     .sort((a, b) => new Date(b.created).getTime() - new Date(a.created).getTime())
     .map((item) => ({
       id: item.id,
-      title: item.expand?.user?.name || '未知用户',
+      title: item.expand?.user?.name || '未知用户', // 💡 现在这里不会报错了
       date: useRelativeTime(item.created).value,
       description: item.content,
       action: item.action,
       allowComment: item.allow_comment,
       published: item.published,
       icon: item.icon,
-      avatarId: item.expand?.user?.avatar,
+      avatarId: item.expand?.user?.avatar, // 💡 expand 类型已识别
       firstImage: getFirstImageUrl(item.content),
       link_data: item.link_data,
     }));
 });
 
-// 修改 totalItems 的显示，根据权限调整
-const visibleTotalItems = computed(() => {
-  if (!canViewDrafts.value) {
-    // 只计算已发布的文章数量
-    const publishedPosts = allPosts.value.filter((post) => post.published);
-    return publishedPosts.length;
-  }
+const visibleTotalItems = computed(() =>
+  canViewDrafts.value ? totalItems.value : allPosts.value.filter(p => p.published).length
+);
 
-  return totalItems.value;
-});
-
-// 9. 交互处理
-const manualRefresh = () => refreshPostsAndComments(refresh, allPosts, currentPage);
-const handleLoadMore = () => loadMore(fetchPostsApi);
-
-// 10. 生命周期与实时流
-onActivated(() => {
-  if (allPosts.value.length === 0 && status.value !== 'pending') {
-    manualRefresh();
-  }
-});
-
+// --- 8. 实时流逻辑 ---
 onMounted(async () => {
   await stream({
     onUpdate: async ({ action, record }) => {
-      let fullRecord: PostRecord = record;
-
-      if (action === 'create' || action === 'update') {
-        try {
-          fullRecord = await pb.collection('posts').getOne<PostRecord>(record.id, { expand: 'user' });
-        } catch (err) { return; }
+      // 1. 删除逻辑：立即执行
+      if (action === 'delete') {
+        const idx = allPosts.value.findIndex(p => p.id === record.id);
+        if (idx !== -1) {
+          allPosts.value.splice(idx, 1);
+          totalItems.value = Math.max(0, totalItems.value - 1);
+        }
+        return;
       }
 
+      // 2. 获取完整数据
+      let fullRecord: PostWithUser;
+      try {
+        fullRecord = await pb.collection('posts').getOne<PostWithUser>(record.id, {
+          expand: 'user',
+          requestKey: `sync-${record.id}`
+        });
+      } catch (err) { return; }
+
+      // 3. 查找本地是否存在
       const index = allPosts.value.findIndex(p => p.id === fullRecord.id);
+      const isVisible = fullRecord.published || canViewDrafts.value;
 
       if (action === 'create') {
-        if (!allPosts.value.some(p => p.id === fullRecord.id)) {
-          allPosts.value.push(fullRecord); // 随手一丢，computed 会排序
+        if (isVisible && index === -1) {
+          allPosts.value.unshift(fullRecord);
           totalItems.value++;
         }
       } else if (action === 'update') {
-        if (index !== -1) {
-          // 这里的逻辑依然需要：如果用户无权看草稿，则从仓库移除
-          if (!fullRecord.published && !canViewDrafts.value) {
-            allPosts.value.splice(index, 1);
-            totalItems.value--;
-          } else {
-            allPosts.value[index] = fullRecord;
-          }
-        } else if (fullRecord.published || canViewDrafts.value) {
-          allPosts.value.push(fullRecord);
-          totalItems.value++;
-        }
-      } else if (action === 'delete') {
-        if (index !== -1) {
+        if (!isVisible && index !== -1) {
+          // 变为不可见，移除
           allPosts.value.splice(index, 1);
           totalItems.value--;
+        } else if (isVisible) {
+          if (index !== -1) {
+            // ✅ 关键修复：先提取到常量，进行非空校验
+            const target = allPosts.value[index];
+            if (target) {
+              // 现在 TypeScript 知道 target 是 object 而不是 undefined
+              Object.assign(target, fullRecord);
+            }
+          } else {
+            // 如果原本不在列表，添加
+            allPosts.value.unshift(fullRecord);
+            totalItems.value++;
+          }
         }
       }
     }
   });
 });
+
+const manualRefresh = () => refreshPostsAndComments(refresh, allPosts, currentPage);
+const handleLoadMore = () => loadMore(fetchPostsApi);
 </script>

@@ -3,7 +3,7 @@
         class="group my-4 flex items-stretch border border-neutral-200 dark:border-neutral-800 rounded-xl overflow-hidden no-underline">
 
         <div v-if="data.image"
-            class="relative w-22 shrink-0 border-r border-neutral-200 dark:border-neutral-800 overflow-hidden">
+            class="relative w-20 shrink-0 border-r border-neutral-200 dark:border-neutral-800 overflow-hidden">
 
             <NuxtImg :src="data.image" placeholder preset="preview" :custom="true">
                 <template #default="{ src, isLoaded, imgAttrs }">
@@ -23,18 +23,27 @@
             </NuxtImg>
         </div>
 
-        <div class="flex-1 p-3 min-w-0 flex flex-col justify-center">
-            <h3 class="text-sm font-bold text-primary mb-0.5 line-clamp-1 leading-snug">
+        <div v-else
+            class="relative w-20 shrink-0 border-r border-neutral-200 dark:border-neutral-800 overflow-hidden">
+            <div class="absolute inset-0 flex items-center justify-center">
+                <UIcon name="i-hugeicons:image-02" class="text-dimmed/20 size-7" />
+            </div>
+        </div>
+
+        <div
+            class="flex-1 p-3 min-w-0 flex flex-col justify-center space-y-1 bg-white dark:bg-neutral-950/20">
+
+            <div class="text-sm font-bold text-primary line-clamp-1 w-full">
                 {{ data.title }}
-            </h3>
+            </div>
 
-            <p class="text-xs text-muted line-clamp-2 leading-relaxed mb-1">
+            <div class="text-xs text-muted line-clamp-1 w-full">
                 {{ data.description }}
-            </p>
+            </div>
 
-            <span class="text-[10px] text-dimmed truncate font-mono">
+            <div class="text-[10px] text-dimmed truncate font-mono">
                 {{ displayUrl }}
-            </span>
+            </div>
         </div>
     </a>
 </template>

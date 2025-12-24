@@ -6,7 +6,7 @@
           <img v-bind="imgAttrs" :src="src" :class="[
             'w-full h-full object-cover transition-all duration-700 ease-in-out',
             isLoaded ? 'blur-0 scale-100' : 'blur-xl scale-110',
-            'group-hover:scale-105',
+            'hover:scale-105',
           ]" />
 
           <div v-if="!isLoaded" class="absolute inset-0 flex items-center justify-center">

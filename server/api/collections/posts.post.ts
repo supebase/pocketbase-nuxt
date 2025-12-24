@@ -1,13 +1,14 @@
 import { createPost } from '../../services/posts.service';
 import { handlePocketBaseError } from '../../utils/errorHandler';
 import { getLinkPreview } from '~~/server/utils/unfurl';
+import { getPocketBaseInstance } from '../../utils/pocketbase'; // 💡 引入实例获取函数
 import sanitizeHtml from 'sanitize-html';
 // 导入业务类型
 import type { CreatePostRequest, SinglePostResponse } from '~/types/posts';
 import type { Create } from '~/types/pocketbase-types';
 
 export default defineEventHandler(async (event): Promise<SinglePostResponse> => {
-  // 1. 获取当前登录用户并进行严格校验
+  // 1. 获取当前登录用户 (用于业务逻辑判断)
   const session = await getUserSession(event);
   const user = session?.user;
 
@@ -19,7 +20,7 @@ export default defineEventHandler(async (event): Promise<SinglePostResponse> => 
     });
   }
 
-  // 2. 读取请求体并标注类型
+  // 2. 读取请求体
   const body = await readBody<CreatePostRequest>(event);
   const { content, allow_comment, published, icon, action, link } = body;
 
@@ -32,22 +33,20 @@ export default defineEventHandler(async (event): Promise<SinglePostResponse> => 
     });
   }
 
-  let linkPreviewData = null;
+  let linkDataString: string | undefined = undefined;
 
   if (link) {
-    linkPreviewData = await getLinkPreview(link);
+    const preview = await getLinkPreview(link);
+    if (preview) {
+      linkDataString = JSON.stringify(preview); // 💡 在这里完成转换
+    }
   }
 
-  // 4. HTML 清洗 (保持你的安全配置)
+  // 4. HTML 清洗
   const cleanContent = sanitizeHtml(content, {
     allowedTags: [
       ...sanitizeHtml.defaults.allowedTags,
-      'img',
-      'details',
-      'summary',
-      'h1',
-      'h2',
-      'span',
+      'img', 'details', 'summary', 'h1', 'h2', 'span',
     ],
     allowedAttributes: {
       ...sanitizeHtml.defaults.allowedAttributes,
@@ -69,37 +68,30 @@ export default defineEventHandler(async (event): Promise<SinglePostResponse> => 
     });
   }
 
-  if (cleanContent.length > 10000) {
-    throw createError({
-      statusCode: 400,
-      message: '内容超过最大长度限制 (10000 字符)',
-    });
-  }
+  // 6. 获取独立的 PB 实例 💡
+  const pb = getPocketBaseInstance(event);
 
   try {
-    // 6. 构造符合数据库结构的 Payload
-    // 使用 Create<'posts'> 确保除了注入的 user 外，其他字段都合法
+    // 7. 构造 Payload
     const createData: Create<'posts'> = {
       content: cleanContent,
-      user: user.id, // 核心：从 Session 注入用户 ID，确保安全性
+      user: user.id,
       allow_comment: allow_comment ?? true,
       published: published ?? true,
       icon: icon,
       action: action,
       link: link,
-      link_data: linkPreviewData,
+      link_data: linkDataString,
     };
 
-    // 7. 执行创建
-    const post = await createPost(createData);
+    // 8. 执行创建 (传入 pb 实例) 💡
+    const post = await createPost(pb, createData);
 
-    // 8. 返回标准化的业务响应对象
     return {
       message: '内容发布成功',
-      data: post as any, // 强制断言或通过 transform 处理
+      data: post as any,
     };
   } catch (error) {
-    // 自动转换 PocketBase 抛出的字段校验错误（如内容重复、权限不足等）
     return handlePocketBaseError(error, '内容发布异常，请稍后再试');
   }
 });

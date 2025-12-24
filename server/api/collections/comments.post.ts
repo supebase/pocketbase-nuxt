@@ -1,5 +1,6 @@
 import { createComment } from '../../services/comments.service';
 import { handlePocketBaseError } from '../../utils/errorHandler';
+import { getPocketBaseInstance } from '../../utils/pocketbase'; // 💡 注入实例获取工具
 import sanitizeHtml from 'sanitize-html';
 // 导入业务类型
 import type { CreateCommentRequest } from '~/types/comments';
@@ -52,18 +53,22 @@ export default defineEventHandler(async (event) => {
     });
   }
 
+  // 6. 获取本次请求专用的独立 PB 实例 💡
+  const pb = getPocketBaseInstance(event);
+
   try {
-    // 6. 构造符合数据库结构的 Payload
+    // 7. 构造符合数据库结构的 Payload
     const createData: Create<'comments'> = {
       comment: cleanComment,
       post: post,
       user: user.id, // 强制使用 Session 中的 ID
     };
 
-    // 7. 执行创建 (Service 层已配置 expand: 'user')
-    const comment = await createComment(createData);
+    // 8. 执行创建 (传入 pb 实例) 💡
+    // Service 内部会使用这个 pb 并自动处理 expand: 'user'
+    const comment = await createComment(pb, createData);
 
-    // 8. 统一成功返回格式
+    // 9. 统一成功返回格式
     return {
       message: '发表评论成功',
       data: {
@@ -71,7 +76,6 @@ export default defineEventHandler(async (event) => {
       },
     };
   } catch (error) {
-    // 自动捕获并转换 PB 的字段校验或权限错误
     return handlePocketBaseError(error, '评论发表异常，请稍后再试');
   }
 });

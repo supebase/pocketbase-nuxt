@@ -1,5 +1,6 @@
 import { getCommentsList } from '../../services/comments.service';
 import { handlePocketBaseError } from '../../utils/errorHandler';
+import { getPocketBaseInstance } from '../../utils/pocketbase'; // 💡 注入实例获取工具
 // 导入业务响应类型
 import type { CommentsListResponse } from '~/types/comments';
 
@@ -12,11 +13,11 @@ export default defineEventHandler(async (event): Promise<CommentsListResponse> =
     // 2. 获取查询参数
     const query = getQuery(event);
 
-    // 参数纠偏：防止非法输入导致报错
+    // 参数纠偏
     const page = Math.max(1, Number(query.page) || 1);
     const perPage = Math.min(100, Math.max(1, Number(query.perPage) || 20));
 
-    // 3. 构建过滤条件 (通常通过 postId 获取该贴下的评论)
+    // 3. 构建过滤条件
     const postId = query.postId as string | undefined;
     let filter = query.filter as string | undefined;
 
@@ -24,20 +25,23 @@ export default defineEventHandler(async (event): Promise<CommentsListResponse> =
       filter = `post = "${postId}"`;
     }
 
-    // 4. 调用服务层
-    // Service 层已重构：内部会合并点赞数据并展开用户信息
+    // 4. 获取独立 PB 实例 💡
+    // 即使是公开读取，传入 pb 也能确保 Service 层在后续执行批量点赞查询时
+    // 能够正确识别当前用户，从而标记 isLiked 状态。
+    const pb = getPocketBaseInstance(event);
+
+    // 5. 调用服务层 (传入 pb 实例) 💡
     const {
       items,
       totalItems,
       page: currentPage,
       perPage: currentPerPage,
-    } = await getCommentsList(page, perPage, filter, userId);
+    } = await getCommentsList(pb, page, perPage, filter, userId);
 
-    // 5. 统一返回格式
+    // 6. 统一返回格式
     return {
       message: '获取评论列表成功',
       data: {
-        // items 已经由 Service 层映射为符合 CommentRecord 的结构
         comments: items as any,
         totalItems,
         page: currentPage,
@@ -45,7 +49,7 @@ export default defineEventHandler(async (event): Promise<CommentsListResponse> =
       },
     };
   } catch (error) {
-    // 6. 统一错误处理，解析 PocketBase 抛出的异常
+    // 7. 统一错误处理
     return handlePocketBaseError(error, '获取评论列表异常，请重试');
   }
 });

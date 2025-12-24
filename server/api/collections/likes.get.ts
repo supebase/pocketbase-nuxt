@@ -1,5 +1,6 @@
 import { getCommentsLikesMap } from '../../services/likes.service';
 import { handlePocketBaseError } from '../../utils/errorHandler';
+import { getPocketBaseInstance } from '../../utils/pocketbase'; // 💡 注入实例获取工具
 // 导入点赞相关的业务响应类型
 import type { CommentLikesResponse } from '~/types/likes';
 
@@ -8,7 +9,7 @@ export default defineEventHandler(async (event): Promise<CommentLikesResponse> =
   const session = await getUserSession(event);
   const userId = session?.user?.id || '';
 
-  // 2. 获取查询参数 (通常是从 query 中获取序列化后的数组)
+  // 2. 获取查询参数
   const query = getQuery(event);
   const commentIdsStr = query.commentIds as string;
 
@@ -38,12 +39,14 @@ export default defineEventHandler(async (event): Promise<CommentLikesResponse> =
     });
   }
 
-  try {
-    // 5. 调用服务层批量获取数据
-    // getCommentsLikesMap 已重构，返回类型为 Record<string, CommentLikeInfo>
-    const likesMap = await getCommentsLikesMap(commentIds, userId);
+  // 5. 获取独立的 PB 实例 💡
+  const pb = getPocketBaseInstance(event);
 
-    // 6. 统一返回标准化的业务响应对象
+  try {
+    // 6. 调用服务层批量获取数据 (传入 pb 实例) 💡
+    const likesMap = await getCommentsLikesMap(pb, commentIds, userId);
+
+    // 7. 统一返回标准化的业务响应对象
     return {
       message: '点赞状态获取成功',
       data: {
@@ -51,7 +54,6 @@ export default defineEventHandler(async (event): Promise<CommentLikesResponse> =
       },
     };
   } catch (error) {
-    // 自动转换 PocketBase 内部错误（如过滤器解析失败等）
     return handlePocketBaseError(error, '批量获取点赞状态异常');
   }
 });
