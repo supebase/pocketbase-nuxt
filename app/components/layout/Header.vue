@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="flex items-center gap-3 select-none">
-      <UButton to="/auth" color="neutral" variant="link" icon="i-hugeicons:lock-key"
+      <UButton to="/auth" color="neutral" variant="link" icon="i-hugeicons:lock-key" tabindex="-1"
         class="rounded-full" v-if="!loggedIn" />
 
       <div class="flex items-center gap-3" v-else>
@@ -16,7 +16,7 @@
         <USeparator orientation="vertical" class="h-6 ml-2" />
 
         <UButton to="/new" color="neutral" variant="link" icon="i-hugeicons:add-circle-half-dot"
-          class="rounded-full" v-if="user?.verified" />
+          tabindex="-1" class="rounded-full" v-if="user?.verified" />
 
         <AuthLogoutButton />
       </div>

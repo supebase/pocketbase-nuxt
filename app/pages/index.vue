@@ -60,7 +60,7 @@
         <template #date="{ item }">
           <div class="flex items-center gap-2.5">
             <UButton v-if="canViewDrafts" variant="link" color="neutral"
-              icon="i-hugeicons:pencil-edit-01" class="size-5 mr-1.5 text-dimmed"
+              icon="i-hugeicons:pencil-edit-01" tabindex="-1" class="size-5 mr-1.5 text-dimmed"
               :to="`/edit/${item.id}`" />
             <ClientOnly>
               <span class="text-dimmed/80">{{ item.date }}</span>
@@ -74,11 +74,11 @@
         <template #description="{ item, index }">
           <div :key="item.id" class="record-item-animate"
             :style="{ '--delay': `${(index % 10) * 0.08}s` }">
-            <ULink :to="`/${item.id}`" class="line-clamp-4 tracking-wide">
+            <ULink :to="`/${item.id}`" class="line-clamp-4 tracking-wide leading-6 hyphens-none" tabindex="-1">
               {{ cleanMarkdown(item.description) }}
             </ULink>
 
-            <ULink v-if="item.firstImage" :to="`/${item.id}`" class="group">
+            <ULink v-if="item.firstImage" :to="`/${item.id}`" class="group" tabindex="-1">
               <div
                 class="my-3 rounded-xl overflow-hidden ring-1 ring-neutral-200 dark:ring-neutral-800">
                 <NuxtImg :src="item.firstImage" placeholder preset="preview" :custom="true">

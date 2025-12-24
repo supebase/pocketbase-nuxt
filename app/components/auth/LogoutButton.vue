@@ -1,6 +1,6 @@
 <template>
   <UButton @click="handleLogout" :loading="isPending" color="neutral" variant="link"
-    icon="i-hugeicons:door-01" class="rounded-full cursor-pointer" />
+    icon="i-hugeicons:door-01" tabindex="-1" class="rounded-full cursor-pointer" />
 </template>
 
 <script setup lang="ts">

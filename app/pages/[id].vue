@@ -14,7 +14,7 @@
           <div class="flex items-center justify-between gap-2 w-full">
             <div class="flex items-center gap-3">
               <UIcon v-if="postWithRelativeTime.icon" :name="postWithRelativeTime.icon"
-                class="size-8 text-primary" />
+                class="size-7 text-primary" />
               <div v-else class="size-8">
                 <CommonGravatar :avatar-id="postWithRelativeTime.expand?.user?.avatar" :size="64" />
               </div>
@@ -39,17 +39,17 @@
         <div class="relative mt-6">
           <Transition leave-active-class="transition duration-300 opacity-0">
             <div v-if="!mdcReady"
-              class="absolute inset-0 h-40 flex items-center justify-center bg-white/50 dark:bg-neutral-900/50 z-10 backdrop-blur-sm rounded-lg select-none pointer-events-none">
-              <UIcon name="i-hugeicons:refresh" class="size-5 mr-2 animate-spin" />
-              <span class="font-medium">
+              class="absolute inset-0 h-40 flex items-center justify-center z-10 select-none pointer-events-none">
+              <UIcon name="i-hugeicons:refresh" class="size-5 mr-2 animate-spin text-muted" />
+              <span class="font-medium text-muted">
                 {{ isUpdateRefresh ? '正在同步内容改动' : '沉浸式梳理内容' }}
               </span>
             </div>
           </Transition>
 
           <div :class="[
-            'transition-all duration-500',
-            mdcReady ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none',
+            'transition-all duration-300 ease-out',
+            mdcReady ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2 pointer-events-none',
           ]">
             <MDC :key="postWithRelativeTime.id + postWithRelativeTime.updated"
               :value="postWithRelativeTime.content || ''" @vue:mounted="handleMdcMounted"
@@ -61,6 +61,9 @@
           'transition-all duration-700 delay-300',
           mdcReady ? 'opacity-100' : 'opacity-0 pointer-events-none',
         ]">
+          <UAlert :ui="{ root: 'items-center justify-center text-dimmed', wrapper: 'flex-none' }" v-if="!postWithRelativeTime.allow_comment" icon="i-hugeicons:comment-block-02"
+            color="neutral" variant="outline" title="本内容评论互动功能已关闭" class="mt-8 select-none" />
+
           <ClientOnly>
             <CommentsCommentForm
               v-if="loggedIn && !isListLoading && postWithRelativeTime.allow_comment"
@@ -171,11 +174,11 @@ onActivated(async () => {
 });
 
 const handleMdcMounted = () => {
-  // 适当缩短延迟，增强响应感
-  setTimeout(() => {
+  // requestAnimationFrame 确保在浏览器下次重绘前更新状态，这比 setTimeout(0) 更快且更流畅
+  requestAnimationFrame(() => {
     mdcReady.value = true;
-    setTimeout(() => { isUpdateRefresh.value = false; }, 1000);
-  }, 600);
+    isUpdateRefresh.value = false;
+  });
 };
 
 watch(() => route.params.id, () => {

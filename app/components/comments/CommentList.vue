@@ -1,5 +1,5 @@
 <template>
-  <div class="mt-6">
+  <div class="mt-8">
     <div v-if="loading && comments.length === 0" class="flex justify-center py-8">
       <UIcon name="i-hugeicons:refresh" class="size-6 text-primary animate-spin" />
     </div>
@@ -28,7 +28,7 @@
         </template>
 
         <template #description="{ item }">
-          <div class="text-base break-all whitespace-pre-wrap">{{ item.comment }}</div>
+          <div class="text-base tracking-wide leading-6 hyphens-none">{{ item.comment }}</div>
           <div class="text-sm text-dimmed mt-1.5">{{ item.relativeTime }}</div>
         </template>
       </CommonMotionTimeline>

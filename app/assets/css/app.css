@@ -130,6 +130,11 @@ body {
   }
 }
 
+.prose {
+  /* 告诉浏览器这部分内容渲染相对独立，减少重绘范围 */
+  contain: content; 
+}
+
 .prose a {
   /* 1. 覆盖 Tailwind 默认样式 */
   text-decoration: none !important;
@@ -157,6 +162,8 @@ body {
   height: auto;
   aspect-ratio: 16 / 9;
   object-fit: cover;
+  margin-top: 0px;
+  margin-bottom: 0px;
 }
 
 .v3-emojis button {

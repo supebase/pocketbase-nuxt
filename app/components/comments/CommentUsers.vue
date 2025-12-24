@@ -9,7 +9,8 @@
         <div class="size-5.5 rounded-full overflow-hidden">
           <CommonGravatar :avatar-id="usersToShow[0]?.expand?.user?.avatar" :size="32" />
         </div>
-        <span class="text-sm font-medium text-dimmed">{{
+        <span class="text-sm font-medium text-dimmed" v-if="!allowComment">评论已关闭</span>
+        <span class="text-sm font-medium text-dimmed" v-else>{{
           usersToShow[0]?.expand?.user?.name
           }} 发表了评论</span>
       </div>
@@ -25,6 +26,7 @@
         class="rounded-xl text-muted text-xs">
         +{{ remainingCount }}
       </UBadge>
+      <span class="text-sm font-medium text-dimmed mt-0.5 ml-3" v-if="!allowComment">评论已关闭</span>
     </div>
 
     <div v-else-if="!allowComment" class="flex items-center gap-2 text-sm text-dimmed">
