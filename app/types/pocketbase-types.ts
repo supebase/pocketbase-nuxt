@@ -126,6 +126,8 @@ export type PostsRecord = {
 	published?: boolean
 	updated: IsoAutoDateString
 	user?: RecordIdString
+	link?: string
+	link_data?: string
 }
 
 export type UsersRecord = {

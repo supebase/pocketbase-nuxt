@@ -37,16 +37,20 @@
 
       <USeparator />
 
-      <div class="flex flex-col gap-4 select-none">
+      <div class="flex flex-col gap-6 select-none">
+        <UInput v-model="form.link" id="link" placeholder="链接卡片，例如：https://ericdit.com"
+          variant="subtle" color="neutral" :disabled="isSubmitting" size="lg" class="w-full" />
+
         <USwitch v-model="form.published" color="neutral" :disabled="isSubmitting"
           :label="form.published ? '立即对外正式发布' : '临时保存为草稿'" />
+          
         <USwitch v-model="form.allow_comment" color="neutral" :disabled="isSubmitting"
           label="允许用户发表评论" />
       </div>
 
       <div class="flex items-center justify-between">
-        <UButton type="button" color="neutral" variant="soft" class="cursor-pointer"
-          @click="$router.back()"> 取消 </UButton>
+        <UButton type="button" color="error" variant="soft" class="cursor-pointer"
+          @click="$router.back()"> 取消编辑 </UButton>
 
         <UButton type="submit" color="neutral" :loading="isSubmitting"
           :disabled="isLoading || isSubmitting || form.content.length >= maxLimit || form.content.trim() === ''"
@@ -75,6 +79,7 @@ const form = ref({
   published: true,
   icon: '',
   action: 'dit',
+  link: '',
 });
 
 const maxLimit = 10000; // 设置最大字数与后端一致
@@ -104,6 +109,7 @@ const loadPostData = async () => {
         published: data.published ?? true,
         icon: data.icon || '',
         action: data.action || 'dit',
+        link: data.link || '',
       };
     }
   } catch (err: any) {

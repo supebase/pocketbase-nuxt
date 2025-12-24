@@ -4,9 +4,9 @@
       class="flex items-center justify-center w-full gap-3">
       <div class="flex items-center gap-1 text-base tracking-widest text-dimmed font-semibold">
         <ClientOnly>
-          <CommonAnimateNumber :value="visibleTotalItems" /> 条贴文和分享
+          <CommonAnimateNumber :value="visibleTotalItems" /> 条内容
           <template #fallback>
-            <span>0 条贴文和分享</span>
+            <span>0 条内容</span>
           </template>
         </ClientOnly>
       </div>
@@ -52,20 +52,20 @@
           <div class="flex items-center gap-3">
             <div class="text-base">{{ item.title }}</div>
             <div v-if="!item.published && canViewDrafts" class="text-warning">待发布稿</div>
-            <div v-else-if="item.action === 'dit'" class="text-dimmed/80">贴文</div>
-            <div v-else class="text-dimmed/80">分享互联网</div>
+            <UBadge v-else-if="item.action === 'dit'" label="DIRE" variant="outline" size="sm" />
+            <UBadge v-else label="PARTAGER" variant="outline" size="sm" />
           </div>
         </template>
 
         <template #date="{ item }">
           <div class="flex items-center gap-2.5">
             <UButton v-if="canViewDrafts" variant="link" color="neutral"
-              icon="i-hugeicons:pencil-edit-01" tabindex="-1" class="size-5 mr-1.5 text-dimmed"
-              :to="`/edit/${item.id}`" />
+              icon="i-hugeicons:pencil-edit-01" tabindex="-1"
+              class="size-5 mr-1.5 text-dimmed hover:text-primary" :to="`/edit/${item.id}`" />
             <ClientOnly>
               <span class="text-dimmed/80">{{ item.date }}</span>
               <template #fallback>
-                <UIcon name="i-hugeicons:clock-01" class="size-4.5 text-dimmed/80" />
+                <UIcon name="i-hugeicons:dashed-line-01" class="size-4.5 text-dimmed/80" />
               </template>
             </ClientOnly>
           </div>
@@ -74,7 +74,8 @@
         <template #description="{ item, index }">
           <div :key="item.id" class="record-item-animate"
             :style="{ '--delay': `${(index % 10) * 0.08}s` }">
-            <ULink :to="`/${item.id}`" class="line-clamp-4 tracking-wide leading-6 hyphens-none" tabindex="-1">
+            <ULink :to="`/${item.id}`" class="line-clamp-4 tracking-wide leading-6 hyphens-none"
+              tabindex="-1">
               {{ cleanMarkdown(item.description) }}
             </ULink>
 
@@ -100,6 +101,8 @@
                 </NuxtImg>
               </div>
             </ULink>
+
+            <CommonLinkCard v-if="item.link_data" :data="item.link_data" />
 
             <CommentsCommentUsers :post-id="item.id" :allow-comment="item.allowComment" />
           </div>
@@ -214,6 +217,7 @@ const displayItems = computed(() => {
       icon: item.icon,
       avatarId: item.expand?.user?.avatar,
       firstImage: getFirstImageUrl(item.content),
+      link_data: item.link_data,
     }));
 });
 

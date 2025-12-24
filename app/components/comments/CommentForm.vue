@@ -5,10 +5,11 @@
       <UTextarea ref="textareaRef" v-model="form.comment" id="comment" color="neutral"
         variant="none" autoresize :rows="2" :maxrows="6" :padded="false" size="xl"
         class="text-neutral-300 w-full py-2" :maxlength="maxLimit" :disabled="isSubmitting"
-        placeholder="说点什么 ..." />
+        :placeholder="randomPlaceholder" />
 
       <div class="flex justify-between items-center px-3 py-1">
-        <div class="flex items-center space-x-3">
+        <div class="flex items-center space-x-3"
+          :class="{ 'cursor-not-allowed pointer-events-none': isSubmitting }">
           <CommonEmojiSelector @emoji="insertEmoji" />
           <UPopover arrow :content="{
             align: 'start',
@@ -23,11 +24,15 @@
 
             <template #content="{ close }">
               <div class="p-1 w-48 max-h-60 overflow-y-auto">
-                <div v-if="rawSuggestions.length === 0" class="p-2 text-sm text-center text-dimmed">
+                <div v-if="isListLoading" class="p-2 text-center">
+                  <UIcon name="i-hugeicons:refresh" class="animate-spin size-4" />
+                </div>
+                <div v-else-if="filteredSuggestions.length === 0"
+                  class="p-2 text-sm text-center text-dimmed">
                   暂无可提及的用户
                 </div>
                 <div v-else>
-                  <div v-for="user in rawSuggestions" :key="user.id" @click="
+                  <div v-for="user in filteredSuggestions" :key="user.id" @click="
                     insertMention(user.name);
                   close();
                   "
@@ -42,7 +47,7 @@
             </template>
           </UPopover>
 
-          <span v-if="rawSuggestions.length > 0" class="text-sm text-primary">
+          <span v-if="filteredSuggestions.length > 0" class="text-sm text-primary">
             可提及 {{ rawSuggestions.length }} 个用户
           </span>
         </div>
@@ -81,6 +86,7 @@ const toast = useToast();
 
 const props = defineProps({
   postId: { type: String, required: true },
+  isListLoading: { type: Boolean, default: false },
   rawSuggestions: { type: Array as PropType<any[]>, default: () => [] },
   maxLimit: { type: Number, default: 200 }, // 建议设为 prop 增加灵活性
 });
@@ -88,6 +94,21 @@ const props = defineProps({
 const emit = defineEmits<{ (e: "comment-created", comment: CommentRecord): void }>();
 
 const textareaRef = ref<any>(null);
+
+const placeholders = [
+  '聚焦核心话题，留下你的专业分析',
+  '理性发声，用观点传递价值',
+  '干货满满，说说你的独到见解',
+  '专业视角交流，助力经验沉淀'
+]
+
+const randomPlaceholder = ref();
+
+// 随机获取 placeholder
+const getRandomPlaceholder = () => {
+  const randomIndex = Math.floor(Math.random() * placeholders.length)
+  randomPlaceholder.value = placeholders[randomIndex]
+}
 
 // --- 状态管理 ---
 const form = reactive({
@@ -140,6 +161,16 @@ const validateForm = () => {
   return true;
 };
 
+const filteredSuggestions = computed(() => {
+  // 核心：基于最新的 currentUser.id 过滤
+  const currentId = currentUser.value?.id;
+
+  return props.rawSuggestions.filter(user => {
+    // 确保 user 存在且 id 不等于当前登录者
+    return user && user.id && user.id !== currentId;
+  });
+});
+
 const handleSubmit = async () => {
   if (!validateForm() || isSubmitting.value) return;
 
@@ -191,4 +222,9 @@ const handleSubmit = async () => {
     isSubmitting.value = false;
   }
 };
+
+if (import.meta.client) {
+  onMounted(getRandomPlaceholder);
+  onActivated(getRandomPlaceholder);
+}
 </script>

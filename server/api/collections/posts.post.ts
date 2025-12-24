@@ -1,5 +1,6 @@
 import { createPost } from '../../services/posts.service';
 import { handlePocketBaseError } from '../../utils/errorHandler';
+import { getLinkPreview } from '~~/server/utils/unfurl';
 import sanitizeHtml from 'sanitize-html';
 // 导入业务类型
 import type { CreatePostRequest, SinglePostResponse } from '~/types/posts';
@@ -20,7 +21,7 @@ export default defineEventHandler(async (event): Promise<SinglePostResponse> => 
 
   // 2. 读取请求体并标注类型
   const body = await readBody<CreatePostRequest>(event);
-  const { content, allow_comment, published, icon, action } = body;
+  const { content, allow_comment, published, icon, action, link } = body;
 
   // 3. 基础非空验证
   if (!content || typeof content !== 'string') {
@@ -29,6 +30,12 @@ export default defineEventHandler(async (event): Promise<SinglePostResponse> => 
       message: '发布内容不能为空',
       statusMessage: 'Bad Request',
     });
+  }
+
+  let linkPreviewData = null;
+
+  if (link) {
+    linkPreviewData = await getLinkPreview(link);
   }
 
   // 4. HTML 清洗 (保持你的安全配置)
@@ -79,6 +86,8 @@ export default defineEventHandler(async (event): Promise<SinglePostResponse> => 
       published: published ?? true,
       icon: icon,
       action: action,
+      link: link,
+      link_data: linkPreviewData,
     };
 
     // 7. 执行创建

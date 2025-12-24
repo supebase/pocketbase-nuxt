@@ -43,7 +43,10 @@
 
       <USeparator />
 
-      <div class="flex flex-col gap-4 select-none">
+      <div class="flex flex-col gap-6 select-none">
+        <UInput v-model="form.link" id="link" placeholder="链接卡片，例如：https://ericdit.com"
+          variant="subtle" color="neutral" :disabled="isSubmitting" size="lg" class="w-full" />
+
         <USwitch v-model="form.published" :disabled="isSubmitting" color="neutral"
           :label="form.published ? '立即对外正式发布' : '临时保存为草稿'" />
 
@@ -52,8 +55,8 @@
       </div>
 
       <div class="flex items-center justify-between select-none">
-        <UButton type="button" color="neutral" variant="soft" class="cursor-pointer"
-          @click="$router.back()"> 取消 </UButton>
+        <UButton type="button" color="error" variant="soft" class="cursor-pointer"
+          @click="$router.back()"> 取消发布 </UButton>
 
         <UButton type="submit" color="neutral" :loading="isSubmitting"
           :disabled="isSubmitting || form.content.length >= maxLimit || form.content.trim() === ''"
@@ -65,13 +68,11 @@
         </UButton>
       </div>
 
-      <div class="space-y-2 mt-4">
-        <UAlert v-if="errors.content" icon="i-hugeicons:alert-02" color="error" variant="soft"
-          :description="errors.content" />
+      <UAlert v-if="errors.content" icon="i-hugeicons:alert-02" color="error" variant="soft"
+        :description="errors.content" class="space-y-2 mt-4" />
 
-        <UAlert v-if="globalError" icon="i-hugeicons:alert-02" color="error" variant="soft"
-          :description="globalError" />
-      </div>
+      <UAlert v-if="globalError" icon="i-hugeicons:alert-02" color="error" variant="soft"
+        :description="globalError" class="space-y-2 mt-4" />
     </form>
   </div>
 </template>
@@ -86,6 +87,7 @@ const createInitialForm = () => ({
   published: true,
   icon: '',
   action: 'dit',
+  link: '',
 });
 
 const form = reactive(createInitialForm());

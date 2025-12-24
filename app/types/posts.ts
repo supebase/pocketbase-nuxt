@@ -32,5 +32,14 @@ export interface SinglePostResponse {
 // 创建请求可以直接使用 Pick
 export type CreatePostRequest = Pick<
   PBPostResponse,
-  'content' | 'allow_comment' | 'published' | 'icon' | 'action'
+  'content' | 'allow_comment' | 'published' | 'icon' | 'action' | 'link' | 'link_data'
 >;
+
+export interface LinkPreviewData {
+  url: string;
+  title: string;
+  description: string;
+  image: string;
+  siteName: string;
+  favicon: string;
+}

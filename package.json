@@ -19,6 +19,7 @@
     "nuxt": "^4.2.2",
     "nuxt-auth-utils": "0.5.26",
     "nuxt-emoji-picker": "^1.2.1",
+    "open-graph-scraper": "^6.11.0",
     "pocketbase": "^0.26.5",
     "vue": "^3.5.26",
     "vue-router": "^4.6.4"

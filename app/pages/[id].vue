@@ -30,7 +30,7 @@
 
             <div>
               <UIcon name="i-hugeicons:arrow-turn-backward"
-                class="size-6.5 text-dimmed cursor-pointer hover:text-primary transition-colors"
+                class="size-6.5 text-dimmed cursor-pointer hover:text-primary"
                 @click="$router.back()" />
             </div>
           </div>
@@ -61,14 +61,25 @@
           'transition-all duration-700 delay-300',
           mdcReady ? 'opacity-100' : 'opacity-0 pointer-events-none',
         ]">
-          <UAlert :ui="{ root: 'items-center justify-center text-dimmed', wrapper: 'flex-none' }" v-if="!postWithRelativeTime.allow_comment" icon="i-hugeicons:comment-block-02"
-            color="neutral" variant="outline" title="本内容评论互动功能已关闭" class="mt-8 select-none" />
+          <UAlert :ui="{ root: 'items-center justify-center text-dimmed', wrapper: 'flex-none' }"
+            v-if="!postWithRelativeTime.allow_comment" icon="i-hugeicons:comment-block-02"
+            color="neutral" variant="soft" title="本内容评论互动功能已关闭" class="mt-8 select-none" />
+
+          <UEmpty v-if="!loggedIn && postWithRelativeTime.allow_comment" size="lg"
+            icon="i-hugeicons:lock-key" title="参与评论需要登录" description="登录后即可在评论区发布你的观点与见解" :actions="[
+              {
+                label: '立即登录',
+                color: 'neutral',
+                variant: 'solid',
+                to: '/auth',
+              }
+            ]" class="mt-8 select-none" />
 
           <ClientOnly>
             <CommentsCommentForm
               v-if="loggedIn && !isListLoading && postWithRelativeTime.allow_comment"
               :post-id="postWithRelativeTime.id" :raw-suggestions="commenters"
-              @comment-created="onCommentSuccess" class="mt-8" />
+              :is-list-loading="isListLoading" @comment-created="onCommentSuccess" class="mt-8" />
           </ClientOnly>
 
           <CommentsCommentList ref="commentListRef" :post-id="postWithRelativeTime.id"
@@ -118,13 +129,21 @@ const postWithRelativeTime = computed(() => {
 });
 
 const handleUpdateCommenters = (rawComments: any[]) => {
+  // 增加防御：如果没数据直接清空
+  if (!rawComments || rawComments.length === 0) {
+    commenters.value = [];
+    return;
+  }
+
   const userMap = new Map();
+
   rawComments.forEach((comment) => {
     const u = comment.expand?.user;
-    if (u && u.id !== currentUser.value?.id) {
+    if (u?.id && u.id !== currentUser.value?.id) {
       userMap.set(u.id, { id: u.id, name: u.name, avatar: u.avatar });
     }
   });
+
   commenters.value = Array.from(userMap.values());
 };
 
@@ -180,6 +199,12 @@ const handleMdcMounted = () => {
     isUpdateRefresh.value = false;
   });
 };
+
+watch(() => currentUser.value?.id, () => {
+  // 获取当前列表中的原始评论数据
+  const currentComments = commentListRef.value?.comments || [];
+  handleUpdateCommenters(currentComments);
+}, { immediate: true });
 
 watch(() => route.params.id, () => {
   mdcReady.value = false;
