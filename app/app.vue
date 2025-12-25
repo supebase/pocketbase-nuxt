@@ -30,7 +30,6 @@
 import { zh_cn } from "@nuxt/ui/locale";
 
 const appConfig = useAppConfig();
-const colorMode = useColorMode();
 const route = useRoute();
 const { showHeaderBack } = useHeader();
 const { loggedIn } = useUserSession(); // 💡 获取 nuxt-auth-utils 状态
@@ -52,12 +51,5 @@ watch(loggedIn, (isLogged) => {
   if (!isLogged && $pb.authStore.isValid) {
     $pb.authStore.clear();
   }
-}, { immediate: true });
-
-watch(() => colorMode.value, (newMode) => {
-  const themeColor = newMode === 'dark' ? '#171717' : '#ffffff';
-  useHead({
-    meta: [{ name: 'theme-color', content: themeColor }]
-  });
 }, { immediate: true });
 </script>
