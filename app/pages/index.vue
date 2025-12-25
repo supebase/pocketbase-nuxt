@@ -61,9 +61,6 @@
 
             <template #date="{ item }">
               <div class="flex items-center gap-2.5">
-                <UButton v-if="canViewDrafts" variant="link" color="neutral"
-                  icon="i-hugeicons:pencil-edit-01" tabindex="-1"
-                  class="size-5 mr-1.5 text-dimmed hover:text-primary" :to="`/edit/${item.id}`" />
                 <span class="text-dimmed/80">{{ item.date }}</span>
               </div>
             </template>
@@ -99,7 +96,12 @@
                 </ULink>
 
                 <CommonLinkCard v-if="item.link_data" :data="item.link_data" />
-                <CommentsUsers :post-id="item.id" :allow-comment="item.allowComment" />
+
+                <div class="flex items-center justify-between">
+                  <CommentsUsers :post-id="item.id" :allow-comment="item.allowComment" />
+                  <ULink v-if="canViewDrafts" tabindex="-1" :to="`/edit/${item.id}`"
+                    class="text-sm text-primary">编辑</ULink>
+                </div>
               </div>
             </template>
           </CommonMotionTimeline>

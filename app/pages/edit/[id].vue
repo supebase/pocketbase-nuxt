@@ -70,7 +70,7 @@ import type { SinglePostResponse } from '~/types/posts';
 
 const { markAsUpdated } = usePostUpdateTracker();
 const route = useRoute();
-const id = route.params.id as string;
+const { id } = route.params as { id: string };
 
 // --- 1. 表单数据 ---
 const form = ref({

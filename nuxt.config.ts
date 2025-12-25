@@ -20,9 +20,6 @@ export default defineNuxtConfig({
     },
     head: {
       title: "Eric",
-      htmlAttrs: {
-        lang: 'zh-CN',
-      },
       viewport:
         'width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover',
     },
@@ -142,7 +139,6 @@ export default defineNuxtConfig({
   ],
   // 颜色模式配置
   colorMode: {
-    preference: 'dark',
     classSuffix: '',
   },
   // CSS配置

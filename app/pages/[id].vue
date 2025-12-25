@@ -5,7 +5,7 @@
 
     <div v-if="status === 'pending' && !postWithRelativeTime" key="loading"
       class="flex flex-col gap-6 mt-4">
-      <SkeletonPost />
+      <SkeletonPost class="opacity-70 mask-b-from-10" />
     </div>
 
     <div v-else-if="postWithRelativeTime" key="content">
@@ -21,7 +21,7 @@
               <ClientOnly>
                 {{ postWithRelativeTime.relativeTime }}
                 <template #fallback><span>{{ useRelativeTime(postWithRelativeTime.created).value
-                }}</span></template>
+                    }}</span></template>
               </ClientOnly>
               <span class="mx-1.5">&bull;</span>
               {{ useReadingTime(postWithRelativeTime.content) }}
@@ -49,9 +49,8 @@
           'transition-all duration-500 ease-out',
           mdcReady ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none',
         ]">
-          <MDC v-if="postWithRelativeTime.content"
-            :key="postWithRelativeTime.id + postWithRelativeTime.updated"
-            :value="postWithRelativeTime.content" @vue:mounted="handleMdcMounted"
+          <MDCRenderer v-if="ast" :key="postWithRelativeTime.updated" :body="ast.body"
+            :data="ast.data" @vue:mounted="handleMdcMounted"
             class="prose prose-neutral prose-lg sm:prose-[18px] dark:prose-invert prose-img:rounded-xl prose-img:ring-1 prose-img:ring-neutral-200 prose-img:dark:ring-neutral-800" />
         </div>
       </div>
@@ -93,6 +92,7 @@
 <script setup lang="ts">
 import type { SinglePostResponse } from "~/types/posts";
 import { useIntersectionObserver } from "@vueuse/core";
+import { parseMarkdown } from "@nuxtjs/mdc/runtime";
 
 // --- 1. 状态管理 ---
 const { updatedMarks, clearUpdateMark } = usePostUpdateTracker();
@@ -117,8 +117,8 @@ const { data, status, refresh, error } = await useLazyFetch<SinglePostResponse>(
 );
 
 // --- 3. 核心修复点：初始化 mdcReady ---
-// 如果是 SSR 环境，或者客户端初始化时 data 已经有值（从 payload 恢复），则默认为 true
-const mdcReady = ref(import.meta.server || !!data.value?.data);
+const mdcReady = ref(false);
+const ast = ref<any>(null); // 存储解析后的 AST
 
 // --- 4. 计算属性 ---
 const postWithRelativeTime = computed(() => {
@@ -155,16 +155,43 @@ const onCommentSuccess = (newComment: any) => {
   refreshNuxtData(`comments-data-${id}`);
 };
 
-const handleMdcMounted = () => {
-  // 仅在非 SSR 且需要加载时增加视觉缓冲
-  if (!mdcReady.value) {
-    setTimeout(() => {
-      requestAnimationFrame(() => {
-        mdcReady.value = true;
-        isUpdateRefresh.value = false;
-      });
-    }, 400);
+// 创建一个解析函数
+const parseContent = async (content: string) => {
+  if (!content) return;
+  try {
+    // 将 markdown/html 字符串解析为 AST
+    ast.value = await parseMarkdown(content);
+  } catch (e) {
+    console.error('MDC Parsing Error:', e);
   }
+};
+
+// 监听内容解析
+watch(() => postWithRelativeTime.value?.content, async (newContent) => {
+  if (!newContent) return;
+
+  // 关键：开始解析前，如果不是 SSR，可以把 mdcReady 设为 false 开启淡入效果
+  if (import.meta.client && !isUpdateRefresh.value) {
+    // mdcReady.value = false; // 如果你希望每次换内容都闪现一下动画，取消注释
+  }
+
+  await parseContent(newContent);
+
+  // 如果解析完后 AST 没变（例如内容一致），handleMdcMounted 可能不触发
+  // 这里做一个保底
+  if (import.meta.server) {
+    mdcReady.value = true;
+  }
+}, { immediate: true });
+
+const handleMdcMounted = () => {
+  // 使用 nextTick 确保渲染树已更新
+  nextTick(() => {
+    setTimeout(() => {
+      mdcReady.value = true;
+      isUpdateRefresh.value = false;
+    }, 100); // 稍微给一点点缓冲，防止闪烁
+  });
 };
 
 // --- 6. 生命周期与交互 ---
@@ -213,13 +240,14 @@ watch(() => data.value?.data?.updated, (newVal, oldVal) => {
   }
 });
 
+// 修正 status 监听
 watch(status, (newStatus) => {
-  // 当 fetch 状态变为 pending 时（如路由切换但组件复用），开启加载态
   if (newStatus === 'pending') {
-    mdcReady.value = false;
-  } else if (newStatus === 'success') {
-    // 数据加载成功后，由 handleMdcMounted 负责切回 true，此处做简单保底
-    if (!postWithRelativeTime.value?.content) mdcReady.value = true;
+    // 只有在非静默刷新（如路由跳转）时才彻底重置
+    if (!isUpdateRefresh.value) {
+      mdcReady.value = false;
+      ast.value = null; // 清空旧内容防止残留
+    }
   }
 });
 
