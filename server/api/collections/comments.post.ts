@@ -56,6 +56,13 @@ export default defineEventHandler(async (event) => {
   // 6. 获取本次请求专用的独立 PB 实例 💡
   const pb = getPocketBaseInstance(event);
 
+  if (!pb.authStore.isValid) {
+    throw createError({
+      statusCode: 401,
+      message: '身份认证已过期，请重新登录',
+    });
+  }
+
   try {
     // 7. 构造符合数据库结构的 Payload
     const createData: Create<'comments'> = {

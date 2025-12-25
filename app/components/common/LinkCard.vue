@@ -1,6 +1,6 @@
 <template>
     <a :href="data.url" target="_blank"
-        class="group my-4 flex items-stretch border border-neutral-200 dark:border-neutral-800 rounded-xl overflow-hidden no-underline">
+        class="group mt-4 mb-1.5 flex items-stretch border border-neutral-200 dark:border-neutral-800 rounded-lg overflow-hidden no-underline">
 
         <div v-if="data.image"
             class="relative w-20 shrink-0 border-r border-neutral-200 dark:border-neutral-800 overflow-hidden">
@@ -31,7 +31,7 @@
         </div>
 
         <div
-            class="flex-1 p-3 min-w-0 flex flex-col justify-center space-y-1 bg-white dark:bg-neutral-950/20">
+            class="flex-1 p-3 min-w-0 flex flex-col justify-center space-y-1 bg-neutral-50 dark:bg-neutral-950/20">
 
             <div class="text-sm font-bold text-primary line-clamp-1 w-full">
                 {{ data.title }}

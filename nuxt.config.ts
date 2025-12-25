@@ -56,10 +56,6 @@ export default defineNuxtConfig({
     },
     minify: true,
   },
-  routeRules: {
-    // 首页：1分钟内走静态缓存，后台异步更新
-    '/': { swr: 60 },
-  },
   // 图片优化
   image: {
     // 1. 预设尺寸（关键）：解决重复加载
@@ -105,6 +101,8 @@ export default defineNuxtConfig({
     // 禁用本地包，改为从 CDN 加载
     provider: 'iconify',
     serverBundle: 'remote',
+    // 将超时时间延长，例如 3000ms 或 5000ms
+    fetchTimeout: 5000,
     // 依然可以配置自定义
     clientBundle: {
       scan: true, // 仅扫描代码中用到的图标，不会全量打包

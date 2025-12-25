@@ -28,15 +28,6 @@ export default defineAppConfig({
       slots: {
         avatar: 'shrink-0 mb-2 bg-transparent',
       },
-      variants: {
-        size: {
-          md: {
-            title: 'text-dimmed',
-            description: 'text-dimmed!',
-            avatar: 'text-3xl',
-          },
-        },
-      },
     },
     separator: {
       slots: {

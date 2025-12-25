@@ -164,13 +164,14 @@ body {
   object-fit: cover;
   margin-top: 0px;
   margin-bottom: 0px;
+  border-radius: var(--radius-lg);
 }
 
 .v3-emojis button {
   flex-basis: 16.6% !important;
   max-width: 16.6% !important;
   font-size: 24px !important;
-  border-radius: 6px !important;
+  border-radius: 4px !important;
 }
 
 .v3-emoji-picker .v3-body {

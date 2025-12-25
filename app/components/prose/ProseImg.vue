@@ -1,5 +1,5 @@
 <template>
-  <div class="rounded-xl overflow-clip ring-1 ring-neutral-200 dark:ring-neutral-800">
+  <div class="rounded-lg overflow-clip border border-neutral-200 dark:border-neutral-800">
     <component :is="ImageComponent" :src="refinedSrc" placeholder preset="preview" :custom="true">
       <template #default="{ src, isLoaded, imgAttrs }">
         <div class="relative overflow-clip">
