@@ -1,14 +1,24 @@
 export const usePostUpdateTracker = () => {
-  // 记录需要更新的文章 ID 集合
-  const updatedPostIds = useState<Set<string>>('updated-posts', () => new Set());
+  // 改用 Record<string, boolean> 确保 SSR 序列化安全
+  const updatedMarks = useState<Record<string, boolean>>('updated-posts-map', () => ({}));
 
   const markAsUpdated = (id: string) => {
-    updatedPostIds.value.add(id);
+    updatedMarks.value[id] = true;
   };
 
   const clearUpdateMark = (id: string) => {
-    updatedPostIds.value.delete(id);
+    if (updatedMarks.value[id]) {
+      delete updatedMarks.value[id];
+    }
   };
 
-  return { updatedPostIds, markAsUpdated, clearUpdateMark };
+  // 为了保持你详情页逻辑的兼容性，提供一个 computed 集合
+  const updatedPostIds = computed(() => new Set(Object.keys(updatedMarks.value)));
+
+  return {
+    updatedPostIds,
+    updatedMarks, // 直接判断 updatedMarks.value[id] 性能更好
+    markAsUpdated,
+    clearUpdateMark
+  };
 };

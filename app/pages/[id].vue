@@ -3,99 +3,90 @@
     <UAlert v-if="error" :description="error.data?.message || '获取内容失败，请稍后重试'" variant="soft"
       icon="i-hugeicons:alert-02" color="error" class="mb-4" />
 
-    <Transition name="fade" mode="out-in">
-      <div v-if="status === 'pending' && !postWithRelativeTime" key="loading"
-        class="flex flex-col gap-6 mt-4">
-        <SkeletonPost />
-      </div>
+    <div v-if="status === 'pending' && !postWithRelativeTime" key="loading"
+      class="flex flex-col gap-6 mt-4">
+      <SkeletonPost />
+    </div>
 
-      <div v-else-if="postWithRelativeTime" key="content">
-        <div ref="authorRow" class="flex flex-col items-center justify-center gap-3 select-none">
-          <div class="flex items-center justify-between gap-2 w-full">
-            <div class="flex items-center gap-3">
-              <UIcon v-if="postWithRelativeTime.icon" :name="postWithRelativeTime.icon"
-                class="size-7 text-primary" />
-              <div v-else class="size-8">
-                <CommonGravatar :avatar-id="postWithRelativeTime.expand?.user?.avatar" :size="64" />
-              </div>
-              <div class="text-dimmed">
-                <ClientOnly>
-                  {{ postWithRelativeTime.relativeTime }}
-                  <template #fallback><span>刚刚</span></template>
-                </ClientOnly>
-                <span class="mx-1.5">&bull;</span>
-                {{ useReadingTime(postWithRelativeTime.content) }}
-              </div>
+    <div v-else-if="postWithRelativeTime" key="content">
+      <div ref="authorRow" class="flex flex-col items-center justify-center gap-3 select-none">
+        <div class="flex items-center justify-between gap-2 w-full">
+          <div class="flex items-center gap-3">
+            <UIcon v-if="postWithRelativeTime.icon" :name="postWithRelativeTime.icon"
+              class="size-7 text-primary" />
+            <div v-else class="size-8">
+              <CommonGravatar :avatar-id="postWithRelativeTime.expand?.user?.avatar" :size="64" />
             </div>
+            <div class="text-dimmed flex items-center">
+              <ClientOnly>
+                {{ postWithRelativeTime.relativeTime }}
+                <template #fallback><span>{{ useRelativeTime(postWithRelativeTime.created).value
+                }}</span></template>
+              </ClientOnly>
+              <span class="mx-1.5">&bull;</span>
+              {{ useReadingTime(postWithRelativeTime.content) }}
+            </div>
+          </div>
 
-            <div>
-              <UIcon name="i-hugeicons:arrow-turn-backward"
-                class="size-6.5 text-dimmed cursor-pointer hover:text-primary"
-                @click="$router.back()" />
-            </div>
+          <div>
+            <UIcon name="i-hugeicons:arrow-turn-backward"
+              class="size-6.5 text-dimmed cursor-pointer hover:text-primary transition-colors"
+              @click="$router.back()" />
           </div>
         </div>
+      </div>
 
-        <div class="relative mt-6">
-          <Transition leave-active-class="transition duration-300 opacity-0">
-            <div v-if="postWithRelativeTime && !mdcReady"
-              class="absolute inset-0 h-40 flex items-center justify-center z-10 select-none pointer-events-none">
-              <UIcon name="i-hugeicons:refresh" class="size-5 mr-2 animate-spin text-muted" />
-              <span class="font-medium text-muted">
-                {{ isUpdateRefresh ? '正在同步内容改动' : '沉浸式梳理内容' }}
-              </span>
-            </div>
-          </Transition>
-
-          <div :class="[
-            'transition-all duration-300 ease-out',
-            mdcReady ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2 pointer-events-none',
-          ]">
-            <MDC v-if="postWithRelativeTime"
-              :key="postWithRelativeTime.id + postWithRelativeTime.updated"
-              :value="postWithRelativeTime.content || ''" @vue:mounted="handleMdcMounted"
-              class="prose prose-neutral prose-lg sm:prose-[18px] dark:prose-invert prose-img:rounded-xl prose-img:ring-1 prose-img:ring-neutral-200 prose-img:dark:ring-neutral-800" />
-          </div>
+      <div class="relative mt-6 min-h-75">
+        <div v-if="!mdcReady"
+          class="absolute inset-0 h-40 flex flex-col items-center justify-center z-10 select-none pointer-events-none">
+          <UIcon name="i-hugeicons:refresh" class="size-6 mb-2 animate-spin text-primary/60" />
+          <span class="text-sm font-medium text-muted tracking-widest">
+            {{ isUpdateRefresh ? '正在同步内容改动' : '沉浸式梳理内容' }}
+          </span>
         </div>
 
         <div :class="[
-          'transition-all duration-700 delay-300',
-          mdcReady ? 'opacity-100' : 'opacity-0 pointer-events-none',
+          'transition-all duration-500 ease-out',
+          mdcReady ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none',
         ]">
-          <UAlert :ui="{ root: 'items-center justify-center text-dimmed', wrapper: 'flex-none' }"
-            v-if="!postWithRelativeTime.allow_comment" icon="i-hugeicons:comment-block-02"
-            color="neutral" variant="soft" title="本内容评论互动功能已关闭" class="mt-8 select-none" />
-
-          <UEmpty v-if="!loggedIn && postWithRelativeTime.allow_comment" size="lg"
-            icon="i-hugeicons:lock-key" title="参与评论需要登录" description="登录后即可在评论区发布你的观点与见解" :actions="[
-              {
-                label: '立即登录',
-                color: 'neutral',
-                variant: 'solid',
-                to: '/auth',
-              }
-            ]" class="mt-8 select-none" />
-
-          <ClientOnly>
-            <CommentsCommentForm
-              v-if="loggedIn && !isListLoading && postWithRelativeTime.allow_comment"
-              :post-id="postWithRelativeTime.id" :raw-suggestions="commenters"
-              :is-list-loading="isListLoading" @comment-created="onCommentSuccess" class="mt-8" />
-          </ClientOnly>
-
-          <CommentsCommentList ref="commentListRef" :post-id="postWithRelativeTime.id"
-            :allow-comment="postWithRelativeTime.allow_comment"
-            @loading-change="(val) => (isListLoading = val)"
-            @update-commenters="handleUpdateCommenters" />
+          <MDC v-if="postWithRelativeTime.content"
+            :key="postWithRelativeTime.id + postWithRelativeTime.updated"
+            :value="postWithRelativeTime.content" @vue:mounted="handleMdcMounted"
+            class="prose prose-neutral prose-lg sm:prose-[18px] dark:prose-invert prose-img:rounded-xl prose-img:ring-1 prose-img:ring-neutral-200 prose-img:dark:ring-neutral-800" />
         </div>
       </div>
 
-      <div v-else key="empty" class="flex flex-col items-center justify-center py-20 select-none">
-        <UEmpty variant="naked" title="内容无法找到" description="当前访问的内容可能已被删除，返回首页浏览更多" :actions="[
-          { label: '返回首页', color: 'neutral', to: '/' },
-        ]" />
+      <div :class="[
+        'transition-all duration-700 delay-300',
+        mdcReady ? 'opacity-100' : 'opacity-0 pointer-events-none',
+      ]">
+        <UAlert v-if="!postWithRelativeTime.allow_comment"
+          :ui="{ root: 'items-center justify-center text-dimmed', wrapper: 'flex-none' }"
+          icon="i-hugeicons:comment-block-02" color="neutral" variant="soft" title="本内容评论互动功能已关闭"
+          class="mt-8 select-none" />
+
+        <UEmpty v-if="!loggedIn && postWithRelativeTime.allow_comment" size="lg"
+          icon="i-hugeicons:lock-key" title="参与评论需要登录" description="登录后即可在评论区发布你的观点与见解"
+          :actions="[{ label: '立即登录', color: 'neutral', variant: 'solid', to: '/auth' }]"
+          class="mt-8 select-none" />
+
+        <ClientOnly>
+          <CommentsForm v-if="loggedIn && !isListLoading && postWithRelativeTime.allow_comment"
+            :post-id="postWithRelativeTime.id" :raw-suggestions="commenters"
+            :is-list-loading="isListLoading" @comment-created="onCommentSuccess" class="mt-8" />
+        </ClientOnly>
+
+        <CommentsList ref="commentListRef" :post-id="postWithRelativeTime.id"
+          :allow-comment="postWithRelativeTime.allow_comment"
+          @loading-change="(val) => (isListLoading = val)"
+          @update-commenters="handleUpdateCommenters" />
       </div>
-    </Transition>
+    </div>
+
+    <div v-else key="empty" class="flex flex-col items-center justify-center py-20 select-none">
+      <UEmpty variant="naked" title="内容无法找到" description="当前访问的内容可能已被删除，返回首页浏览更多"
+        :actions="[{ label: '返回首页', color: 'neutral', to: '/' }]" />
+    </div>
   </div>
 </template>
 
@@ -103,23 +94,33 @@
 import type { SinglePostResponse } from "~/types/posts";
 import { useIntersectionObserver } from "@vueuse/core";
 
-const { updatedPostIds, clearUpdateMark } = usePostUpdateTracker();
+// --- 1. 状态管理 ---
+const { updatedMarks, clearUpdateMark } = usePostUpdateTracker();
 const { loggedIn, user: currentUser } = useUserSession();
+const { showHeaderBack } = useHeader();
 const route = useRoute();
-const { id } = route.params;
+const { id } = route.params as { id: string };
 
 const isListLoading = ref(false);
-const mdcReady = ref(false);
-const commentListRef = ref();
-const commenters = shallowRef<any[]>([]);
 const isUpdateRefresh = ref(false);
 const authorRow = ref<HTMLElement | null>(null);
+const commentListRef = ref();
+const commenters = shallowRef<any[]>([]);
 
+// --- 2. 数据获取 ---
 const { data, status, refresh, error } = await useLazyFetch<SinglePostResponse>(
   `/api/collections/post/${id}`,
-  { server: true }
+  {
+    key: `post-detail-${id}`,
+    server: true
+  }
 );
 
+// --- 3. 核心修复点：初始化 mdcReady ---
+// 如果是 SSR 环境，或者客户端初始化时 data 已经有值（从 payload 恢复），则默认为 true
+const mdcReady = ref(import.meta.server || !!data.value?.data);
+
+// --- 4. 计算属性 ---
 const postWithRelativeTime = computed(() => {
   const postData = data.value?.data;
   if (!postData) return null;
@@ -129,23 +130,21 @@ const postWithRelativeTime = computed(() => {
   };
 });
 
+// --- 5. 逻辑处理 ---
 const handleUpdateCommenters = (rawComments: any[]) => {
-  if (!rawComments || rawComments.length === 0) {
+  if (!rawComments?.length) {
     commenters.value = [];
     return;
   }
-
   const userMap = new Map();
   const currentUserId = currentUser.value?.id;
 
   rawComments.forEach((comment) => {
     const u = comment.expand?.user;
-    // 过滤掉自己，且确保用户数据完整
     if (u?.id && u.id !== currentUserId) {
       userMap.set(u.id, { id: u.id, name: u.name, avatar: u.avatar });
     }
   });
-
   commenters.value = Array.from(userMap.values());
 };
 
@@ -156,47 +155,47 @@ const onCommentSuccess = (newComment: any) => {
   refreshNuxtData(`comments-data-${id}`);
 };
 
-const { showHeaderBack } = useHeader();
+const handleMdcMounted = () => {
+  // 仅在非 SSR 且需要加载时增加视觉缓冲
+  if (!mdcReady.value) {
+    setTimeout(() => {
+      requestAnimationFrame(() => {
+        mdcReady.value = true;
+        isUpdateRefresh.value = false;
+      });
+    }, 400);
+  }
+};
 
-// 【关键修复 3】：调整观察器逻辑，确保逻辑不被阻塞
+// --- 6. 生命周期与交互 ---
+onMounted(() => {
+  // 确保客户端激活后，如果已有数据，一定要显示内容
+  if (postWithRelativeTime.value) {
+    mdcReady.value = true;
+  }
+});
+
 useIntersectionObserver(
   authorRow,
   (entries) => {
     const entry = entries[0];
     if (!entry) return;
-
     const { isIntersecting, boundingClientRect } = entry;
-
     if (isIntersecting) {
-      // 只要作者行可见，立刻关闭 HeaderBack，保证点击不被拦截
       showHeaderBack.value = false;
     } else if (boundingClientRect.top < 0 && mdcReady.value) {
-      // 只有在内容完全加载且滚出屏幕时才显示 HeaderBack
       showHeaderBack.value = true;
     }
   },
   { threshold: 0, rootMargin: "-20px 0px 0px 0px" }
 );
 
-const handleMdcMounted = () => {
-  // 稍微加一点点延迟（可选），让梳理文案能被看清，提升“沉浸感”
-  setTimeout(() => {
-    requestAnimationFrame(() => {
-      mdcReady.value = true;
-      isUpdateRefresh.value = false;
-    });
-  }, 300);
-};
-
-onBeforeRouteLeave(() => { showHeaderBack.value = false; });
-onUnmounted(() => { showHeaderBack.value = false; });
-
 onActivated(async () => {
-  const currentId = route.params.id as string;
-  if (updatedPostIds.value.has(currentId)) {
+  const currentId = id;
+  if (updatedMarks.value[currentId]) {
     isUpdateRefresh.value = true;
+    mdcReady.value = false; // 标记加载态进行平滑同步
     await refresh();
-    mdcReady.value = false;
     if (commentListRef.value) {
       commentListRef.value.fetchComments(true);
     }
@@ -204,38 +203,28 @@ onActivated(async () => {
   }
 });
 
-watch(() => currentUser.value?.id, (newId) => {
-  if (commentListRef.value) {
-    // 切换用户后，重新根据现有列表计算提及人，排除掉“新”的自己
-    handleUpdateCommenters(commentListRef.value.comments || []);
-  }
-}, { immediate: true });
+onBeforeRouteLeave(() => { showHeaderBack.value = false; });
+onUnmounted(() => { showHeaderBack.value = false; });
 
-// 监听路由 ID 变化，重置提及列表，防止 A 文章的评论者出现在 B 文章
-watch(() => route.params.id, () => {
-  mdcReady.value = false;
-  commenters.value = [];
-});
-
-watch(status, (newStatus) => {
-  if (newStatus === 'pending') {
+// --- 7. 侦听器 ---
+watch(() => data.value?.data?.updated, (newVal, oldVal) => {
+  if (oldVal && newVal !== oldVal) {
     mdcReady.value = false;
   }
 });
+
+watch(status, (newStatus) => {
+  // 当 fetch 状态变为 pending 时（如路由切换但组件复用），开启加载态
+  if (newStatus === 'pending') {
+    mdcReady.value = false;
+  } else if (newStatus === 'success') {
+    // 数据加载成功后，由 handleMdcMounted 负责切回 true，此处做简单保底
+    if (!postWithRelativeTime.value?.content) mdcReady.value = true;
+  }
+});
+
+watch(() => id, () => {
+  mdcReady.value = false;
+  commenters.value = [];
+});
 </script>
-
-<style scoped>
-.fade-enter-active {
-  transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
-}
-
-.fade-leave-active {
-  transition: all 0.3s ease;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-  transform: translateY(10px);
-}
-</style>

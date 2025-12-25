@@ -49,36 +49,42 @@ const props = defineProps({
   allowComment: { type: Boolean, default: true },
 });
 
-const cacheKey = computed(() => `comments-data-${props.postId}`);
+// 1. 优化 Key：确保 key 是唯一的，且能对应该组件实例
+const cacheKey = computed(() => `comments-preview-${props.postId}`);
 
-// 注意：这里解构出 totalItems
-const { data: commentsResponse, status } = await useLazyFetch<CommentsListResponse>(`/api/collections/comments`, {
+const { data: commentsResponse, status, refresh } = await useLazyFetch<CommentsListResponse>(`/api/collections/comments`, {
   key: cacheKey.value,
   server: true,
   query: {
     filter: `post="${props.postId}"`,
     sort: "-created",
     page: 1,
-    perPage: 5, // 预览依然只取 5 个头像
+    perPage: 5,
   },
-  dedupe: "cancel",
-  default: () => ({
-    message: '',
-    data: {
-      comments: [],
-      totalItems: 0,
-      page: 1,
-      perPage: 5
-    }
-  }),
+  // 2. 移除 dedupe: "cancel"，这在快速滚动列表时会导致大量请求被取消从而显示不正常
+  // 3. 增加 pick 减少负载（可选）
+  watch: [() => props.postId], // 监听 ID 变化
 });
 
-// 计算属性：用于循环的头像（前3个）
+const forceRefresh = () => {
+  // 只有在客户端且非挂载中状态才执行，避免 SSR 冲突
+  if (import.meta.client) {
+    refresh();
+  }
+};
+
+onMounted(() => {
+  // 无论有没有数据，挂载时都请求最新状态
+  // 这能解决“返回首页”时，由于 Nuxt Keep-alive 或路由缓存导致的数据过期
+  forceRefresh();
+});
+
+// 如果你的 app 使用了 <keep-alive> 或 <NuxtPage keepalive />
+onActivated(() => {
+  forceRefresh();
+});
+
 const usersToShow = computed(() => commentsResponse.value?.data?.comments || []);
-
-// 计算属性：总评论数
 const totalCount = computed(() => commentsResponse.value?.data?.totalItems || 0);
-
-// 计算属性：剩余隐藏的人数
 const remainingCount = computed(() => Math.max(0, totalCount.value - 3));
 </script>

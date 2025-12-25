@@ -1,5 +1,5 @@
 <template>
-  <p class="leading-7 hyphens-none">
+  <div class="leading-7 hyphens-none mb-4 last:mb-0">
     <slot />
-  </p>
+  </div>
 </template>

@@ -11,10 +11,11 @@ export function usePagination<T>() {
 
   /**
    * 加载更多
-   * @param fetchDataFn 请求函数，内部会自动传入 nextPage
    */
   const loadMore = async (
-    fetchDataFn: (page: number) => Promise<{ items: T[]; total: number } | undefined>
+    fetchDataFn: (page: number) => Promise<{ items: T[]; total: number } | undefined>,
+    // 💡 增加一个可选的预处理回调
+    transformFn?: (items: T[]) => T[]
   ) => {
     if (isLoadingMore.value || !hasMore.value) return;
 
@@ -24,22 +25,26 @@ export function usePagination<T>() {
       const result = await fetchDataFn(nextPage);
 
       if (result && result.items.length > 0) {
-        allItems.value = [...allItems.value, ...result.items];
+        // 💡 如果有转换函数，先转换再合并
+        const newItems = transformFn ? transformFn(result.items) : result.items;
+
+        allItems.value = [...allItems.value, ...newItems];
         totalItems.value = result.total;
         currentPage.value = nextPage;
-        await nextTick();
       }
     } catch (err) {
       console.error('Pagination error:', err);
     } finally {
+      // 这里的 setTimeout 建议缩短或移除，除非是为了视觉缓冲
       setTimeout(() => {
         isLoadingMore.value = false;
       }, 100);
     }
   };
 
-  const resetPagination = (items: T[], total: number) => {
-    allItems.value = items;
+  const resetPagination = (items: T[], total: number, transformFn?: (items: T[]) => T[]) => {
+    // 💡 初始重置时也应用转换
+    allItems.value = transformFn ? transformFn(items) : items;
     totalItems.value = total;
     currentPage.value = 1;
   };

@@ -28,14 +28,19 @@ export default defineNuxtConfig({
     },
   },
   experimental: {
-    payloadExtraction: false,
+    // 启用路由预获取，当鼠标悬停在链接上时提前下载数据
+    payloadExtraction: true, // 开启它，有助于快速导航
     renderJsonPayloads: true,
+    typedPages: true, // 提升开发和构建时的路由分析速度
+    // 💡 建议开启：支持在异步逻辑中更稳定地使用全局状态，对你的更新追踪器很有帮助
+    asyncContext: true,
   },
   vue: {
     propsDestructure: true,
   },
   vite: {
     build: {
+      cssMinify: 'lightningcss', // 比传统压缩更快更小
       // 禁用 CSS 的 Source Map 生成，从而消除插件警告
       sourcemap: false,
       target: "esnext",
@@ -48,14 +53,15 @@ export default defineNuxtConfig({
         target: "esnext",
       },
     },
-    // prerender: {
-    //   crawlLinks: true,
-    // },
     compressPublicAssets: {
       brotli: true,
       gzip: true,
     },
     minify: true,
+  },
+  routeRules: {
+    // 首页：1分钟内走静态缓存，后台异步更新
+    '/': { swr: 60 },
   },
   // 图片优化
   image: {
@@ -101,6 +107,7 @@ export default defineNuxtConfig({
   icon: {
     // 禁用本地包，改为从 CDN 加载
     provider: 'iconify',
+    serverBundle: 'remote',
     // 依然可以配置自定义
     clientBundle: {
       scan: true, // 仅扫描代码中用到的图标，不会全量打包
