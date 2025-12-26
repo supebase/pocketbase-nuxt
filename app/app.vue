@@ -16,7 +16,7 @@
       </template>
     </UHeader>
 
-    <UMain class="max-w-lg mx-auto">
+    <UMain class="max-w-xl mx-auto">
       <UContainer>
         <NuxtLayout>
           <NuxtPage />
