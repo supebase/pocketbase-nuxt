@@ -49,9 +49,10 @@
           'transition-all duration-500 ease-out',
           mdcReady ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none',
         ]">
+          <PostsToc :toc="toc" />
           <MDCRenderer v-if="ast" :key="postWithRelativeTime.updated" :body="ast.body"
             :data="ast.data" @vue:mounted="handleMdcMounted"
-            class="prose prose-neutral prose-lg sm:prose-[18px] dark:prose-invert prose-img:rounded-xl prose-img:ring-1 prose-img:ring-neutral-200 prose-img:dark:ring-neutral-800" />
+            class="prose prose-neutral prose-base dark:prose-invert prose-img:rounded-xl prose-img:ring-1 prose-img:ring-neutral-200 prose-img:dark:ring-neutral-800" />
         </div>
       </div>
 
@@ -119,6 +120,7 @@ const { data, status, refresh, error } = await useLazyFetch<SinglePostResponse>(
 // --- 3. 核心修复点：初始化 mdcReady ---
 const mdcReady = ref(false);
 const ast = ref<any>(null); // 存储解析后的 AST
+const toc = ref<any>(null);
 
 // --- 4. 计算属性 ---
 const postWithRelativeTime = computed(() => {
@@ -159,8 +161,15 @@ const onCommentSuccess = (newComment: any) => {
 const parseContent = async (content: string) => {
   if (!content) return;
   try {
-    // 将 markdown/html 字符串解析为 AST
-    ast.value = await parseMarkdown(content);
+    // 将 markdown 字符串解析为 AST
+    const result = await parseMarkdown(content, {
+      toc: {
+        depth: 4,
+        searchDepth: 4,
+      }
+    });
+    ast.value = result; // MDCRenderer 绑定的是 body
+    toc.value = result.toc;  // 提取目录结构
   } catch (e) {
     console.error('MDC Parsing Error:', e);
   }
@@ -231,7 +240,10 @@ onActivated(async () => {
 });
 
 onBeforeRouteLeave(() => { showHeaderBack.value = false; });
-onUnmounted(() => { showHeaderBack.value = false; });
+
+onUnmounted(() => {
+  showHeaderBack.value = false;
+});
 
 // --- 7. 侦听器 ---
 watch(() => data.value?.data?.updated, (newVal, oldVal) => {

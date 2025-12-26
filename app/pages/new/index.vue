@@ -65,7 +65,7 @@
           <UButton type="button" color="warning" variant="soft" class="cursor-pointer"
             @click="handleCancel">
             取消发布 </UButton>
-          <UButton type="submit" color="neutral" :loading="isSubmitting"
+          <UButton type="submit" color="neutral" loading-auto
             :disabled="isSubmitting || form.content.length >= maxLimit || form.content.trim() === ''"
             class="cursor-pointer">
             <span v-if="!isSubmitting">{{ form.action === 'partager' ? '分享互联网' : '发表新贴文' }}</span>

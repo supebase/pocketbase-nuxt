@@ -44,3 +44,12 @@ export async function createPost(pb: TypedPocketBase, data: Create<'posts'>) {
 export async function updatePost(pb: TypedPocketBase, postId: string, data: Update<'posts'>) {
   return await pb.collection('posts').update<PBPostsResponse>(postId, data);
 }
+
+/**
+ * 删除文章
+ * @param pb 独立 PB 实例
+ * @param postId 要删除的文章 ID
+ */
+export async function deletePost(pb: TypedPocketBase, postId: string) {
+  return await pb.collection('posts').delete(postId);
+}

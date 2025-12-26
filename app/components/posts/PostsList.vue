@@ -62,6 +62,7 @@
             <template #date="{ item }">
               <div class="flex items-center gap-2.5">
                 <span class="text-dimmed/80">{{ item.date }}</span>
+                <PostsDelete :item="item" :can-view-drafts="canViewDrafts ?? false" />
               </div>
             </template>
 
@@ -75,8 +76,8 @@
         <div v-if="allPosts.length > 0" class="flex flex-col items-center justify-center mt-8 mb-4">
           <Transition name="fade" mode="out-in">
             <div v-if="hasMore" key="load-button">
-              <UButton :loading="isLoadingMore" variant="soft" color="neutral"
-                class="cursor-pointer px-8" @click="handleLoadMore">
+              <UButton loading-auto variant="soft" color="neutral" class="cursor-pointer px-8"
+                @click="handleLoadMore">
                 {{ isLoadingMore ? '努力加载中...' : '加载更多' }}
               </UButton>
             </div>

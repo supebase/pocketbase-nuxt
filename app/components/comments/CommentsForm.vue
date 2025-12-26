@@ -61,7 +61,7 @@
           </span>
           <UButton type="submit" color="neutral" size="lg" variant="ghost"
             class="hover:bg-transparent! cursor-pointer px-0 text-neutral-500"
-            :loading="isSubmitting" :icon="!isSubmitting && !(form.comment.length >= maxLimit) && form.comment.trim() !== ''
+            loading-auto :icon="!isSubmitting && !(form.comment.length >= maxLimit) && form.comment.trim() !== ''
               ? 'i-hugeicons:comment-add-02'
               : 'i-hugeicons:comment-block-02'
               " :disabled="isSubmitting || form.comment.length >= maxLimit || form.comment.trim() === ''

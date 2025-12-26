@@ -40,7 +40,7 @@
         </template>
       </UInput>
 
-      <UButton type="submit" :loading="loading" :label="buttonLabel" color="neutral" size="xl" block
+      <UButton type="submit" loading-auto :label="buttonLabel" color="neutral" size="xl" block
         class="mt-1 cursor-pointer" />
     </UForm>
 

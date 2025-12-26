@@ -111,7 +111,7 @@ export default defineNuxtConfig({
   // MDC配置
   mdc: {
     headings: {
-      anchorLinks: false,
+      anchorLinks: true,
     },
     highlight: {
       theme: {

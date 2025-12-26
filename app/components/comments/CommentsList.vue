@@ -21,10 +21,20 @@
         <template #title="{ item }">
           <div class="flex items-center justify-between text-base font-medium">
             {{ item.expand?.user?.name }}
-            <CommonLikeButton :key="item.id" :comment-id="item.id" :initial-likes="item.likes || 0"
-              :is-liked="item.isLiked || false"
-              @like-change="(liked, likes) => handleLikeChange(liked, likes, item.id, false)" />
+            <div class="flex items-center justify-center gap-5">
+              <UIcon v-if="item.expand?.user?.id === user?.id" name="i-hugeicons:delete-01"
+                @click="openDeleteModal(item.id)" class="size-5 text-dimmed cursor-pointer" />
+              <CommonLikeButton :key="item.id" :comment-id="item.id"
+                :initial-likes="item.likes || 0" :is-liked="item.isLiked || false"
+                @like-change="(liked, likes) => handleLikeChange(liked, likes, item.id, false)" />
+            </div>
           </div>
+          <ModalDelete v-model:open="isModalOpen" :loading="isDeleting" @confirm="confirmDelete">
+            <div class="flex flex-col gap-2">
+              <div class="text-sm text-primary font-semibold">即将消失的数据</div>
+              <div class="text-sm text-muted line-clamp-2">{{ item.comment }}</div>
+            </div>
+          </ModalDelete>
         </template>
 
         <template #description="{ item }">
@@ -34,8 +44,7 @@
       </CommonMotionTimeline>
 
       <div class="flex justify-center mt-8 mb-4 select-none">
-        <UButton v-if="hasMore" :loading="isLoadingMore" variant="soft" color="neutral"
-          @click="handleLoadMore">
+        <UButton v-if="hasMore" loading-auto variant="soft" color="neutral" @click="handleLoadMore">
           加载更多评论
         </UButton>
         <USeparator v-else label="已经到底了" type="dashed" />
@@ -47,6 +56,8 @@
 <script setup lang="ts">
 import type { CommentRecord } from "~/types/comments";
 import type { LikeRecord, CommentLikesResponse } from "~/types/likes";
+
+const { user } = useUserSession();
 
 const props = defineProps<{ postId: string; allowComment: boolean }>();
 const emit = defineEmits(["loading-change", "update-commenters"]);
@@ -148,6 +159,39 @@ const syncSingleComment = (record: any, action: 'create' | 'update' | 'delete') 
 };
 
 const likeTimers = new Map<string, any>();
+
+const toast = useToast();
+const isModalOpen = ref(false);
+const isDeleting = ref(false);
+const selectedId = ref<string | null>(null);
+
+const openDeleteModal = (id: string) => {
+  selectedId.value = id
+  isModalOpen.value = true
+}
+
+const confirmDelete = async () => {
+  if (!selectedId.value) return
+
+  isDeleting.value = true;
+  try {
+    await $fetch(`/api/collections/comment/${selectedId.value}`, {
+      method: 'DELETE',
+    });
+
+    emit("update-commenters", comments.value);
+  } catch (err: any) {
+    toast.add({
+      title: "删除失败",
+      description: err.data?.message || '删除失败，请稍后重试',
+      icon: "i-hugeicons:alert-02",
+      color: "error",
+    });
+  } finally {
+    isDeleting.value = false;
+    selectedId.value = null;
+  }
+}
 
 onMounted(async () => {
   await fetchComments();

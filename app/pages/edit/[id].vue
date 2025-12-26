@@ -71,7 +71,7 @@
           <UButton type="button" color="warning" variant="soft" class="cursor-pointer"
             @click="$router.back()">
             取消编辑 </UButton>
-          <UButton type="submit" color="neutral" :loading="isSubmitting"
+          <UButton type="submit" color="neutral" loading-auto
             :disabled="isLoading || isSubmitting || form.content.length >= maxLimit || form.content.trim() === ''"
             class="cursor-pointer">
             <span v-if="!isSubmitting">更新内容</span>

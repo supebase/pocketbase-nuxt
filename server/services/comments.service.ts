@@ -58,6 +58,15 @@ export async function getCommentsList(
 }
 
 /**
+ * 获取单篇评论详情
+ */
+export async function getCommentById(pb: TypedPocketBase, commentId: string) {
+  return await pb.collection('comments').getOne<PBCommentsResponse<CommentExpand>>(commentId, {
+    expand: 'user',
+  });
+}
+
+/**
  * 创建新评论
  */
 export async function createComment(pb: TypedPocketBase, data: Create<'comments'>) {
@@ -65,4 +74,12 @@ export async function createComment(pb: TypedPocketBase, data: Create<'comments'
   return await pb.collection('comments').create<PBCommentsResponse<CommentExpand>>(data, {
     expand: 'user',
   });
+}
+
+/**
+ * 删除评论
+ */
+export async function deleteComment(pb: TypedPocketBase, commentId: string) {
+  // 💡 使用传入的 pb 实例，会自动关联当前登录用户的 Token
+  return await pb.collection('comments').delete(commentId);
 }

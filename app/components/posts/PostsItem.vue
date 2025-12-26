@@ -6,7 +6,8 @@
     </ULink>
 
     <ULink v-if="item.firstImage" :to="`/${item.id}`" class="group" tabindex="-1">
-      <div class="my-3 rounded-lg overflow-hidden border border-neutral-200 dark:border-neutral-800">
+      <div
+        class="my-3 rounded-lg overflow-hidden border border-neutral-200 dark:border-neutral-800">
         <NuxtImg :src="item.firstImage" placeholder preset="preview" :custom="true">
           <template #default="{ src, isLoaded, imgAttrs }">
             <div class="relative overflow-hidden aspect-video">
@@ -25,13 +26,7 @@
     </ULink>
 
     <CommonLinkCard v-if="item.link_data" :data="item.link_data" />
-
-    <div class="flex items-center justify-between">
-      <CommentsUsers :post-id="item.id" :allow-comment="item.allowComment" />
-      <ULink v-if="canViewDrafts" tabindex="-1" :to="`/edit/${item.id}`"
-        class="text-sm text-primary">编辑
-      </ULink>
-    </div>
+    <CommentsUsers :post-id="item.id" :allow-comment="item.allowComment" />
   </div>
 </template>
 
