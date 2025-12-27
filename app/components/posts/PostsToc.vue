@@ -2,7 +2,7 @@
     <aside class="hidden xl:block absolute top-0 right-full mr-16 w-72 h-full select-none">
         <div class="sticky top-28 max-h-[calc(100vh-120px)] overflow-y-auto custom-scrollbar">
             <nav v-if="toc?.links?.length">
-                <ul class="space-y-1 border-r border-neutral-200 dark:border-neutral-800">
+                <ul class="space-y-1 border-r border-neutral-200 dark:border-neutral-800 pr-4">
                     <template v-for="link in toc.links" :key="link.id">
                         <TOCItem :link="link" :active-id="activeId" @scroll="scrollToAnchor" />
                     </template>

@@ -4,7 +4,7 @@
 import type {
   LikesResponse as PBLikesResponse,
   Create,
-  TypedPocketBase
+  TypedPocketBase,
 } from '~/types/pocketbase-types';
 import type { CommentLikeInfo } from '~/types/likes';
 
@@ -54,7 +54,11 @@ export async function getCommentLikes(pb: TypedPocketBase, commentId: string): P
 /**
  * 检查用户是否已点赞
  */
-export async function isUserLiked(pb: TypedPocketBase, commentId: string, userId: string): Promise<boolean> {
+export async function isUserLiked(
+  pb: TypedPocketBase,
+  commentId: string,
+  userId: string
+): Promise<boolean> {
   try {
     const existingLike = await pb
       .collection('likes')

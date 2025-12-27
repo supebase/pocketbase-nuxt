@@ -21,7 +21,7 @@
               <ClientOnly>
                 {{ postWithRelativeTime.relativeTime }}
                 <template #fallback><span>{{ useRelativeTime(postWithRelativeTime.created).value
-                    }}</span></template>
+                }}</span></template>
               </ClientOnly>
               <span class="mx-1.5">&bull;</span>
               {{ useReadingTime(postWithRelativeTime.content) }}
@@ -71,7 +71,7 @@
           class="mt-8 select-none" />
 
         <ClientOnly>
-          <CommentsForm v-if="loggedIn && !isListLoading && postWithRelativeTime.allow_comment"
+          <CommentsForm v-if="loggedIn && postWithRelativeTime.allow_comment"
             :post-id="postWithRelativeTime.id" :raw-suggestions="commenters"
             :is-list-loading="isListLoading" @comment-created="onCommentSuccess" class="mt-8" />
         </ClientOnly>
@@ -106,7 +106,7 @@ const isListLoading = ref(false);
 const isUpdateRefresh = ref(false);
 const authorRow = ref<HTMLElement | null>(null);
 const commentListRef = ref();
-const commenters = shallowRef<any[]>([]);
+const commenters = ref<any[]>([]);
 
 // --- 2. 数据获取 ---
 const { data, status, refresh, error } = await useLazyFetch<SinglePostResponse>(
@@ -134,19 +134,27 @@ const postWithRelativeTime = computed(() => {
 
 // --- 5. 逻辑处理 ---
 const handleUpdateCommenters = (rawComments: any[]) => {
-  if (!rawComments?.length) {
+  // 如果没有评论，确保清空列表
+  if (!rawComments || rawComments.length === 0) {
     commenters.value = [];
     return;
   }
+
   const userMap = new Map();
   const currentUserId = currentUser.value?.id;
 
   rawComments.forEach((comment) => {
-    const u = comment.expand?.user;
+    // 兼容多种数据结构：有些可能是原始 record，有些可能是已经 expand 的
+    const u = comment.expand?.user || comment.user;
     if (u?.id && u.id !== currentUserId) {
-      userMap.set(u.id, { id: u.id, name: u.name, avatar: u.avatar });
+      userMap.set(u.id, {
+        id: u.id,
+        name: u.name,
+        avatar: u.avatar || u.avatarId // 兼容字段名
+      });
     }
   });
+
   commenters.value = Array.from(userMap.values());
 };
 
@@ -156,6 +164,12 @@ const onCommentSuccess = (newComment: any) => {
   }
   refreshNuxtData(`comments-data-${id}`);
 };
+
+watch(currentUser, () => {
+  if (commentListRef.value?.comments) {
+    handleUpdateCommenters(commentListRef.value.comments);
+  }
+}, { deep: true });
 
 // 创建一个解析函数
 const parseContent = async (content: string) => {

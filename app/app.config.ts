@@ -55,7 +55,7 @@ export default defineAppConfig({
   toaster: {
     position: 'bottom-right' as const,
     expand: false,
-    duration: 5000,
+    duration: 4000,
     // progress: false,
   },
 });

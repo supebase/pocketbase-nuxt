@@ -132,7 +132,7 @@ body {
 
 .prose {
   /* 告诉浏览器这部分内容渲染相对独立，减少重绘范围 */
-  contain: content; 
+  contain: content;
 }
 
 .prose a {
@@ -165,6 +165,31 @@ body {
   margin-top: 0px;
   margin-bottom: 0px;
   border-radius: var(--radius-lg);
+}
+
+.layout-container,
+.editor-panel {
+  will-change: width, flex-basis, margin;
+  transition: all 0.7s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+.side-slide-enter-active {
+  transition: all 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+}
+.side-slide-leave-active {
+  transition: all 0.5s cubic-bezier(0.5, 0, 0.75, 0);
+}
+.side-slide-enter-from,
+.side-slide-leave-to {
+  transform: translateX(-30px);
+  opacity: 0;
+}
+.fade-content-enter-active,
+.fade-content-leave-active {
+  transition: opacity 0.3s ease;
+}
+.fade-content-enter-from,
+.fade-content-leave-to {
+  opacity: 0;
 }
 
 .v3-emojis button {

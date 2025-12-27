@@ -3,7 +3,12 @@
  */
 // 💡 不再从 utils 导入全局 pb，而是导入类型
 import type { PostExpand } from '~/types/posts';
-import type { Create, Update, PostsResponse as PBPostsResponse, TypedPocketBase } from '~/types/pocketbase-types';
+import type {
+  Create,
+  Update,
+  PostsResponse as PBPostsResponse,
+  TypedPocketBase,
+} from '~/types/pocketbase-types';
 
 /**
  * 获取文章列表

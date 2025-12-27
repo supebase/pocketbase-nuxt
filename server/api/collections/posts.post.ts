@@ -46,7 +46,12 @@ export default defineEventHandler(async (event): Promise<SinglePostResponse> => 
   const cleanContent = sanitizeHtml(content, {
     allowedTags: [
       ...sanitizeHtml.defaults.allowedTags,
-      'img', 'details', 'summary', 'h1', 'h2', 'span',
+      'img',
+      'details',
+      'summary',
+      'h1',
+      'h2',
+      'span',
     ],
     allowedAttributes: {
       ...sanitizeHtml.defaults.allowedAttributes,

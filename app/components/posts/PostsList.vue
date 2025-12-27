@@ -111,8 +111,6 @@ type PostWithUser = PostsResponse<{ user: UsersResponse }> & {
 // --- 2. 状态与认证 ---
 const { loggedIn, user } = useUserSession();
 const { isRefreshing, isResetting, refreshPostsAndComments } = useRefresh();
-const { $pb } = useNuxtApp();
-const pb = $pb as TypedPocketBase;
 
 // --- 3. 分页逻辑 ---
 const {
@@ -190,11 +188,18 @@ const visibleTotalItems = computed(() =>
 );
 
 // --- 8. 实时流逻辑 ---
+// --- 8. 实时流逻辑 ---
 onMounted(async () => {
   await stream({
-    onUpdate: async ({ action, record }) => {
+    expand: 'user',
+    // 💡 这里的 fields 过滤可以极大减少 markdown 传输压力
+    fields: 'id,content,action,published,created,allow_comment,icon,expand.user.name,expand.user.avatar,link_data',
+    onUpdate: ({ action, record }) => {
+      // 这里的 record 已经是 usePocketRealtime 补全后的 fullRecord
+      const idx = allPosts.value.findIndex(p => p.id === record.id);
+      const isVisible = record.published || canViewDrafts.value;
+
       if (action === 'delete') {
-        const idx = allPosts.value.findIndex(p => p.id === record.id);
         if (idx !== -1) {
           allPosts.value.splice(idx, 1);
           totalItems.value = Math.max(0, totalItems.value - 1);
@@ -202,37 +207,29 @@ onMounted(async () => {
         return;
       }
 
-      let fullRecord: PostWithUser;
-      try {
-        fullRecord = await pb.collection('posts').getOne<PostWithUser>(record.id, {
-          expand: 'user',
-          requestKey: `sync-${record.id}`
-        });
-
-        fullRecord.cleanContent = cleanMarkdown(fullRecord.content);
-      } catch (err) { return; }
-
-      const index = allPosts.value.findIndex(p => p.id === fullRecord.id);
-      const isVisible = fullRecord.published || canViewDrafts.value;
+      // 预清洗内容
+      const processedRecord = {
+        ...record,
+        cleanContent: cleanMarkdown(record.content)
+      };
 
       if (action === 'create') {
-        if (isVisible && index === -1) {
-          allPosts.value.unshift(fullRecord);
+        if (isVisible && idx === -1) {
+          allPosts.value.unshift(processedRecord);
           totalItems.value++;
         }
       } else if (action === 'update') {
-        if (!isVisible && index !== -1) {
-          allPosts.value.splice(index, 1);
+        if (!isVisible && idx !== -1) {
+          // 如果更新后变为不可见（如取消发布），从本地列表移除
+          allPosts.value.splice(idx, 1);
           totalItems.value--;
         } else if (isVisible) {
-          if (index !== -1) {
-            const target = allPosts.value[index];
-            if (target) {
-              // ✅ 这样 Object.assign 会把新的 cleanContent 也覆盖进去
-              Object.assign(target, fullRecord);
-            }
+          if (idx !== -1) {
+            // 直接替换对象，确保响应式更新
+            allPosts.value[idx] = processedRecord;
           } else {
-            allPosts.value.unshift(fullRecord);
+            // 如果原本不可见现在可见了，新增进去
+            allPosts.value.unshift(processedRecord);
             totalItems.value++;
           }
         }

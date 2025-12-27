@@ -19,6 +19,6 @@ export const usePostUpdateTracker = () => {
     updatedPostIds,
     updatedMarks, // 直接判断 updatedMarks.value[id] 性能更好
     markAsUpdated,
-    clearUpdateMark
+    clearUpdateMark,
   };
 };

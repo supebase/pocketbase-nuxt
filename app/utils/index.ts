@@ -3,40 +3,52 @@
  * @param text - 包含 Markdown 语法的文本
  * @returns 清理后的纯文本
  */
+
+const markdownCache = new Map<string, string>();
+const MAX_CACHE_SIZE = 500;
+
 export function cleanMarkdown(text: string): string {
   if (typeof text !== 'string' || !text) return '';
 
-  return (
-    text
-      // 1. 彻底移除图片语法 (包括描述文字)
-      .replace(/!\[.*?\]\(.*?\)/g, '')
+  // 1. 检查缓存
+  if (markdownCache.has(text)) {
+    return markdownCache.get(text)!;
+  }
 
-      // 2. 移除多行代码块
-      .replace(/```[\s\S]*?```/g, '')
+  const cleaned = text
+    // 移除图片 (包括带描述的)
+    .replace(/!\[.*?\]\(.*?\)/g, '')
+    // 移除代码块
+    .replace(/```[\s\S]*?```/g, '')
+    // 链接处理：修正了 [文字](链接) 的正则，防止非贪婪模式失效
+    .replace(/\[([^\]]+)\]\([^)]+\)(?:\{target=_blank\})?/g, '$1')
+    // 标题、加粗、斜体等
+    .replace(/#{1,6}\s/g, '')
+    .replace(/\*\*(.+?)\*\*/g, '$1')
+    .replace(/\*(.+?)\*/g, '$1')
+    .replace(/~~(.+?)~~/g, '$1')
+    .replace(/`(.+?)`/g, '$1')
+    // 引用和列表
+    .replace(/^>\s+/gm, '') // 修正：使用多行模式匹配行首的 >
+    .replace(/^\s*[-*+]\s+/gm, '')
+    .replace(/^\s*\d+\.\s+/gm, '')
+    // 仅移除 iframe
+    .replace(/<iframe[^>]*>.*?<\/iframe>/gis, '')
+    .replace(/<iframe[^>]*\/?>/gi, '')
+    // MDC 组件语法清理 (::component)
+    .replace(/::.*?::/gs, '')
+    // 移除多余换行，合并为空格或单换行
+    .replace(/\n+/g, ' ')
+    .trim();
 
-      // 3. 处理普通链接：保留文字，移除地址 [文字](链接) -> 文字
-      .replace(/\[(.+?)\]\(.+?\)({target=_blank})?/g, '$1')
+  // 2. 写入缓存并限制大小
+  if (markdownCache.size > MAX_CACHE_SIZE) {
+    const firstKey = markdownCache.keys().next().value;
+    markdownCache.delete(firstKey || '');
+  }
+  markdownCache.set(text, cleaned);
 
-      // 4. 清理标题、粗体、斜体、删除线、行内代码
-      .replace(/#{1,6}\s/g, '')
-      .replace(/\*\*(.+?)\*\*/g, '$1')
-      .replace(/\*(.+?)\*/g, '$1')
-      .replace(/~~(.+?)~~/g, '$1')
-      .replace(/`(.+?)`/g, '$1')
-
-      // 5. 清理引用和列表符号
-      .replace(/>\s/g, '')
-      .replace(/\n\s*[-*+]\s/g, '\n')
-      .replace(/\n\s*\d+\.\s/g, '\n')
-
-      // 6. 仅移除 iframe 相关标签
-      .replace(/<iframe[^>]*>.*?<\/iframe>/gis, '')
-      .replace(/<iframe[^>]*\/?>/gi, '')
-
-      // 7. 其他清理
-      .replace(/::.*?::/gs, '')
-      .trim()
-  );
+  return cleaned;
 }
 
 /**

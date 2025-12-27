@@ -11,7 +11,7 @@ export async function handleAuthSuccess(
   pb: TypedPocketBase,
   successMessage: string
 ): Promise<AuthResponse> {
-  const pbUser = pb.authStore.model as unknown as UserRecord;
+  const pbUser = pb.authStore.record as unknown as UserRecord;
 
   // 1. 构造用户载荷
   const userPayload: UserRecord = {
@@ -32,10 +32,10 @@ export async function handleAuthSuccess(
   // 注意：maxAge 应与 session 配置保持一致 (7天)
   const pbCookie = pb.authStore.exportToCookie({
     httpOnly: false, // 必须为 false，否则客户端 JS 无法读取 Token 供 WebSocket 使用
-    secure: true,
+    secure: process.env.NODE_ENV === 'production',
     sameSite: 'Lax',
     path: '/',
-    maxAge: 60 * 60 * 24 * 7
+    maxAge: 60 * 60 * 24 * 7,
   });
 
   appendResponseHeader(event, 'Set-Cookie', pbCookie);

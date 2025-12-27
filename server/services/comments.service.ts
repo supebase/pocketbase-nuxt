@@ -6,7 +6,7 @@ import type { CommentRecord, CommentExpand } from '~/types/comments';
 import type {
   CommentsResponse as PBCommentsResponse,
   Create,
-  TypedPocketBase
+  TypedPocketBase,
 } from '~/types/pocketbase-types';
 
 /**

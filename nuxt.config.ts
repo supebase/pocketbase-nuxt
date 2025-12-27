@@ -6,20 +6,20 @@ export default defineNuxtConfig({
   runtimeConfig: {
     session: {
       name: 'pb-session',
-      password: import.meta.env.NUXT_SESSION_PASSWORD,
+      password: process.env.NUXT_SESSION_PASSWORD || '',
       maxAge: 60 * 60 * 24 * 7,
     },
-    pocketbaseBackend: import.meta.env.NUXT_POCKETBASE_URL,
+    pocketbaseBackend: process.env.NUXT_POCKETBASE_URL,
     public: {
-      pocketbaseWebsocket: import.meta.env.NUXT_POCKETBASE_WEBSOCKET_URL,
-    }
+      pocketbaseWebsocket: process.env.NUXT_POCKETBASE_WEBSOCKET_URL,
+    },
   },
   app: {
     keepalive: {
       max: 10,
     },
     head: {
-      title: "Eric",
+      title: 'Eric',
       viewport:
         'width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover',
     },
@@ -31,6 +31,7 @@ export default defineNuxtConfig({
     typedPages: true, // 提升开发和构建时的路由分析速度
     // 💡 建议开启：支持在异步逻辑中更稳定地使用全局状态，对你的更新追踪器很有帮助
     asyncContext: true,
+    componentIslands: true,
   },
   vue: {
     propsDestructure: true,
@@ -40,14 +41,14 @@ export default defineNuxtConfig({
       cssMinify: 'lightningcss', // 比传统压缩更快更小
       // 禁用 CSS 的 Source Map 生成，从而消除插件警告
       sourcemap: false,
-      target: "esnext",
+      target: 'esnext',
     },
   },
   // 压缩配置
   nitro: {
     esbuild: {
       options: {
-        target: "esnext",
+        target: 'esnext',
       },
     },
     compressPublicAssets: {
@@ -65,16 +66,16 @@ export default defineNuxtConfig({
         modifiers: {
           width: 600,
           format: 'webp',
-          quality: 80
-        }
+          quality: 80,
+        },
       },
       large: {
         modifiers: {
           width: 1200, // 放大后的尺寸
           format: 'webp',
-          quality: 90
-        }
-      }
+          quality: 90,
+        },
+      },
     },
 
     // 2. 默认格式
@@ -82,15 +83,15 @@ export default defineNuxtConfig({
 
     // 3. 响应式断点：自动根据屏幕宽度生成 srcset，防止小屏幕下载大图
     screens: {
-      'xs': 320,
-      'sm': 640,
-      'md': 768,
-      'lg': 1024,
-      'xl': 1280,
+      xs: 320,
+      sm: 640,
+      md: 768,
+      lg: 1024,
+      xl: 1280,
     },
 
     // 4. 提供者（如果你没有特殊后端，默认是 'ipx'）
-    provider: 'ipx'
+    provider: 'ipx',
   },
   // UI配置
   ui: {
@@ -120,18 +121,18 @@ export default defineNuxtConfig({
       },
     },
     components: {
-      prose: true
+      prose: true,
     },
   },
   components: [
     // 1. 只有放在这个文件夹里的组件才会全局注册，供 MDC 使用
     {
-      path: "./components/prose",
+      path: './components/prose',
       global: true,
     },
     // 2. 其他组件仅使用自动导入（不设为 global），消除冲突
     {
-      path: "./components",
+      path: './components',
       global: false, // 关键：关闭通用的全局注册
     },
   ],

@@ -6,7 +6,7 @@ import type { SinglePostResponse } from '~/types/posts'; // 注意：单篇详�
 
 export default defineEventHandler(async (event): Promise<SinglePostResponse> => {
   try {
-    // 1. 获取路由参数 (例如: /api/posts/abc123xyz)
+    // 1. 获取路由参数
     const postId = getRouterParam(event, 'id');
 
     // 2. 参数验证

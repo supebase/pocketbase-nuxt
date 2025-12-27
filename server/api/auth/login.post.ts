@@ -27,7 +27,6 @@ export default defineEventHandler(async (event): Promise<AuthResponse> => {
     // 3. 将 pb 实例传递给 handleAuthSuccess
     // 内部会同时处理 setUserSession (nuxt-auth-utils) 和导出 pb_auth Cookie
     return await handleAuthSuccess(event, pb, '登录成功');
-
   } catch (error) {
     // 4. 错误处理
     return handlePocketBaseError(error, '登录失败，请检查账号信息是否正确');

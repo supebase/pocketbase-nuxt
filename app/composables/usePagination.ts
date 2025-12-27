@@ -1,7 +1,4 @@
-/**
- * 通用的分页管理
- */
-export function usePagination<T>() {
+export function usePagination<T extends { id: string | number }>() {
   const allItems = ref<T[]>([]) as Ref<T[]>;
   const currentPage = ref(1);
   const totalItems = ref(0);
@@ -9,12 +6,16 @@ export function usePagination<T>() {
 
   const hasMore = computed(() => allItems.value.length < totalItems.value);
 
-  /**
-   * 加载更多
-   */
+  const mergeItems = (existing: T[], incoming: T[], transformFn?: (items: T[]) => T[]) => {
+    const transformed = transformFn ? transformFn(incoming) : incoming;
+    // 使用 Map 去重：优先保留最新的数据（Incoming 通常是 API 返回的新分页）
+    const itemMap = new Map(existing.map((item) => [item.id, item]));
+    transformed.forEach((item) => itemMap.set(item.id, item));
+    return Array.from(itemMap.values());
+  };
+
   const loadMore = async (
     fetchDataFn: (page: number) => Promise<{ items: T[]; total: number } | undefined>,
-    // 💡 增加一个可选的预处理回调
     transformFn?: (items: T[]) => T[]
   ) => {
     if (isLoadingMore.value || !hasMore.value) return;
@@ -24,38 +25,25 @@ export function usePagination<T>() {
       const nextPage = currentPage.value + 1;
       const result = await fetchDataFn(nextPage);
 
-      if (result && result.items.length > 0) {
-        // 💡 如果有转换函数，先转换再合并
-        const newItems = transformFn ? transformFn(result.items) : result.items;
-
-        allItems.value = [...allItems.value, ...newItems];
+      if (result) {
         totalItems.value = result.total;
-        currentPage.value = nextPage;
+        if (result.items.length > 0) {
+          allItems.value = mergeItems(allItems.value, result.items, transformFn);
+          currentPage.value = nextPage;
+        }
       }
     } catch (err) {
-      console.error('Pagination error:', err);
+      console.error('[Pagination] Load more error:', err);
     } finally {
-      // 这里的 setTimeout 建议缩短或移除，除非是为了视觉缓冲
-      setTimeout(() => {
-        isLoadingMore.value = false;
-      }, 100);
+      isLoadingMore.value = false;
     }
   };
 
   const resetPagination = (items: T[], total: number, transformFn?: (items: T[]) => T[]) => {
-    // 💡 初始重置时也应用转换
     allItems.value = transformFn ? transformFn(items) : items;
     totalItems.value = total;
     currentPage.value = 1;
   };
 
-  return {
-    allItems,
-    currentPage,
-    totalItems,
-    isLoadingMore,
-    hasMore,
-    loadMore,
-    resetPagination,
-  };
+  return { allItems, currentPage, totalItems, isLoadingMore, hasMore, loadMore, resetPagination };
 }

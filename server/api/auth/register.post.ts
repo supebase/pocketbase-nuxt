@@ -31,7 +31,7 @@ export default defineEventHandler(async (event): Promise<AuthResponse> => {
 
   try {
     // 4. 执行注册逻辑 (传入 pb 实例)
-    // registerService 内部会调用 pb.collection('users').create() 
+    // registerService 内部会调用 pb.collection('users').create()
     // 然后紧接着调用 loginService(pb, ...)，使该 pb 实例获得 Token
     await registerService(pb, email, password, passwordConfirm);
 

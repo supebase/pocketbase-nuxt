@@ -41,7 +41,15 @@ export default defineEventHandler(async (event): Promise<SinglePostResponse> => 
     }
 
     cleanContent = sanitizeHtml(body.content, {
-      allowedTags: [...sanitizeHtml.defaults.allowedTags, 'img', 'details', 'summary', 'h1', 'h2', 'span'],
+      allowedTags: [
+        ...sanitizeHtml.defaults.allowedTags,
+        'img',
+        'details',
+        'summary',
+        'h1',
+        'h2',
+        'span',
+      ],
       allowedAttributes: {
         ...sanitizeHtml.defaults.allowedAttributes,
         img: ['src', 'alt', 'title', 'width', 'height', 'loading'],
@@ -82,7 +90,7 @@ export default defineEventHandler(async (event): Promise<SinglePostResponse> => 
 
     // 链接预览处理逻辑
     if (body.link !== undefined) {
-      if (body.link === "") {
+      if (body.link === '') {
         linkPreviewData = null;
       } else if (body.link !== (existingPost as any).link) {
         linkPreviewData = await getLinkPreview(body.link);
@@ -97,7 +105,7 @@ export default defineEventHandler(async (event): Promise<SinglePostResponse> => 
       ...(body.icon !== undefined && { icon: body.icon }),
       ...(body.action !== undefined && { action: body.action }),
       ...(body.link !== undefined && { link: body.link }),
-      ...(linkPreviewData !== undefined && { link_data: linkPreviewData })
+      ...(linkPreviewData !== undefined && { link_data: linkPreviewData }),
     };
 
     // 7. 执行更新 💡 传入 pb 实例

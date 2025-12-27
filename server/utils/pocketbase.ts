@@ -14,14 +14,6 @@ export function getPocketBaseInstance(event?: H3Event) {
 
   pb.autoCancellation(false);
 
-  // if (event) {
-  //   // 尝试从 Cookie 中恢复 PocketBase 的认证状态
-  //   const authCookie = getCookie(event, 'pb_auth');
-  //   if (authCookie) {
-  //     pb.authStore.loadFromCookie(`pb_auth=${authCookie}`);
-  //   }
-  // }
-
   if (event) {
     // 💡 获取原始 Header，loadFromCookie 会自动处理解析逻辑
     const cookieHeader = getHeader(event, 'cookie') || '';

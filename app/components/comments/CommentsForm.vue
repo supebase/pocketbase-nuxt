@@ -60,8 +60,7 @@
             {{ form.comment.length }} / {{ maxLimit }}
           </span>
           <UButton type="submit" color="neutral" size="lg" variant="ghost"
-            class="hover:bg-transparent! cursor-pointer px-0 text-neutral-500"
-            loading-auto :icon="!isSubmitting && !(form.comment.length >= maxLimit) && form.comment.trim() !== ''
+            class="hover:bg-transparent! cursor-pointer px-0 text-neutral-500" loading-auto :icon="!isSubmitting && !(form.comment.length >= maxLimit) && form.comment.trim() !== ''
               ? 'i-hugeicons:comment-add-02'
               : 'i-hugeicons:comment-block-02'
               " :disabled="isSubmitting || form.comment.length >= maxLimit || form.comment.trim() === ''
@@ -162,11 +161,13 @@ const validateForm = () => {
 };
 
 const filteredSuggestions = computed(() => {
-  // 核心：基于最新的 currentUser.id 过滤
+  // 获取当前登录用户 ID
   const currentId = currentUser.value?.id;
 
+  // props.rawSuggestions 现在已经是 [{id, name, avatar}, ...] 格式了
   return props.rawSuggestions.filter(user => {
-    // 确保 user 存在且 id 不等于当前登录者
+    // 1. 确保 user 对象存在
+    // 2. 确保不提及自己
     return user && user.id && user.id !== currentId;
   });
 });
