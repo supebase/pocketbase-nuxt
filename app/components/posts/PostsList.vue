@@ -188,7 +188,6 @@ const visibleTotalItems = computed(() =>
 );
 
 // --- 8. 实时流逻辑 ---
-// --- 8. 实时流逻辑 ---
 onMounted(async () => {
   await stream({
     expand: 'user',
@@ -219,19 +218,19 @@ onMounted(async () => {
           totalItems.value++;
         }
       } else if (action === 'update') {
-        if (!isVisible && idx !== -1) {
-          // 如果更新后变为不可见（如取消发布），从本地列表移除
-          allPosts.value.splice(idx, 1);
-          totalItems.value--;
-        } else if (isVisible) {
-          if (idx !== -1) {
-            // 直接替换对象，确保响应式更新
-            allPosts.value[idx] = processedRecord;
+        if (idx !== -1) {
+          if (!isVisible) {
+            // 原本可见，更新后不可见了（如：设为私密）
+            allPosts.value.splice(idx, 1);
+            totalItems.value = Math.max(0, totalItems.value - 1);
           } else {
-            // 如果原本不可见现在可见了，新增进去
-            allPosts.value.unshift(processedRecord);
-            totalItems.value++;
+            // 依然可见，更新内容
+            allPosts.value[idx] = processedRecord;
           }
+        } else if (isVisible) {
+          // 原本不可见，更新后变可见了（如：草稿发布）
+          allPosts.value.unshift(processedRecord);
+          totalItems.value++;
         }
       }
     }

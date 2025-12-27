@@ -2,7 +2,7 @@ import type { RecordModel, RecordSubscription } from 'pocketbase';
 
 interface RealtimeOptions<T> {
   topic?: string;
-  fields?: string; // 指定拉取的字段，提升性能
+  fields?: string;
   expand?: string;
   onUpdate?: (event: RecordSubscription<T>) => void;
 }
@@ -12,42 +12,75 @@ export const usePocketRealtime = <T extends RecordModel>(collectionName: string)
   const isConnected = ref(false);
   let activeTopic: string | null = null;
 
+  // 1. 定义取消订阅的内部函数
+  const stop = async () => {
+    if (activeTopic) {
+      try {
+        await $pb.collection(collectionName).unsubscribe(activeTopic);
+        activeTopic = null;
+        isConnected.value = false;
+      } catch (e) {
+        // 忽略静默失败
+      }
+    }
+  };
+
   if (import.meta.client) {
+    // 💡 监听全局认证状态：如果用户登出，强制切断订阅
+    // 这是为了配合 plugins/pocketbase.client.ts 中的同步逻辑
+    watch(
+      () => $pb.authStore.token,
+      (newToken) => {
+        if (!newToken && isConnected.value) {
+          console.log(`[Realtime] Auth lost, stopping subscription for ${collectionName}`);
+          stop();
+        }
+      }
+    );
+
     onUnmounted(() => {
-      if (activeTopic) $pb.collection(collectionName).unsubscribe(activeTopic);
+      stop();
     });
   }
 
   const stream = async (options: RealtimeOptions<T> = {}) => {
     if (!import.meta.client) return;
+
+    // 💡 防止重复订阅
+    if (isConnected.value) await stop();
+
     const { topic = '*', onUpdate, expand, fields } = options;
     activeTopic = topic;
 
-    await $pb.collection(collectionName).subscribe<T>(topic, async (event) => {
-      let record = event.record;
+    try {
+      await $pb.collection(collectionName).subscribe<T>(topic, async (event) => {
+        let record = event.record;
 
-      if ((expand || fields) && event.action !== 'delete') {
-        try {
-          const fullRecord = await $pb.collection(collectionName).getOne<T>(record.id, {
-            expand,
-            fields,
-            requestKey: `rt-sync-${record.id}`,
-          });
-          if (fullRecord) record = fullRecord;
-        } catch (e: any) {
-          // 💡 关键修正：判断是否为自动取消
-          if (e?.isAbort) {
-            // 这是正常的 SDK 行为，直接忽略，不打印错误
-            return;
+        // 处理数据补全逻辑 (expand/fields)
+        if ((expand || fields) && event.action !== 'delete') {
+          try {
+            const fullRecord = await $pb.collection(collectionName).getOne<T>(record.id, {
+              expand,
+              fields,
+              requestKey: `rt-sync-${record.id}`,
+            });
+            if (fullRecord) record = fullRecord;
+          } catch (e: any) {
+            if (e?.isAbort) return;
+            // 💡 如果是 404/403，说明权限在推送瞬间发生了变化（例如记录变私有了）
+            console.warn('[Realtime] Data sync failed', e);
           }
-          console.warn('[Realtime] 获取补充数据失败', e);
         }
-      }
 
-      if (onUpdate) onUpdate({ ...event, record });
-    });
-    isConnected.value = true;
+        if (onUpdate) onUpdate({ ...event, record });
+      });
+
+      isConnected.value = true;
+    } catch (err) {
+      console.error(`[Realtime] Failed to subscribe to ${collectionName}`, err);
+      isConnected.value = false;
+    }
   };
 
-  return { isConnected, stream };
+  return { isConnected, stream, stop };
 };

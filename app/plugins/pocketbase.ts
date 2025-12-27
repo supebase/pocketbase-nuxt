@@ -5,34 +5,45 @@ export default defineNuxtPlugin(() => {
   const config = useRuntimeConfig();
   const pb = new PocketBase(config.public.pocketbaseWebsocket) as TypedPocketBase;
 
+  // 1. 客户端初始化逻辑
   if (import.meta.client) {
-    // 1. 初始化：从 Cookie 加载状态
+    // 从 Cookie 恢复初始状态
+    // 💡 提示：'pb_auth' 需与后端 authHelpers 中的保持一致
     const authCookie = useCookie('pb_auth').value;
     if (authCookie) {
       pb.authStore.loadFromCookie(`pb_auth=${authCookie}`);
     }
 
-    // 2. 多标签页同步逻辑
+    // 2. 多标签页同步通道
     const syncChannel = new BroadcastChannel('pb_auth_sync');
 
     pb.authStore.onChange((token, model) => {
-      // 更新本地 Cookie
+      // 💡 更新 Cookie (与后端保持同步)
       document.cookie = pb.authStore.exportToCookie({
-        httpOnly: false,
+        httpOnly: false, // 客户端必须为 false 才能读取
         secure: true,
         sameSite: 'Lax',
         path: '/',
         maxAge: token ? 60 * 60 * 24 * 7 : -1,
       });
 
-      // 通知其他标签页同步状态
+      // 💡 状态清理增强：登出时主动断开 Websocket
+      if (!token) {
+        pb.cancelAllRequests(); // 取消所有进行中的请求
+      }
+
+      // 通知其他标签页
       syncChannel.postMessage({ token, model });
     }, false);
 
-    // 监听来自其他标签页的同步消息
+    // 监听其他标签页同步
     syncChannel.onmessage = (event) => {
       const { token, model } = event.data;
-      pb.authStore.save(token, model);
+      if (token) {
+        pb.authStore.save(token, model);
+      } else {
+        pb.authStore.clear();
+      }
     };
   }
 

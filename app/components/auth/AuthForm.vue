@@ -122,13 +122,24 @@ async function handleAuth() {
         passwordConfirm: passwordConfirm.value,
       };
 
-    // 使用 $fetch 发起请求
-    await $fetch(endpoint, {
+    // 使用 $fetch 发起认证请求
+    await $fetch<any>(endpoint, {
       method: 'POST',
       body,
     });
 
-    // 刷新会话并跳转
+    /**
+     * 💡 关键点：手动触发 PB 客户端同步
+     * 虽然后端通过 Set-Cookie 发送了 pb_auth，但在单页应用中，
+     * 调用这个方法可以强制 $pb.authStore 重新从 Cookie 中加载状态，
+     * 确保后续的实时订阅 (Realtime) 立即拥有权限。
+     */
+    const { $pb } = useNuxtApp();
+    if (import.meta.client) {
+      $pb.authStore.loadFromCookie(document.cookie);
+    }
+
+    // 刷新 Nuxt Session (nuxt-auth-utils)
     await fetchSession();
 
     toast.add({
@@ -142,8 +153,17 @@ async function handleAuth() {
     password.value = '';
     passwordConfirm.value = '';
 
-    // 成功后跳转到首页
-    await navigateTo('/');
+    // 成功后跳转
+    const route = useRoute();
+    let redirectPath = (route.query.redirect as string) || '/';
+
+    // 安全检查：确保是内部路径，防止外部钓鱼链接
+    if (!redirectPath.startsWith('/') || redirectPath.includes('//')) {
+      redirectPath = '/';
+    }
+
+    // 6. 执行跳转
+    await navigateTo(redirectPath, { replace: true });
   } catch (err: any) {
     // 1. 优先读取 err.data.message (这是我们后端 handlePocketBaseError 传回的友好中文)
     if (err.data?.message) {

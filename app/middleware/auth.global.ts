@@ -1,24 +1,33 @@
 export default defineNuxtRouteMiddleware((to, from) => {
   const { loggedIn, user } = useUserSession();
 
-  // 如果已登录，访问认证页，则重定向到首页
+  // 1. 如果已登录，访问认证页，则重定向到首页
   if (loggedIn.value && to.path === '/auth') {
     return navigateTo('/', { replace: true });
   }
 
-  // 当用户访问发表文章页面时，需要检查用户是否已登录且verified为true
-  if (to.path.includes('/new') || to.path.includes('/edit')) {
-    // 未登录则重定向到登录页
+  // 2. 检查是否为发布或编辑页面
+  // 💡 使用正则表达式：
+  // ^/new$ 匹配精确的 /new 路径
+  // ^/edit/.* 匹配以 /edit/ 开头的所有路径
+  const isWritePage = /^\/new$/.test(to.path) || /^\/edit\/.*/.test(to.path);
+
+  if (isWritePage) {
+    // 未登录：重定向到登录页，并带上回跳参数
     if (!loggedIn.value) {
-      return navigateTo('/auth', { replace: true });
+      return navigateTo({
+        path: '/auth',
+        query: { redirect: to.fullPath }
+      }, { replace: true });
     }
 
-    // 已登录但未验证则提示用户
-    if (loggedIn.value && !user.value?.verified) {
-      // 可以根据需要修改为更友好的提示方式
+    // 已登录但未验证：PocketBase 身份保护
+    // 💡 如果你要求只有 verified 用户能发布，保留此逻辑
+    if (user.value && !user.value.verified) {
+      // 这里可以跳转到首页，并配合一个全局提示
       return navigateTo('/', { replace: true });
     }
   }
 
-  // 所有其他页面均可无登录访问
+  // 其他页面放行
 });
