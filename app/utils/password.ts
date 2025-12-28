@@ -39,8 +39,14 @@ export function calculatePasswordScore(requirements: PasswordRequirement[]): num
 export function getPasswordStrengthColor(
   score: number
 ): 'error' | 'success' | 'warning' | 'neutral' {
-  if (score === 0) return 'neutral';
-  if (score <= 1) return 'error';
-  if (score <= 3) return 'warning';
-  return 'success';
+  switch (true) {
+    case score === 0:
+      return 'neutral';
+    case score <= 1:
+      return 'error';
+    case score <= 3:
+      return 'warning';
+    default:
+      return 'success';
+  }
 }

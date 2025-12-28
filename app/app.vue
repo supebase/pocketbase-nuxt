@@ -31,6 +31,7 @@ import { zh_cn } from "@nuxt/ui/locale";
 
 const appConfig = useAppConfig();
 const route = useRoute();
+const toast = useToast();
 const { showHeaderBack } = useHeader();
 const { loggedIn, user } = useUserSession(); // 💡 结构出 user，更有助于判断
 const { $pb } = useNuxtApp();
@@ -64,7 +65,13 @@ watch(loggedIn, (isLogged) => {
     // 💡 可选：如果已登录但 PB 无效（例如 pb_auth Cookie 被意外删了）
     // 可以在这里提示用户重新登录或尝试静默刷新
     if (!$pb.authStore.isValid) {
-      console.warn('会话存在但缺少 PB 令牌');
+      toast.add({
+        id: 'session-mismatch',
+        title: '会话状态异常',
+        description: '您的登录状态似乎已失效，部分功能可能无法使用。请尝试刷新页面或重新登录。',
+        icon: 'i-hugeicons:alert-02',
+        color: 'warning',
+      });
     }
   }
 }, {
