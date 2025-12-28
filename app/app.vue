@@ -56,15 +56,15 @@ watch(loggedIn, (isLogged) => {
   if (!isLogged) {
     // 💡 彻底清理客户端 PocketBase 状态
     $pb.authStore.clear();
-    // 如果有实时订阅 (Realtime)，建议在这里也执行取消订阅
+    // 如果有需要验证的实时订阅 (Realtime)，建议在这里也执行取消订阅
     // $pb.collection('posts').unsubscribe(); 
 
-    console.log('[Auth] Session ended, PB store cleared.');
+    // console.log('会话已结束，PB 存储已清除');
   } else {
     // 💡 可选：如果已登录但 PB 无效（例如 pb_auth Cookie 被意外删了）
     // 可以在这里提示用户重新登录或尝试静默刷新
     if (!$pb.authStore.isValid) {
-      console.warn('[Auth] Nuxt Session exists but PB Token is missing.');
+      console.warn('会话存在但缺少 PB 令牌');
     }
   }
 }, {

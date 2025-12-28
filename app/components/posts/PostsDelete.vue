@@ -1,5 +1,6 @@
 <template>
-    <UDropdownMenu arrow size="lg" :ui="{ item: 'cursor-pointer' }" :items="menuItems">
+    <UDropdownMenu arrow size="lg" :ui="{ item: 'cursor-pointer' }"
+        :items="props.isLogined ? action : auth">
         <Icon name="i-hugeicons:more-horizontal"
             class="size-5 text-dimmed cursor-pointer hover:text-primary transition-colors" />
     </UDropdownMenu>
@@ -16,6 +17,7 @@
 
 <script setup lang="ts">
 interface Props {
+    isLogined: boolean;
     item: {
         id: string;
         cleanContent?: string;
@@ -29,8 +31,16 @@ const toast = useToast();
 const isModalOpen = ref(false);
 const isDeleting = ref(false);
 
-const menuItems = computed(() => [
-    {
+const auth = [
+    [{
+        icon: 'i-hugeicons:lock-key',
+        label: '请先登录',
+        onClick: () => navigateTo(`/auth`),
+    }],
+]
+
+const action = computed(() => [
+    [{
         icon: 'i-hugeicons:edit-04',
         label: '编辑',
         onClick: () => props.canViewDrafts ? navigateTo(`/edit/${props.item.id}`) : showAuthToast(),
@@ -40,7 +50,7 @@ const menuItems = computed(() => [
         label: '删除',
         color: 'error' as const,
         onClick: () => props.canViewDrafts ? (isModalOpen.value = true) : showAuthToast(),
-    },
+    }],
 ]);
 
 const confirmDelete = async () => {

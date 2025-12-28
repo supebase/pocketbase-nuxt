@@ -11,9 +11,26 @@
   --ui-primary: oklch(90.1% 0.076 70.697);
 }
 
+html,
 body {
+  /* 禁用双击缩放，并提升点击响应速度 */
+  touch-action: manipulation;
+
+  /* 阻止 iOS Safari 在横屏时自动调整字体大小 */
+  -webkit-text-size-adjust: 100%;
+
+  /* 解决点击元素时的蓝色高亮边框 (可选) */
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  /* 字体平滑优化 */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  /* 确保页面高度充满屏幕，防止滚动回弹干扰 */
+  min-height: 100vh;
+  margin: 0;
 }
 
 ::-webkit-scrollbar {

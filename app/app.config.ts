@@ -10,6 +10,11 @@ export default defineAppConfig({
       copy: 'i-hugeicons:copy-02',
       copyCheck: 'i-hugeicons:checkmark-square-03',
     },
+    header: {
+      slots: {
+        container: 'max-w-xl',
+      },
+    },
     user: {
       variants: {
         size: {

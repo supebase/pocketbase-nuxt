@@ -39,6 +39,8 @@ export function cleanMarkdown(text: string): string {
     .replace(/::.*?::/gs, '')
     // 移除多余换行，合并为空格或单换行
     .replace(/\n+/g, ' ')
+    // 水平分割线
+    .replace(/^\s*[-*_]{3,}\s*$/gm, '')
     .trim();
 
   // 2. 写入缓存并限制大小

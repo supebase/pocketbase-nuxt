@@ -102,6 +102,22 @@ const { showHeaderBack } = useHeader();
 const route = useRoute();
 const { id } = route.params as { id: string };
 
+definePageMeta({
+  validate: (route) => {
+    // 1. 将 params 断言为一个包含 id 的对象，解决 TS 报错
+    const params = route.params as { id?: string };
+
+    // 2. 安全提取 id
+    const targetId = params.id;
+
+    // 3. 验证逻辑
+    if (!targetId) return false;
+
+    // 验证 PocketBase ID：15位字母数字
+    return /^[a-z0-9]{15}$/i.test(targetId);
+  }
+})
+
 const isListLoading = ref(false);
 const isUpdateRefresh = ref(false);
 const authorRow = ref<HTMLElement | null>(null);

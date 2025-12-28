@@ -62,7 +62,8 @@
             <template #date="{ item }">
               <div class="flex items-center gap-2.5">
                 <span class="text-dimmed/80">{{ item.date }}</span>
-                <PostsDelete :item="item" :can-view-drafts="canViewDrafts ?? false" />
+                <PostsDelete :is-logined="loggedIn" :item="item"
+                  :can-view-drafts="canViewDrafts ?? false" />
               </div>
             </template>
 
