@@ -9,8 +9,10 @@
     </div>
 
     <div v-else-if="postWithRelativeTime" key="content">
-      <PostsMeta :post-meta="postWithRelativeTime"
-        :avatar-id="postWithRelativeTime.expand?.user?.avatar" />
+      <div ref="authorRow" class="flex flex-col items-center justify-center gap-3 select-none">
+        <PostsMeta :post-meta="postWithRelativeTime"
+          :avatar-id="postWithRelativeTime.expand?.user?.avatar" />
+      </div>
 
       <div class="relative mt-6 min-h-75">
         <div v-if="!mdcReady"
