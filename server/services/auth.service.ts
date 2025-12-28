@@ -1,33 +1,50 @@
 /**
- * 认证服务层
+ * @file 用户认证服务层 (Auth Service)
+ * @description 该文件封装了所有与用户身份认证相关的核心业务逻辑，
+ *              包括登录、注册和登出。服务层不直接处理 HTTP 请求和响应，
+ *              而是专注于执行具体的业务操作，并供上层的 API handlers 调用。
  */
+
+// 从工具函数中导入 MD5 哈希生成器，用于创建 Gravatar 头像链接。
 import { getMd5Hash } from '../utils/pocketbase';
+// 从共享的工具函数中导入邮箱和名称格式化函数。
 import { normalizeEmail, formatDefaultName } from '~/utils/index';
-// 导入生成的类型和业务模型
+// 导入 PocketBase 自动生成的类型，以确保与数据库交互时的数据结构正确。
 import type { UsersResponse, Create, TypedPocketBase } from '~/types/pocketbase-types';
 
 /**
- * 用户登录服务
- * @param pb 传入由 API Handler 创建的独立 PB 实例
+ * 用户登录服务。
+ * @param pb 由上层 API handler 传入的、与当前请求绑定的 PocketBase 实例。
+ * @param email 用户的电子邮件地址。
+ * @param password 用户的明文密码。
+ * @returns 返回成功登录后的用户记录 (UsersResponse)。如果认证失败，PocketBase SDK 会自动抛出错误。
  */
 export async function loginService(
   pb: TypedPocketBase,
   email: string,
   password: string
 ): Promise<UsersResponse> {
+  // 对邮箱进行标准化处理（例如，去除多余空格），确保认证的一致性。
   const cleanEmail = normalizeEmail(email);
 
-  // 执行认证，结果会存储在传入的 pb 实例的 authStore 中
+  // 调用 PocketBase SDK 的 `authWithPassword` 方法执行认证。
+  // 成功后，用户的认证信息（包括 token 和用户数据）会自动存储在传入的 `pb` 实例的 `authStore` 中。
+  // 这是实现状态传递的关键一步。
   const authData = await pb
     .collection('users')
     .authWithPassword<UsersResponse>(cleanEmail, password);
 
+  // 返回完整的用户记录数据。
   return authData.record;
 }
 
 /**
- * 用户注册服务
- * @param pb 传入由 API Handler 创建的独立 PB 实例
+ * 用户注册服务。
+ * @param pb 由上层 API handler 传入的 PocketBase 实例。
+ * @param email 用户注册时使用的电子邮件地址。
+ * @param password 用户的明文密码。
+ * @param passwordConfirm 用户的确认密码。
+ * @returns 返回新注册并自动登录后的用户记录。
  */
 export async function registerService(
   pb: TypedPocketBase,
@@ -35,32 +52,42 @@ export async function registerService(
   password: string,
   passwordConfirm: string
 ): Promise<UsersResponse> {
+  // 1. 准备新用户数据
   const cleanEmail = normalizeEmail(email);
-  const md5Hash = getMd5Hash(cleanEmail);
-  const rawName = cleanEmail.split('@')[0];
-  const defaultName = formatDefaultName(rawName);
+  const md5Hash = getMd5Hash(cleanEmail); // 为 Gravatar 生成 MD5 哈希
+  const rawName = cleanEmail.split('@')[0]; // 从邮箱前缀提取默认用户名
+  const defaultName = formatDefaultName(rawName); // 格式化默认用户名
 
-  // 使用 Create<'users'> 类型约束
+  // 2. 构建符合 PocketBase 'users' 集合 `create` 操作的数据结构。
+  // 使用 `Omit<Create<'users'>, 'tokenKey'>` 类型可以获得很好的类型提示和安全保证。
   const newUser: Omit<Create<'users'>, 'tokenKey'> = {
     email: cleanEmail,
     password,
     passwordConfirm,
-    avatar: md5Hash,
+    avatar: md5Hash, // 将 MD5 哈希作为 avatar 字段存入，前端可拼接成 Gravatar URL
     name: defaultName,
   };
 
-  // 1. 创建用户
+  // 3. 调用 PocketBase SDK 的 `create` 方法在 'users' 集合中创建新记录。
+  // 如果邮箱已存在、密码不匹配等，SDK 会自动抛出 ClientResponseError。
   await pb.collection('users').create(newUser);
 
-  // 2. 自动登录（传入相同的 pb 实例，确保 Token 状态被保留）
+  // 4. 实现 "注册后自动登录" 的逻辑。
+  // 直接复用 `loginService`，并传入同一个 `pb` 实例。
+  // 因为 `loginService` 会将认证结果存入此 `pb` 实例的 `authStore`，
+  // 所以上层调用者可以从这个 `pb` 实例中获取到新用户的登录状态。
   return await loginService(pb, cleanEmail, password);
 }
 
 /**
- * 用户登出服务
- * 注：由于是 Stateless 无状态请求，服务端的 clear 其实只影响当前请求实例，
- * 真正的登出逻辑主要由 API Handler 清理 Cookie 完成。
+ * 用户登出服务。
+ * @param pb 与当前请求绑定的 PocketBase 实例。
+ * @returns Promise<void>
  */
 export async function logoutService(pb: TypedPocketBase): Promise<void> {
+  // 调用 PocketBase 认证存储的 `clear` 方法。
+  // 这会清除当前 `pb` 实例内存中的认证 token 和用户模型。
+  // 注意：这本身是一个无状态的操作，它只影响这个在单次请求中创建的 `pb` 实例。
+  // 真正的登出效果依赖于上层 API handler 清除浏览器端的认证 Cookie。
   pb.authStore.clear();
 }

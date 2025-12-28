@@ -1,36 +1,49 @@
+/**
+ * @file API Route: /api/collections/comments [POST]
+ * @description 创建新评论的 API 端点。
+ *              该接口负责处理用户提交的评论，执行安全检查和数据验证，
+ *              然后将新评论存入数据库。
+ */
+
+// 导入核心的评论创建服务。
 import { createComment } from '../../services/comments.service';
+// 导入统一的 PocketBase 错误处理器。
 import { handlePocketBaseError } from '../../utils/errorHandler';
-import { getPocketBaseInstance } from '../../utils/pocketbase'; // 💡 注入实例获取工具
+// 导入用于获取当前请求唯一的 PocketBase 实例的函数。
+import { getPocketBaseInstance } from '../../utils/pocketbase';
+// 导入用于清理 HTML 的库，这是防止 XSS 攻击的关键。
 import sanitizeHtml from 'sanitize-html';
-// 导入业务类型
+// 导入相关的业务类型定义。
 import type { CreateCommentRequest } from '~/types/comments';
 import type { Create } from '~/types/pocketbase-types';
 
+/**
+ * 定义处理创建评论请求的事件处理器。
+ */
 export default defineEventHandler(async (event) => {
-  // 1. 身份验证 (确保 user.id 存在)
-  const session = await getUserSession(event);
-  const user = session?.user;
+  // 步骤 1: 进行身份验证。
+  // 必须确保请求来自一个已登录的用户，因为我们需要将评论与用户关联。
+  // 新增: 从事件上下文中获取用户信息
+  // 认证逻辑已由中间件统一处理，此处可安全地使用非空断言 `!`。
+  const user = event.context.user!;
 
-  if (!user?.id) {
-    throw createError({
-      statusCode: 401,
-      message: '请先登录后再发表评论',
-      statusMessage: 'Unauthorized',
-    });
-  }
-
-  // 2. 读取请求体并标注类型
+  // 步骤 2: 读取并解析请求体。
   const body = await readBody<CreateCommentRequest>(event);
   const { comment: rawComment, post } = body;
 
-  // 3. 核心防御：清理评论内容（彻底禁止 HTML 标签）
+  // 步骤 3: **核心安全措施** - 清理评论内容。
+  // 使用 `sanitize-html` 库，并配置其彻底禁止所有 HTML 标签和属性。
+  // `disallowedTagsMode: 'discard'` 会直接移除所有不被允许的标签。
+  // 这样做可以有效防止 XSS (跨站脚本) 攻击。
+  // 最后使用 `.trim()` 移除首尾的空白字符。
   const cleanComment = sanitizeHtml(rawComment || '', {
     allowedTags: [],
     allowedAttributes: {},
     disallowedTagsMode: 'discard',
   }).trim();
 
-  // 4. 业务参数验证
+  // 步骤 4: 进行业务参数验证。
+  // 检查评论必须关联到一个帖子 (post)。
   if (!post) {
     throw createError({
       statusCode: 400,
@@ -38,6 +51,7 @@ export default defineEventHandler(async (event) => {
     });
   }
 
+  // 检查经过清理后的评论内容是否为空。
   if (!cleanComment) {
     throw createError({
       statusCode: 400,
@@ -45,7 +59,7 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  // 5. 内容长度限制
+  // 步骤 5: 检查评论内容的长度限制。
   if (cleanComment.length > 300) {
     throw createError({
       statusCode: 400,
@@ -53,29 +67,24 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  // 6. 获取本次请求专用的独立 PB 实例 💡
+  // 步骤 6: 获取 PocketBase 实例。
   const pb = getPocketBaseInstance(event);
 
-  if (!pb.authStore.isValid) {
-    throw createError({
-      statusCode: 401,
-      message: '身份认证已过期，请重新登录',
-    });
-  }
-
   try {
-    // 7. 构造符合数据库结构的 Payload
+    // 步骤 7: 构造符合数据库 `comments` 集合结构的 payload。
+    // 这是即将要插入数据库的最终数据。
     const createData: Create<'comments'> = {
-      comment: cleanComment,
-      post: post,
-      user: user.id, // 强制使用 Session 中的 ID
+      comment: cleanComment,    // 使用经过安全清理的内容
+      post: post,               // 关联的帖子 ID
+      user: user.id,            // **安全关键**：强制使用从服务端 Session 中获取的用户 ID，而不是客户端提交的任何 ID。
     };
 
-    // 8. 执行创建 (传入 pb 实例) 💡
-    // Service 内部会使用这个 pb 并自动处理 expand: 'user'
+    // 步骤 8: 调用服务层函数来执行数据库创建操作。
+    // `createComment` 内部会使用传入的 `pb` 实例，这意味着操作将以当前登录用户的身份执行。
+    // 服务层通常还会处理 `expand` 等数据关联查询的逻辑。
     const comment = await createComment(pb, createData);
 
-    // 9. 统一成功返回格式
+    // 步骤 9: 如果创建成功，返回一个标准化的成功响应，并将新创建的评论数据包含其中。
     return {
       message: '发表评论成功',
       data: {
@@ -83,6 +92,7 @@ export default defineEventHandler(async (event) => {
       },
     };
   } catch (error) {
+    // 如果在创建过程中 PocketBase 返回错误（如数据库约束失败），则由统一错误处理器捕获并响应。
     return handlePocketBaseError(error, '评论发表异常，请稍后再试');
   }
 });

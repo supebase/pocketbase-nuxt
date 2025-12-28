@@ -16,7 +16,6 @@ export default defineNuxtPlugin(() => {
             toast.add({
               title: '离线状态',
               description: '网络已断开，请检查网络连接',
-              icon: 'i-hugeicons:wifi-disconnected-03',
               color: 'warning',
             });
             document.documentElement.style.filter = 'grayscale(1)';
@@ -25,7 +24,6 @@ export default defineNuxtPlugin(() => {
             toast.add({
               title: '在线状态',
               description: "网络已恢复，可以正常访问",
-              icon: 'i-hugeicons:wifi-connected-03',
               color: 'success',
             });
             document.documentElement.style.filter = 'none';
