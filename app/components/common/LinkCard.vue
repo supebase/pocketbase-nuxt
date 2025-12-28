@@ -1,11 +1,11 @@
 <template>
-    <a :href="data.url" target="_blank"
+    <a :href="data.url" target="_blank" tabindex="-1"
         class="group mt-4 mb-1.5 flex items-stretch border border-neutral-200 dark:border-neutral-800 rounded-lg overflow-hidden no-underline">
 
         <div v-if="data.image"
             class="relative w-20 shrink-0 border-r border-neutral-200 dark:border-neutral-800 overflow-hidden">
 
-            <NuxtImg :src="data.image" placeholder preset="preview" :custom="true">
+            <NuxtImg :src="data.image" preload placeholder preset="preview" :custom="true">
                 <template #default="{ src, isLoaded, imgAttrs }">
                     <div class="relative w-full h-full">
                         <img v-bind="imgAttrs" :src="src" :class="[

@@ -9,32 +9,8 @@
     </div>
 
     <div v-else-if="postWithRelativeTime" key="content">
-      <div ref="authorRow" class="flex flex-col items-center justify-center gap-3 select-none">
-        <div class="flex items-center justify-between gap-2 w-full">
-          <div class="flex items-center gap-3">
-            <UIcon v-if="postWithRelativeTime.icon" :name="postWithRelativeTime.icon"
-              class="size-7 text-primary" />
-            <div v-else class="size-8">
-              <CommonGravatar :avatar-id="postWithRelativeTime.expand?.user?.avatar" :size="64" />
-            </div>
-            <div class="text-dimmed flex items-center">
-              <ClientOnly>
-                {{ postWithRelativeTime.relativeTime }}
-                <template #fallback><span>{{ useRelativeTime(postWithRelativeTime.created).value
-                }}</span></template>
-              </ClientOnly>
-              <span class="mx-1.5">&bull;</span>
-              {{ useReadingTime(postWithRelativeTime.content) }}
-            </div>
-          </div>
-
-          <div>
-            <UIcon name="i-hugeicons:arrow-turn-backward"
-              class="size-6.5 text-dimmed cursor-pointer hover:text-primary transition-colors"
-              @click="$router.back()" />
-          </div>
-        </div>
-      </div>
+      <PostsMeta :post-meta="postWithRelativeTime"
+        :avatar-id="postWithRelativeTime.expand?.user?.avatar" />
 
       <div class="relative mt-6 min-h-75">
         <div v-if="!mdcReady"

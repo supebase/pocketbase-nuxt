@@ -8,7 +8,7 @@
     <ULink v-if="item.firstImage" :to="`/${item.id}`" class="group" tabindex="-1">
       <div
         class="my-3 rounded-lg overflow-hidden border border-neutral-200 dark:border-neutral-800">
-        <NuxtImg :src="item.firstImage" placeholder preset="preview" :custom="true">
+        <NuxtImg :src="item.firstImage" preload placeholder preset="preview" :custom="true">
           <template #default="{ src, isLoaded, imgAttrs }">
             <div class="relative overflow-hidden aspect-video">
               <img v-bind="imgAttrs" :src="src" :class="[

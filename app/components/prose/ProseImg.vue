@@ -1,6 +1,6 @@
 <template>
   <div class="rounded-lg overflow-clip border border-neutral-200 dark:border-neutral-800">
-    <component :is="ImageComponent" :src="refinedSrc" placeholder preset="preview" :custom="true">
+    <component :is="ImageComponent" :src="refinedSrc" preload placeholder preset="preview" :custom="true">
       <template #default="{ src, isLoaded, imgAttrs }">
         <div class="relative overflow-clip">
           <img v-bind="imgAttrs" :src="src" :class="[
