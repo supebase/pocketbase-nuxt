@@ -8,6 +8,8 @@
  * 定义一个需要身份验证的路由和方法的列表。
  * 这使得认证逻辑与 API 路由处理程序本身分离，提高了代码的模块化和可维护性。
  */
+import { getPocketBaseInstance } from '../utils/pocketbase';
+
 const protectedRoutes = [
   // 文章相关
   { path: '/api/collections/posts', method: 'POST' }, // 创建文章
@@ -20,42 +22,39 @@ const protectedRoutes = [
 
   // 点赞相关
   { path: '/api/collections/likes', method: 'POST' }, // 创建/取消点赞
-
-  // 认证相关
-  { path: '/api/auth/logout', method: 'POST' }, // 登出操作也需要用户上下文
 ];
 
 export default defineEventHandler(async (event) => {
-  // 1. 获取当前请求的 URL 路径和 HTTP 方法。
   const url = getRequestURL(event).pathname;
   const method = event.method;
 
-  // 2. 检查当前请求是否匹配受保护路由列表中的任何一项。
+  // 1. 无论是否是受保护路由，先尝试初始化用户信息
+  // 这样 event.context.user 就能在后续的 API 处理程序中使用了
+  const pb = getPocketBaseInstance(event);
+
+  // 如果 pb.authStore 验证有效，则将用户信息注入上下文
+  if (pb.authStore.isValid) {
+    event.context.user = pb.authStore.record;
+    // 可选：将 pb 实例也存入 context，避免后续重复创建
+    event.context.pb = pb;
+  }
+
+  // 2. 检查当前请求是否匹配受保护路由
   const isProtected = protectedRoutes.some((route) => {
-    // 如果规则是前缀匹配 (例如 '/api/collections/post/')
     if (route.path.endsWith('/')) {
       return url.startsWith(route.path) && method === route.method;
     }
-    // 如果是精确路径匹配
     return url === route.path && method === route.method;
   });
 
-  // 3. 如果请求的路由不受保护，则直接跳过，不执行任何操作。
-  if (!isProtected) {
-    return;
-  }
+  if (!isProtected) return;
 
-  // 4. 如果路由受保护，检查请求上下文中是否存在用户信息。
-  //    `event.context.user` 是在 `server/plugins/auth.ts` 插件中被注入的。
+  // 3. 此时 event.context.user 已经被前面的代码尝试赋值了
   if (!event.context.user) {
-    // 5. 如果用户不存在（未登录或会话无效），则抛出一个 401 Unauthorized 错误。
-    //    这将立即中断请求处理流程，后续的 API 路由处理器不会被执行。
     throw createError({
       statusCode: 401,
       message: '用户未登录或会话已过期，请重新登录。',
       statusMessage: 'Unauthorized',
     });
   }
-
-  // 6. 如果用户已登录，则不执行任何操作，请求将继续流转到相应的 API 路由处理器。
 });
