@@ -16,6 +16,7 @@
     "@nuxt/image": "2.0.0",
     "@nuxt/ui": "^4.3.0",
     "@nuxtjs/mdc": "0.19.2",
+    "eventsource": "^4.1.0",
     "nuxt": "^4.2.2",
     "nuxt-auth-utils": "0.5.26",
     "nuxt-emoji-picker": "^1.2.1",

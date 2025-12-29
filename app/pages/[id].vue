@@ -127,44 +127,23 @@ const postWithRelativeTime = computed(() => {
 });
 
 // --- 5. 逻辑处理 ---
-const handleUpdateCommenters = (rawComments: any[]) => {
-  // 如果没有评论，确保清空列表
-  if (!rawComments || rawComments.length === 0) {
-    commenters.value = [];
-    return;
-  }
-
-  const userMap = new Map();
-  const currentUserId = currentUser.value?.id;
-
-  rawComments.forEach((comment) => {
-    // 兼容多种数据结构：有些可能是原始 record，有些可能是已经 expand 的
-    const u = comment.expand?.user || comment.user;
-    if (u?.id && u.id !== currentUserId) {
-      userMap.set(u.id, {
-        id: u.id,
-        name: u.name,
-        avatar: u.avatar || u.avatarId, // 兼容字段名
-        location: u.location || '', // 用户位置
-      });
-    }
-  });
-
-  commenters.value = Array.from(userMap.values());
+const handleUpdateCommenters = (uniqueUsers: any[]) => {
+  // 过滤掉当前登录用户，不提及自己
+  commenters.value = uniqueUsers.filter(u => u.id !== currentUser.value?.id);
 };
 
 const onCommentSuccess = (newComment: any) => {
   if (commentListRef.value) {
     commentListRef.value.handleCommentCreated(newComment);
   }
-  refreshNuxtData(`comments-data-${id}`);
+  // 注意：不再需要 refreshNuxtData，实时流或乐观更新已覆盖
 };
 
-watch(currentUser, () => {
-  if (commentListRef.value?.comments) {
-    handleUpdateCommenters(commentListRef.value.comments);
+watch(loggedIn, (isLogged) => {
+  if (isLogged && commentListRef.value?.comments) {
+    handleUpdateCommenters(commentListRef.value.getUniqueUsers(commentListRef.value.comments));
   }
-}, { deep: true });
+});
 
 // 创建一个解析函数
 const parseContent = async (content: string) => {

@@ -29,7 +29,6 @@ export async function handleAuthSuccess(
   // 从 PocketBase 的认证存储中获取刚刚完成认证的用户记录。
   // 使用 `as unknown as UserRecord` 进行类型断言，将其转换为我们自定义的 UserRecord 类型。
   const pbUser = pb.authStore.record as unknown as UserRecord;
-  const pbToken = pb.authStore.token;
 
   // 步骤 1: 构造用于 Session 和 API 响应的用户信息载荷 (Payload)。
   // 这里只选取客户端和 Nuxt Session 需要的、可以安全暴露的字段，避免泄露敏感信息。
@@ -47,20 +46,13 @@ export async function handleAuthSuccess(
   // 这使得我们可以在服务端渲染 (SSR) 和服务端 API 路由中通过 `getUserSession` 快速获取用户信息。
   await setUserSession(event, {
     user: userPayload,
-    secure: {
-      pbToken: pbToken 
-    },
     loggedInAt: new Date().toISOString(),
   });
 
   // 步骤 3: 将 PocketBase 的认证 Token 导出为 Cookie，并附加到响应头中。
   // 这个 Cookie 主要供客户端 JavaScript 使用，特别是 PocketBase 的 JS SDK 和 WebSocket 实时通信。
   const pbCookie = pb.authStore.exportToCookie({
-    // 关键配置：`httpOnly` 必须设置为 `false`。
-    // 这允许客户端的 JavaScript (例如，PocketBase JS SDK) 读取这个 Cookie 中的 token，
-    // 从而能够进行实时的数据库订阅和客户端 API 请求。
-    // 如果设为 `true`，JS 将无法访问，导致实时功能失效。
-    httpOnly: false,
+    httpOnly: true,
     // 在生产环境中，强制 Cookie 只能通过 HTTPS 发送，增加安全性。
     secure: process.env.NODE_ENV === 'production',
     // `Lax` 是一种平衡了安全性和用户体验的 SameSite 策略。

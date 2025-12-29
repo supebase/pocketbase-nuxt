@@ -9,6 +9,7 @@ import PocketBase from 'pocketbase';
 import type { TypedPocketBase } from '~/types/pocketbase-types';
 // 导入 H3Event 类型，用于在 Nitro 服务端路由中获取请求上下文。
 import type { H3Event } from 'h3';
+import { EventSource } from 'eventsource';
 
 /**
  * 获取一个经过身份验证和配置的 PocketBase 服务端实例。
@@ -21,6 +22,10 @@ import type { H3Event } from 'h3';
 export function getPocketBaseInstance(event?: H3Event) {
   // `useRuntimeConfig` 用于安全地访问在 `nuxt.config.ts` 中定义的环境变量。
   const config = useRuntimeConfig();
+
+  if (typeof global !== 'undefined' && !global.EventSource) {
+    (global as any).EventSource = EventSource;
+  }
 
   // 创建一个新的 PocketBase 实例，并连接到配置中指定的后端服务 URL。
   // 注意：这里使用的是服务端的内部地址 (config.pocketbaseBackend)，而不是面向公众的 URL，

@@ -125,7 +125,7 @@ const {
 } = usePagination<PostWithUser>();
 
 // --- 4. 实时订阅 ---
-const { stream } = usePocketRealtime<PostWithUser>('posts');
+const { listen } = usePocketRealtime(['posts']);
 
 // --- 5. 获取数据的 API 包装 ---
 const fetchPostsApi = async (page: number) => {
@@ -189,50 +189,60 @@ const visibleTotalItems = computed(() =>
 );
 
 // --- 8. 实时流逻辑 ---
-onMounted(async () => {
-  await stream({
-    expand: 'user',
-    // 💡 这里的 fields 过滤可以极大减少 markdown 传输压力
-    fields: 'id,content,action,published,created,allow_comment,icon,expand.user.name,expand.user.avatar,link_data',
-    onUpdate: ({ action, record }) => {
-      // 这里的 record 已经是 usePocketRealtime 补全后的 fullRecord
-      const idx = allPosts.value.findIndex(p => p.id === record.id);
-      const isVisible = record.published || canViewDrafts.value;
+onMounted(() => {
+  listen(({ collection, action, record }) => {
+    if (collection !== 'posts') return;
 
-      if (action === 'delete') {
-        if (idx !== -1) {
-          allPosts.value.splice(idx, 1);
-          totalItems.value = Math.max(0, totalItems.value - 1);
-        }
-        return;
+    const idx = allPosts.value.findIndex(p => p.id === record.id);
+
+    // 1. 优先处理删除：删除事件不判断 visible，只判断 ID 是否在列表里
+    if (action === 'delete') {
+      if (idx !== -1) {
+        allPosts.value.splice(idx, 1);
+        totalItems.value = Math.max(0, totalItems.value - 1);
       }
+      return; // 删完直接结束
+    }
 
-      // 预清洗内容
-      const processedRecord = {
-        ...record,
-        cleanContent: cleanMarkdown(record.content)
-      };
+    // 2. 处理新增和更新：这时才需要判断可见性
+    const isVisible = record.published || canViewDrafts.value;
 
-      if (action === 'create') {
-        if (isVisible && idx === -1) {
-          allPosts.value.unshift(processedRecord);
-          totalItems.value++;
+    if (action === 'create') {
+      if (isVisible && idx === -1) {
+        allPosts.value.unshift({
+          ...record,
+          cleanContent: cleanMarkdown(record.content || '')
+        });
+        totalItems.value++;
+      }
+    } else if (action === 'update') {
+      if (idx !== -1) {
+        if (!isVisible) {
+          allPosts.value.splice(idx, 1);
+          totalItems.value--;
+        } else {
+          const oldItem = allPosts.value[idx];
+          // 1. 提取旧的 expand (如果存在)
+          const oldExpand = oldItem?.expand || {};
+          // 2. 提取推送过来的新 expand (如果存在)
+          const newExpand = record?.expand || {};
+          allPosts.value[idx] = {
+            ...oldItem,
+            ...record,
+            // 合并 expand 对象，确保新旧 expand 中的 user 信息都不会丢失
+            expand: {
+              ...oldExpand,
+              ...newExpand
+            },
+            cleanContent: cleanMarkdown(record.content || '')
+          };
         }
-      } else if (action === 'update') {
-        if (idx !== -1) {
-          if (!isVisible) {
-            // 原本可见，更新后不可见了（如：设为私密）
-            allPosts.value.splice(idx, 1);
-            totalItems.value = Math.max(0, totalItems.value - 1);
-          } else {
-            // 依然可见，更新内容
-            allPosts.value[idx] = processedRecord;
-          }
-        } else if (isVisible) {
-          // 原本不可见，更新后变可见了（如：草稿发布）
-          allPosts.value.unshift(processedRecord);
-          totalItems.value++;
-        }
+      } else if (isVisible) {
+        allPosts.value.unshift({
+          ...record,
+          cleanContent: cleanMarkdown(record.content || '')
+        });
+        totalItems.value++;
       }
     }
   });

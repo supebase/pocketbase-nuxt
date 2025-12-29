@@ -5,7 +5,7 @@
       <UTextarea ref="textareaRef" v-model="form.comment" id="comment" color="neutral"
         variant="none" autoresize :rows="2" :maxrows="6" :padded="false" size="xl"
         class="text-neutral-300 w-full py-2" :maxlength="maxLimit" :disabled="isSubmitting"
-        :placeholder="randomPlaceholder" />
+        :placeholder="randomPlaceholder" @keydown="handleKeyDown" />
 
       <div class="flex justify-between items-center px-3 py-1">
         <div class="flex items-center space-x-3"
@@ -148,6 +148,47 @@ const insertEmoji = (emoji: string) => {
   insertTextAtCursor(emoji);
 };
 
+const getTextareaDom = () => {
+  return textareaRef.value?.$el.querySelector("textarea") as HTMLTextAreaElement | null;
+};
+
+// 2. 监听 Backspace 按键
+const handleKeyDown = (e: KeyboardEvent) => {
+  if (e.key === 'Backspace') {
+    const textarea = getTextareaDom();
+    if (!textarea) return;
+
+    const { selectionStart, selectionEnd } = textarea;
+
+    // 只有在非选择状态（即只是普通闪烁光标）下才执行逻辑
+    if (selectionStart === selectionEnd) {
+      const text = form.comment;
+      const textBeforeCursor = text.substring(0, selectionStart);
+
+      // 正则匹配：以 @ 开头，中间是字符，最后以空格结尾，且紧贴光标
+      // 这里的 regex 匹配的是： @ + 任意非空格字符 + 空格
+      const mentionMatch = textBeforeCursor.match(/@\S*$/);
+
+      if (mentionMatch) {
+        const matchString = mentionMatch[0];
+        const matchStart = selectionStart - matchString.length;
+
+        // 阻止默认删除（默认只删一个空格）
+        e.preventDefault();
+
+        // 手动删除整个匹配到的字符串
+        form.comment = text.substring(0, matchStart) + text.substring(selectionEnd);
+
+        // 重新定位光标
+        nextTick(() => {
+          textarea.setSelectionRange(matchStart, matchStart);
+          textarea.focus();
+        });
+      }
+    }
+  }
+};
+
 // --- 表单提交逻辑 ---
 const validateForm = () => {
   errors.comment = "";
@@ -161,15 +202,8 @@ const validateForm = () => {
 };
 
 const filteredSuggestions = computed(() => {
-  // 获取当前登录用户 ID
   const currentId = currentUser.value?.id;
-
-  // props.rawSuggestions 现在已经是 [{id, name, avatar}, ...] 格式了
-  return props.rawSuggestions.filter(user => {
-    // 1. 确保 user 对象存在
-    // 2. 确保不提及自己
-    return user && user.id && user.id !== currentId;
-  });
+  return props.rawSuggestions.filter(user => user && user.id !== currentId);
 });
 
 const handleSubmit = async () => {
@@ -194,14 +228,7 @@ const handleSubmit = async () => {
       // 2. 构造乐观更新数据 (让用户立刻看到自己的评论，不等实时推送)
       const optimisticComment: CommentRecord = {
         ...newComment,
-        expand: {
-          user: {
-            id: currentUser.value?.id,
-            name: currentUser.value?.name,
-            avatar: currentUser.value?.avatar,
-            location: currentUser.value?.location,
-          },
-        },
+        expand: { user: { ...currentUser.value } }
       };
 
       // 3. 立即重置输入框

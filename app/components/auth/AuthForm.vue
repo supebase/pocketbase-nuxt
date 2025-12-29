@@ -124,17 +124,6 @@ async function handleAuth() {
       body,
     });
 
-    /**
-     * 💡 关键点：手动触发 PB 客户端同步
-     * 虽然后端通过 Set-Cookie 发送了 pb_auth，但在单页应用中，
-     * 调用这个方法可以强制 $pb.authStore 重新从 Cookie 中加载状态，
-     * 确保后续的实时订阅 (Realtime) 立即拥有权限。
-     */
-    const { $pb } = useNuxtApp();
-    if (import.meta.client) {
-      $pb.authStore.loadFromCookie(document.cookie);
-    }
-
     // 刷新 Nuxt Session (nuxt-auth-utils)
     await fetchSession();
 

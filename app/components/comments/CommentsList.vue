@@ -40,10 +40,15 @@
         </template>
 
         <template #description="{ item }">
-          <div class="text-base tracking-wide leading-6 hyphens-none whitespace-pre-wrap">{{
-            item.comment }}</div>
+          <div class="text-base tracking-wide leading-6 hyphens-none whitespace-pre-wrap">
+            <template v-for="(part, index) in parsedContent(item.comment)" :key="index">
+              <span v-if="part.isMention" class="text-primary font-semibold">{{ part.text }}</span>
+              <span v-else>{{ part.text }}</span>
+            </template>
+          </div>
           <div class="text-sm text-dimmed mt-1.5">
-            {{ item.relativeTime }}{{ item.expand?.user?.location ? `，来自${item.expand?.user?.location}` : '' }}
+            {{ item.relativeTime
+            }}{{ item.expand?.user?.location ? `，来自${item.expand?.user?.location}` : '' }}
           </div>
         </template>
       </CommonMotionTimeline>
@@ -60,17 +65,15 @@
 </template>
 
 <script setup lang="ts">
-import type { CommentRecord } from "~/types/comments";
-import type { LikeRecord, CommentLikesResponse } from "~/types/likes";
+import type { CommentRecord } from '~/types/comments';
+import type { CommentLikesResponse } from '~/types/likes';
 
 const props = defineProps<{ postId: string; allowComment: boolean }>();
-const emit = defineEmits(["loading-change", "update-commenters"]);
+const emit = defineEmits(['loading-change', 'update-commenters']);
 
 const { user } = useUserSession();
-const { $pb } = useNuxtApp();
-const toast = useToast();
+const likeTimers = new Map<string, any>();
 
-// --- 1. 使用你提供的 Composable ---
 const {
   allItems: comments,
   totalItems,
@@ -80,32 +83,63 @@ const {
   resetPagination,
 } = usePagination<CommentRecord>();
 
-const { stream: streamComments } = usePocketRealtime<CommentRecord>('comments');
-
-// --- 2. 状态定义 ---
+const { listen } = usePocketRealtime(['comments', 'likes']);
 const loading = ref(false);
-const lastLoadedPostId = ref<string | null>(null);
 const isModalOpen = ref(false);
 const isDeleting = ref(false);
 const selectedComment = ref<CommentRecord | null>(null);
-const likeTimers = new Map<string, any>();
+const lastLoadedPostId = ref<string | null>(null);
 
-// --- 3. 获取数据 API ---
+// 1. 去重逻辑
+const getUniqueUsers = (list: CommentRecord[]) => {
+  const usersMap = new Map();
+  list.forEach((c) => {
+    // 关键：在 SSE 模式下，record.expand.user 必须存在
+    const u = c.expand?.user;
+    if (u) usersMap.set(u.id, { id: u.id, name: u.name, avatar: u.avatar, location: u.location });
+  });
+  return Array.from(usersMap.values());
+};
+
+// 2. 核心同步逻辑 (不再手动 emit)
+const syncSingleComment = (record: CommentRecord, action: 'create' | 'update' | 'delete') => {
+  const index = comments.value.findIndex((c) => c.id === record.id);
+  if (action === 'delete' && index !== -1) {
+    comments.value.splice(index, 1);
+    totalItems.value = Math.max(0, totalItems.value - 1);
+  } else if (action === 'create' && index === -1) {
+    comments.value.unshift({ ...record, relativeTime: useRelativeTime(record.created) });
+    totalItems.value++;
+  } else if (action === 'update' && index !== -1) {
+    comments.value[index] = {
+      ...comments.value[index],
+      ...record,
+      expand: { ...(comments.value[index]?.expand || {}), ...(record.expand || {}) },
+    };
+  }
+};
+
+// 3. 关键：监听数组变化并向上同步
+watch(
+  comments,
+  (newVal) => {
+    if (newVal) {
+      const users = getUniqueUsers(newVal);
+      emit('update-commenters', users);
+    }
+  },
+  { deep: true, immediate: true }
+);
+
+// 4. API 请求
 const fetchCommentsApi = async (page: number) => {
   const res = await $fetch<any>(`/api/collections/comments`, {
-    query: {
-      filter: `post="${props.postId}"`,
-      sort: "-created",
-      page,
-      perPage: 10,
-    },
+    query: { filter: `post="${props.postId}"`, sort: '-created', page, perPage: 10 },
   });
-
   const items = (res.data?.comments || []).map((c: any) => ({
     ...c,
     relativeTime: useRelativeTime(c.created),
   }));
-
   return { items, total: res.data?.totalItems || 0 };
 };
 
@@ -116,9 +150,6 @@ const fetchComments = async (isSilent = false) => {
     const result = await fetchCommentsApi(1);
     resetPagination(result.items, result.total);
     lastLoadedPostId.value = props.postId;
-
-    // 💡 初始化时也要发射扁平用户列表
-    emit("update-commenters", getUniqueUsers(comments.value));
   } finally {
     loading.value = false;
   }
@@ -126,134 +157,89 @@ const fetchComments = async (isSilent = false) => {
 
 const handleLoadMore = () => loadMore(fetchCommentsApi);
 
-// --- 4. 同步逻辑 (核心修复) ---
-const handleLikeChange = (liked: boolean, likes: number, commentId: string, isFromRealtime = false) => {
+// 5. 点赞同步
+const handleLikeChange = (
+  liked: boolean,
+  likes: number,
+  commentId: string,
+  isFromRealtime = false
+) => {
   const target = comments.value.find((c) => c.id === commentId);
   if (target) {
     target.likes = likes;
     if (!isFromRealtime) target.isLiked = liked;
-    emit("update-commenters", comments.value);
   }
 };
 
-const getUniqueUsers = (commentList: CommentRecord[]) => {
-  const usersMap = new Map();
-  commentList.forEach(c => {
-    // 关键点：从 expand.user 中提取用户信息
-    if (c.expand?.user) {
-      usersMap.set(c.expand.user.id, {
-        id: c.expand.user.id,
-        name: c.expand.user.name,
-        avatar: c.expand.user.avatar,
-        location: c.expand.user.location,
-      });
-    }
-  });
-  return Array.from(usersMap.values());
+const triggerLikeSync = (commentId: string) => {
+  if (likeTimers.has(commentId)) clearTimeout(likeTimers.get(commentId));
+  likeTimers.set(
+    commentId,
+    setTimeout(async () => {
+      try {
+        const res = await $fetch<CommentLikesResponse>(`/api/collections/likes`, {
+          query: { commentIds: JSON.stringify([commentId]) },
+        });
+        const info = res.data.likesMap[commentId];
+        if (info) handleLikeChange(false, info.likes, commentId, true);
+      } finally {
+        likeTimers.delete(commentId);
+      }
+    }, 400)
+  );
 };
 
-const syncSingleComment = (record: CommentRecord, action: 'create' | 'update' | 'delete') => {
-  const index = comments.value.findIndex(c => c.id === record.id);
-
-  if (action === 'create') {
-    if (index === -1) {
-      comments.value.unshift({ ...record, relativeTime: useRelativeTime(record.created) });
-      totalItems.value++;
-    }
-  } else if (action === 'update') {
-    if (index !== -1) {
-      comments.value[index] = { ...comments.value[index], ...record };
-    }
-  } else if (action === 'delete') {
-    if (index !== -1) {
-      comments.value.splice(index, 1);
-      totalItems.value = Math.max(0, totalItems.value - 1);
-    }
-  }
-
-  // 💡 发射给父组件时，确保是扁平的用户列表，而不是评论对象列表
-  emit("update-commenters", getUniqueUsers(comments.value));
-};
-
-// --- 5. 删除操作 ---
+// 6. 删除逻辑
 const openDeleteModal = (item: CommentRecord) => {
   selectedComment.value = item;
   isModalOpen.value = true;
 };
-
 const confirmDelete = async () => {
   if (!selectedComment.value) return;
   isDeleting.value = true;
   try {
     await $fetch(`/api/collections/comment/${selectedComment.value.id}`, { method: 'DELETE' });
     isModalOpen.value = false;
-    // 这里不需要手动 splice，实时流会处理 delete action
-  } catch (err: any) {
-    toast.add({ title: "删除失败", color: "error" });
   } finally {
     isDeleting.value = false;
-    selectedComment.value = null;
   }
 };
 
-// --- 6. 生命周期与实时订阅 ---
+// 匹配 @用户名（假设用户名不含空格）
+const MENTION_REGEX = /(@\S+)/g;
+
+const parsedContent = (text: string) => {
+  if (!text) return [];
+
+  // 将字符串按 @用户名 切分
+  return text.split(MENTION_REGEX).map((part) => {
+    return {
+      text: part,
+      isMention: MENTION_REGEX.test(part)
+    };
+  });
+};
+
 onMounted(async () => {
   await fetchComments();
-
-  // A. 评论内容流 (使用你修改后的 usePocketRealtime)
-  await streamComments({
-    expand: 'user',
-    fields: 'id,comment,post,likes,created,expand.user.id,expand.user.name,expand.user.avatar,expand.user.location',
-    onUpdate: ({ action, record }) => {
-      // 💡 修复点：record 已经是 usePocketRealtime 补全后的 fullRecord，直接传入
-      if (record.post !== props.postId) return;
+  listen(({ collection, action, record }) => {
+    if (collection === 'comments' && record.post === props.postId) {
       syncSingleComment(record as CommentRecord, action as any);
-
-      emit("update-commenters", [...comments.value]);
+    }
+    if (collection === 'likes' && comments.value.some((c) => c.id === record.comment)) {
+      triggerLikeSync(record.comment);
     }
   });
-
-  // B. 点赞实时订阅 (Likes 是独立表，单独处理)
-  $pb.collection('likes').subscribe('*', (event) => {
-    const likeData = event.record as unknown as LikeRecord;
-    const commentId = likeData.comment;
-
-    // 仅处理当前列表存在的评论
-    if (!comments.value.some(c => c.id === commentId)) return;
-
-    if (likeTimers.has(commentId)) clearTimeout(likeTimers.get(commentId));
-
-    const timer = setTimeout(async () => {
-      try {
-        const res = await $fetch<CommentLikesResponse>(`/api/collections/likes`, {
-          query: { commentIds: JSON.stringify([commentId]) }
-        });
-        const updatedInfo = res.data.likesMap[commentId];
-        if (updatedInfo) {
-          handleLikeChange(false, updatedInfo.likes, commentId, true);
-        }
-      } catch (e) {
-        console.warn("Sync likes failed", e);
-      }
-      likeTimers.delete(commentId);
-    }, 400);
-
-    likeTimers.set(commentId, timer);
-  });
 });
 
-onUnmounted(() => {
-  $pb.collection('likes').unsubscribe('*');
-  likeTimers.forEach(timer => clearTimeout(timer));
+onUnmounted(() => likeTimers.forEach((t) => clearTimeout(t)));
+
+defineExpose({
+  handleCommentCreated: (c: any) => syncSingleComment(c, 'create'),
+  fetchComments,
+  getUniqueUsers,
+  comments,
 });
 
-// --- 7. 其他逻辑 ---
-const handleCommentCreated = (newComment: CommentRecord) => syncSingleComment(newComment, 'create');
-defineExpose({ handleCommentCreated, fetchComments, comments });
-
-onActivated(() => {
-  if (lastLoadedPostId.value !== props.postId) fetchComments();
-});
-
-watch([loading, isLoadingMore], ([l1, l2]) => emit("loading-change", l1 || l2));
+watch([loading, isLoadingMore], ([l1, l2]) => emit('loading-change', l1 || l2));
 </script>
