@@ -122,7 +122,7 @@ const postWithRelativeTime = computed(() => {
   if (!postData) return null;
   return {
     ...postData,
-    relativeTime: useRelativeTime(postData.created).value,
+    relativeTime: useRelativeTime(postData.created),
   };
 });
 
@@ -144,7 +144,8 @@ const handleUpdateCommenters = (rawComments: any[]) => {
       userMap.set(u.id, {
         id: u.id,
         name: u.name,
-        avatar: u.avatar || u.avatarId // 兼容字段名
+        avatar: u.avatar || u.avatarId, // 兼容字段名
+        location: u.location || '', // 用户位置
       });
     }
   });

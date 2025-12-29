@@ -54,13 +54,8 @@
 </template>
 
 <script setup lang="ts">
-import {
-  checkPasswordStrength,
-  calculatePasswordScore,
-  getPasswordStrengthColor,
-} from '~/utils/password';
-
 const { fetch: fetchSession } = useUserSession();
+const { locationData, fetchGeo } = useGeoLocation();
 const toast = useToast();
 
 const props = defineProps<{
@@ -120,6 +115,7 @@ async function handleAuth() {
         email: email.value,
         password: password.value,
         passwordConfirm: passwordConfirm.value,
+        location: locationData.value.location,
       };
 
     // 使用 $fetch 发起认证请求
@@ -193,4 +189,10 @@ async function handleAuth() {
 const strength = computed(() => checkPasswordStrength(password.value));
 const score = computed(() => calculatePasswordScore(strength.value));
 const color = computed(() => getPasswordStrengthColor(score.value));
+
+onMounted(() => {
+  if (!props.isLoginMode) {
+    fetchGeo();
+  }
+});
 </script>

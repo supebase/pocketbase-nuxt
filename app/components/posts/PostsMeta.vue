@@ -30,7 +30,7 @@
 interface Props {
     postMeta: {
         icon: string | null;
-        relativeTime: string;
+        relativeTime: string | ComputedRef<string>;
         created: string;
         content: string;
     };

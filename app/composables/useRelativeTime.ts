@@ -62,7 +62,7 @@ export function useRelativeTime(date: string | Date | number | null): ComputedRe
     max: 'year',
     fullDateFormatter,
     // 关键：控制同步频率，进一步降低冲突概率
-    updateInterval: 30000,
+    updateInterval: 10000,
   });
 
   return computed(() => timeAgo.value);

@@ -199,6 +199,7 @@ const handleSubmit = async () => {
             id: currentUser.value?.id,
             name: currentUser.value?.name,
             avatar: currentUser.value?.avatar,
+            location: currentUser.value?.location,
           },
         },
       };

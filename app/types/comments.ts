@@ -5,12 +5,12 @@ import type {
 } from './pocketbase-types';
 
 export interface CommentExpand {
-  user?: Pick<UsersResponse, 'id' | 'name' | 'verified' | 'avatar'>;
+  user?: Pick<UsersResponse, 'id' | 'name' | 'verified' | 'avatar' | 'location'>;
   post?: Pick<PostsResponse, 'id' | 'content'>;
 }
 
 export interface CommentRecord extends PBCommentResponse<CommentExpand> {
-  relativeTime?: string;
+  relativeTime?: string | ComputedRef<string>;
   likes?: number;
   isLiked?: boolean;
   isNew?: boolean;

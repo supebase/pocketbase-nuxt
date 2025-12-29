@@ -119,24 +119,6 @@ onMounted(() => {
   }
 });
 
-// const forceRefresh = () => {
-//   // 只有在客户端且非挂载中状态才执行，避免 SSR 冲突
-//   if (import.meta.client) {
-//     refresh();
-//   }
-// };
-
-// onMounted(() => {
-//   // 无论有没有数据，挂载时都请求最新状态
-//   // 这能解决“返回首页”时，由于 Nuxt Keep-alive 或路由缓存导致的数据过期
-//   forceRefresh();
-// });
-
-// // 如果你的 app 使用了 <keep-alive> 或 <NuxtPage keepalive />
-// onActivated(() => {
-//   forceRefresh();
-// });
-
 const usersToShow = computed(() => commentsResponse.value?.data?.comments || []);
 const totalCount = computed(() => commentsResponse.value?.data?.totalItems || 0);
 const remainingCount = computed(() => Math.max(0, totalCount.value - 3));

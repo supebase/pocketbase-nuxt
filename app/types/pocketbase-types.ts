@@ -141,6 +141,7 @@ export type UsersRecord = {
 	tokenKey: string
 	updated: IsoAutoDateString
 	verified?: boolean
+	location?: string
 }
 
 // Response types include system fields and match responses from the PocketBase API
@@ -201,6 +202,7 @@ export type CreateAuth<T> = {
 	password: string
 	passwordConfirm: string
 	verified?: boolean
+	location?: string
 } & ProcessCreateAndUpdateFields<T>
 
 // Create type for Base collections
@@ -218,6 +220,7 @@ export type UpdateAuth<T> = Partial<
 	password?: string
 	passwordConfirm?: string
 	verified?: boolean
+	location?: string
 }
 
 // Update type for Base collections

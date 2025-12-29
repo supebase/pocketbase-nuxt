@@ -12,6 +12,7 @@ export default defineNuxtConfig({
     pocketbaseBackend: process.env.NUXT_POCKETBASE_URL,
     public: {
       pocketbaseWebsocket: process.env.NUXT_POCKETBASE_WEBSOCKET_URL,
+      geoLocation: process.env.NUXT_GEOLOCATION_URL,
     },
   },
   app: {

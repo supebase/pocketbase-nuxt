@@ -5,7 +5,7 @@ import type { UsersResponse } from './pocketbase-types';
  * 业务层用户基础类型
  * 使用 Pick 确保核心字段来自 PocketBase 生成定义
  */
-export type UserRecord = Pick<UsersResponse, 'id' | 'email' | 'name' | 'avatar' | 'verified'>;
+export type UserRecord = Pick<UsersResponse, 'id' | 'email' | 'name' | 'avatar' | 'verified' | 'location'>;
 
 export interface LoginRequest {
   email: string;
@@ -16,6 +16,7 @@ export interface RegisterRequest {
   email: string;
   password: string;
   passwordConfirm: string;
+  location: string;
 }
 
 export interface AuthResponse {

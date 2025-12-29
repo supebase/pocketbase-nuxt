@@ -22,7 +22,7 @@ import type { RegisterRequest, AuthResponse } from '~/types/auth';
 export default defineEventHandler(async (event): Promise<AuthResponse> => {
   // 步骤 1: 从请求体中异步读取 JSON 数据，并断言其类型为 `RegisterRequest`。
   const body = await readBody<RegisterRequest>(event);
-  const { email, password, passwordConfirm } = body;
+  const { email, password, passwordConfirm, location } = body;
 
   // 步骤 2: 在将请求传递给服务层之前，进行前置的、基本的输入验证。
   // 检查所有必需字段是否存在。
@@ -52,7 +52,7 @@ export default defineEventHandler(async (event): Promise<AuthResponse> => {
     //   a. 调用 `pb.collection('users').create()` 创建新用户。
     //   b. 紧接着调用 `loginService(pb, ...)`，使用新创建的账户信息进行登录。
     //      这使得我们传入的这个 `pb` 实例的 `authStore` 被填充了新用户的认证信息。
-    await registerService(pb, email, password, passwordConfirm);
+    await registerService(pb, email, password, passwordConfirm, location);
 
     // 步骤 5: 注册和自动登录成功后，调用统一的成功处理器 `handleAuthSuccess`。
     // 我们将包含了新用户认证信息的 `pb` 实例传递给它，它会负责设置 Session、Cookie 并返回标准响应。

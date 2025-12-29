@@ -6,7 +6,7 @@
  */
 
 // 从工具函数中导入 MD5 哈希生成器，用于创建 Gravatar 头像链接。
-import { getMd5Hash } from '../utils/pocketbase';
+import { getMd5Hash } from '../utils/md5hash';
 // 从共享的工具函数中导入邮箱和名称格式化函数。
 import { normalizeEmail, formatDefaultName } from '~/utils/index';
 // 导入 PocketBase 自动生成的类型，以确保与数据库交互时的数据结构正确。
@@ -50,7 +50,8 @@ export async function registerService(
   pb: TypedPocketBase,
   email: string,
   password: string,
-  passwordConfirm: string
+  passwordConfirm: string,
+  location: string
 ): Promise<UsersResponse> {
   // 1. 准备新用户数据
   const cleanEmail = normalizeEmail(email);
@@ -66,6 +67,7 @@ export async function registerService(
     passwordConfirm,
     avatar: md5Hash, // 将 MD5 哈希作为 avatar 字段存入，前端可拼接成 Gravatar URL
     name: defaultName,
+    location,
   };
 
   // 3. 调用 PocketBase SDK 的 `create` 方法在 'users' 集合中创建新记录。

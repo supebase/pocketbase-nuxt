@@ -38,6 +38,7 @@ export async function handleAuthSuccess(
     name: pbUser.name,
     avatar: pbUser.avatar,       // 用户头像 URL
     verified: pbUser.verified, // 邮箱是否已验证
+    location: pbUser.location, // 用户位置
   };
 
   // 步骤 2: 创建或更新 Nuxt 的服务端 Session。

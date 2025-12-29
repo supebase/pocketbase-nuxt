@@ -42,7 +42,9 @@
         <template #description="{ item }">
           <div class="text-base tracking-wide leading-6 hyphens-none whitespace-pre-wrap">{{
             item.comment }}</div>
-          <div class="text-sm text-dimmed mt-1.5">{{ item.relativeTime }}</div>
+          <div class="text-sm text-dimmed mt-1.5">
+            {{ item.relativeTime }}{{ item.expand?.user?.location ? `，来自${item.expand?.user?.location}` : '' }}
+          </div>
         </template>
       </CommonMotionTimeline>
 
@@ -101,7 +103,7 @@ const fetchCommentsApi = async (page: number) => {
 
   const items = (res.data?.comments || []).map((c: any) => ({
     ...c,
-    relativeTime: useRelativeTime(c.created).value,
+    relativeTime: useRelativeTime(c.created),
   }));
 
   return { items, total: res.data?.totalItems || 0 };
@@ -142,7 +144,8 @@ const getUniqueUsers = (commentList: CommentRecord[]) => {
       usersMap.set(c.expand.user.id, {
         id: c.expand.user.id,
         name: c.expand.user.name,
-        avatar: c.expand.user.avatar
+        avatar: c.expand.user.avatar,
+        location: c.expand.user.location,
       });
     }
   });
@@ -154,7 +157,7 @@ const syncSingleComment = (record: CommentRecord, action: 'create' | 'update' | 
 
   if (action === 'create') {
     if (index === -1) {
-      comments.value.unshift({ ...record, relativeTime: useRelativeTime(record.created).value });
+      comments.value.unshift({ ...record, relativeTime: useRelativeTime(record.created) });
       totalItems.value++;
     }
   } else if (action === 'update') {
@@ -200,7 +203,7 @@ onMounted(async () => {
   // A. 评论内容流 (使用你修改后的 usePocketRealtime)
   await streamComments({
     expand: 'user',
-    fields: 'id,comment,post,likes,created,expand.user.id,expand.user.name,expand.user.avatar',
+    fields: 'id,comment,post,likes,created,expand.user.id,expand.user.name,expand.user.avatar,expand.user.location',
     onUpdate: ({ action, record }) => {
       // 💡 修复点：record 已经是 usePocketRealtime 补全后的 fullRecord，直接传入
       if (record.post !== props.postId) return;

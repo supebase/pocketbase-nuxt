@@ -172,7 +172,7 @@ const displayItems = computed(() => {
     .map((item) => ({
       id: item.id,
       title: item.expand?.user?.name || '未知用户',
-      date: useRelativeTime(item.created).value,
+      date: useRelativeTime(item.created),
       cleanContent: item.cleanContent,
       action: item.action,
       allowComment: item.allow_comment,
