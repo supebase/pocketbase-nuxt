@@ -29,6 +29,7 @@ export async function handleAuthSuccess(
   // 从 PocketBase 的认证存储中获取刚刚完成认证的用户记录。
   // 使用 `as unknown as UserRecord` 进行类型断言，将其转换为我们自定义的 UserRecord 类型。
   const pbUser = pb.authStore.record as unknown as UserRecord;
+  const pbToken = pb.authStore.token;
 
   // 步骤 1: 构造用于 Session 和 API 响应的用户信息载荷 (Payload)。
   // 这里只选取客户端和 Nuxt Session 需要的、可以安全暴露的字段，避免泄露敏感信息。
@@ -46,6 +47,9 @@ export async function handleAuthSuccess(
   // 这使得我们可以在服务端渲染 (SSR) 和服务端 API 路由中通过 `getUserSession` 快速获取用户信息。
   await setUserSession(event, {
     user: userPayload,
+    secure: {
+      pbToken: pbToken 
+    },
     loggedInAt: new Date().toISOString(),
   });
 

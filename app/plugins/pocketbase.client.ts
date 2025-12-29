@@ -7,11 +7,13 @@ export default defineNuxtPlugin(() => {
 
   // 1. 客户端初始化逻辑
   if (import.meta.client) {
+    const { session } = useUserSession();
     // 从 Cookie 恢复初始状态
     // 💡 提示：'pb_auth' 需与后端 authHelpers 中的保持一致
-    const authCookie = useCookie('pb_auth').value;
-    if (authCookie) {
-      pb.authStore.loadFromCookie(`pb_auth=${authCookie}`);
+    if (session.value?.secure?.pbToken) {
+      pb.authStore.save(session.value.secure.pbToken, session.value.user as any);
+    } else {
+      pb.authStore.loadFromCookie(document.cookie, 'pb_auth');
     }
 
     // 2. 多标签页同步通道
@@ -19,13 +21,14 @@ export default defineNuxtPlugin(() => {
 
     pb.authStore.onChange((token, model) => {
       // 💡 更新 Cookie (与后端保持同步)
-      document.cookie = pb.authStore.exportToCookie({
+      const cookieString = pb.authStore.exportToCookie({
         httpOnly: false, // 客户端必须为 false 才能读取
         secure: true,
         sameSite: 'Lax',
         path: '/',
         maxAge: token ? 60 * 60 * 24 * 7 : -1,
       });
+      document.cookie = cookieString;
 
       // 💡 状态清理增强：登出时主动断开 Websocket
       if (!token) {

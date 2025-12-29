@@ -33,7 +33,7 @@ const appConfig = useAppConfig();
 const route = useRoute();
 const toast = useToast();
 const { showHeaderBack } = useHeader();
-const { loggedIn, user } = useUserSession(); // 💡 结构出 user，更有助于判断
+const { loggedIn, user, fetch: fetchSession } = useUserSession(); // 💡 结构出 user，更有助于判断
 const { $pb } = useNuxtApp();
 
 // --- 1. 路由与 Header 逻辑 ---
@@ -59,7 +59,7 @@ watch(loggedIn, (isLogged) => {
     $pb.authStore.clear();
     // 如果有需要验证的实时订阅 (Realtime)，建议在这里也执行取消订阅
     // $pb.collection('posts').unsubscribe(); 
-
+    document.cookie = 'pb_auth=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
     // console.log('会话已结束，PB 存储已清除');
   } else {
     // 💡 可选：如果已登录但 PB 无效（例如 pb_auth Cookie 被意外删了）
@@ -78,4 +78,13 @@ watch(loggedIn, (isLogged) => {
   // 💡 建议在客户端挂载后再执行监听，避免 SSR 期间的 Hydration 冲突
   immediate: false
 });
+
+if (import.meta.client) {
+  window.addEventListener('visibilitychange', () => {
+    // 当用户切换回这个标签页时，自动刷新一次 Session 状态
+    if (document.visibilityState === 'visible') {
+      fetchSession();
+    }
+  });
+}
 </script>
