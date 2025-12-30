@@ -113,6 +113,11 @@ export default defineNuxtConfig({
       xl: 1280,
     },
 
+    alias: {
+      '/previews': resolve('./public/previews'),
+      '/uploads': resolve('./public/uploads')
+    },
+
     // 4. 提供者（如果你没有特殊后端，默认是 'ipx'）
     provider: 'ipx',
     ipx: {
