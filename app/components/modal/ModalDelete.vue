@@ -1,6 +1,6 @@
 <template>
     <UModal v-model:open="open" title="确认执行删除操作？" description="该操作不可逆，删除后数据将永久清除，请注意确认。"
-        close-icon="i-hugeicons:cancel-01" :ui="{ footer: 'justify-end' }">
+        :ui="{ footer: 'justify-end' }">
 
         <template #body>
             <slot />

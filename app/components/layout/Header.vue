@@ -20,6 +20,7 @@
 
         <AuthLogoutButton />
       </div>
+      <ModalSearch />
       <CommonColorModeButton />
     </div>
   </div>

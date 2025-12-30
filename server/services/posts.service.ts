@@ -77,3 +77,20 @@ export async function deletePost(pb: TypedPocketBase, postId: string) {
   // API 路由层应该在此函数被调用前，已完成对文章所有权的验证。
   return await pb.collection('posts').delete(postId);
 }
+
+/**
+ * 搜索文章
+ * @param pb 与当前请求上下文绑定的 PocketBase 实例。
+ * @param query 搜索查询字符串。
+ * @param page 要获取的页码，默认为 1。
+ * @param perPage 每页的项目数量，默认为 10。
+ * @returns 返回符合搜索条件的文章列表。
+ */
+export async function searchPosts(pb: TypedPocketBase, query: string, page: number = 1, perPage: number = 10) {
+  // 使用 pb.filter 保证查询字符串的安全
+  return await pb.collection('posts').getList<PBPostsResponse<PostExpand>>(page, perPage, {
+    filter: pb.filter('content ~ {:q}', { q: query }),
+    sort: '-created',
+    expand: 'user', // 展开作者信息
+  });
+}

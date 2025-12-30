@@ -9,6 +9,8 @@ export default defineAppConfig({
       chevronDown: 'i-hugeicons:arrow-down-01',
       copy: 'i-hugeicons:copy-02',
       copyCheck: 'i-hugeicons:checkmark-square-03',
+      close: 'i-hugeicons:cancel-01',
+      search: 'i-hugeicons:search-01',
     },
     header: {
       slots: {
