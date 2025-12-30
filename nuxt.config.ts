@@ -61,6 +61,9 @@ export default defineNuxtConfig({
       gzip: true,
     },
     minify: true,
+    experimental: {
+      tasks: true // 必须开启此项，否则 runTask 会报错
+    }
   },
   // 图片优化
   image: {

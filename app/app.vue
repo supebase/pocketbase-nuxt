@@ -31,7 +31,6 @@ import { zh_cn } from "@nuxt/ui/locale";
 
 const appConfig = useAppConfig();
 const route = useRoute();
-const toast = useToast();
 const { showHeaderBack } = useHeader();
 const { loggedIn, fetch: fetchSession } = useUserSession();
 

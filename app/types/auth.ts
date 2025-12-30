@@ -30,10 +30,6 @@ declare module '#auth-utils' {
   // 这里的 User 接口直接继承自我们定义的 UserRecord
   interface User extends UserRecord {}
 
-  interface SecureSessionData {
-    pbToken: string;
-  }
-
   interface UserSession {
     user?: User;
     loggedInAt?: string;

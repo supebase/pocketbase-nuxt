@@ -12,6 +12,8 @@ import { handlePocketBaseError } from '../../../utils/errorHandler';
 import { getLinkPreview } from '~~/server/utils/unfurl';
 // 导入用于获取当前请求唯一的 PocketBase 实例的函数。
 import { getPocketBaseInstance } from '../../../utils/pocketbase';
+// 导入用于处理 Markdown 中的图片的工具函数。
+import { processMarkdownImages } from '~~/server/utils/markdown';
 // 导入用于清理 HTML 的库。
 import sanitizeHtml from 'sanitize-html';
 // 导入相关的业务类型定义。
@@ -40,10 +42,28 @@ export default defineEventHandler(async (event): Promise<SinglePostResponse> => 
     if (typeof body.content !== 'string' || body.content.trim() === '') {
       throw createError({ statusCode: 400, message: '有效内容不能为空' });
     }
+
+    // 在编辑内容时也执行并发图片下载本地化 ---
+    const localizedContent = await processMarkdownImages(body.content);
+
     // 使用与创建时相同的规则进行 HTML 清理，防止安全漏洞。
-    cleanContent = sanitizeHtml(body.content, {
-      allowedTags: [...sanitizeHtml.defaults.allowedTags, 'img', 'details', 'summary', 'h1', 'h2', 'span'],
-      allowedAttributes: { ...sanitizeHtml.defaults.allowedAttributes, img: ['src', 'alt', 'title', 'width', 'height', 'loading'], code: ['class'], span: ['class'], div: ['class'] },
+    cleanContent = sanitizeHtml(localizedContent, {
+      allowedTags: [
+        ...sanitizeHtml.defaults.allowedTags,
+        'img',
+        'details',
+        'summary',
+        'h1',
+        'h2',
+        'span',
+      ],
+      allowedAttributes: {
+        ...sanitizeHtml.defaults.allowedAttributes,
+        img: ['src', 'alt', 'title', 'width', 'height', 'loading'],
+        code: ['class'],
+        span: ['class'],
+        div: ['class'],
+      },
       transformTags: { a: sanitizeHtml.simpleTransform('a', { rel: 'nofollow' }) },
     });
     // 可选：添加内容长度限制

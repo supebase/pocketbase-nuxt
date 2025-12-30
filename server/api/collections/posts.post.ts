@@ -12,6 +12,8 @@ import { handlePocketBaseError } from '../../utils/errorHandler';
 import { getLinkPreview } from '~~/server/utils/unfurl';
 // 导入用于获取当前请求唯一的 PocketBase 实例的函数。
 import { getPocketBaseInstance } from '../../utils/pocketbase';
+// 导入用于处理 Markdown 中的图片的工具函数。
+import { processMarkdownImages } from '~~/server/utils/markdown';
 // 导入用于清理 HTML 的库，这是实现富文本安全的关键。
 import sanitizeHtml from 'sanitize-html';
 // 导入相关的业务类型定义。
@@ -41,6 +43,10 @@ export default defineEventHandler(async (event): Promise<SinglePostResponse> => 
     });
   }
 
+  // --- 新增步骤：本地化图片 ---
+  // 在清理 HTML 之前，先将 Markdown/HTML 中的远程图片下载到本地
+  const localizedContent = await processMarkdownImages(content);
+
   // 步骤 4: 处理链接预览 (Link Unfurling)。
   let linkDataString: string | undefined = undefined;
   if (link) {
@@ -53,7 +59,7 @@ export default defineEventHandler(async (event): Promise<SinglePostResponse> => 
   }
 
   // 步骤 5: **核心安全措施** - 对富文本内容进行精细的 HTML 清理。
-  const cleanContent = sanitizeHtml(content, {
+  const cleanContent = sanitizeHtml(localizedContent, {
     // 允许的标签：在默认允许的标签基础上，增加了图片、折叠面板、标题和 span。
     allowedTags: [
       ...sanitizeHtml.defaults.allowedTags,
