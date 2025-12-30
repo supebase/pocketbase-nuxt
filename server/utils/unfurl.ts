@@ -3,6 +3,10 @@ import { hash } from 'ohash';
 import fs from 'node:fs';
 import path from 'node:path';
 
+// 统一使用项目根目录下的 public 目录
+// process.cwd() 在你的 PM2 配置下即为 /root
+const baseDir = path.join(process.cwd(), 'public');
+
 const ensureAbsoluteUrl = (pathStr: string | undefined, baseUrl: string): string => {
   if (!pathStr) return '';
   try {
@@ -19,37 +23,36 @@ export const getLinkPreview = async (url: string) => {
     const { result } = await ogs({ url, timeout: 3000 });
 
     if (result.success) {
+      const urlObj = new URL(url);
+      const isGitHub = urlObj.hostname === 'github.com' || urlObj.hostname.endsWith('.github.com');
       const rawImage = result.ogImage?.[0]?.url || result.twitterImage?.[0]?.url || '';
       let finalImagePath = '';
 
-      if (rawImage) {
+      // 只有在不是 GitHub 且有图片链接时处理
+      if (!isGitHub && rawImage) {
         const absoluteImageUrl = ensureAbsoluteUrl(rawImage, url);
         const fileHash = hash(absoluteImageUrl);
         const fileName = `${fileHash}.png`;
 
-        // 1. 确定物理路径：项目根目录/public/previews
-        const publicDir = path.join(process.cwd(), 'public', 'previews');
-        const filePath = path.join(publicDir, fileName);
+        const previewsDir = path.join(baseDir, 'previews');
+        const filePath = path.join(previewsDir, fileName);
 
         try {
-          // 2. 确保目录存在
-          if (!fs.existsSync(publicDir)) {
-            fs.mkdirSync(publicDir, { recursive: true });
+          if (!fs.existsSync(previewsDir)) {
+            fs.mkdirSync(previewsDir, { recursive: true });
           }
 
-          // 3. 如果文件不存在则下载
           if (!fs.existsSync(filePath)) {
             const buffer = await $fetch<ArrayBuffer>(absoluteImageUrl, {
               responseType: 'arrayBuffer',
             });
             fs.writeFileSync(filePath, Buffer.from(buffer));
           }
-
-          // 4. 返回前端访问路径（对应 public 后的路径）
-          finalImagePath = `/previews/${fileName}`;
+          // 统一返回接口路径
+          finalImagePath = `/api/images/previews/${fileName}`;
         } catch (downloadError) {
           console.error('Image Cache Error:', downloadError);
-          finalImagePath = absoluteImageUrl; // 失败降级
+          finalImagePath = absoluteImageUrl;
         }
       }
 
@@ -58,12 +61,11 @@ export const getLinkPreview = async (url: string) => {
         title: result.ogTitle || result.twitterTitle || '无标题',
         description: result.ogDescription || result.twitterDescription || '',
         image: finalImagePath,
-        siteName: result.ogSiteName || new URL(url).hostname,
+        siteName: result.ogSiteName || urlObj.hostname,
       };
     }
   } catch (e) {
     console.error('OGS Fetch Error:', url, e);
   }
-
   return null;
 };

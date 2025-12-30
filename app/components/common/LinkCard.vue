@@ -20,7 +20,8 @@
         <div v-else
             class="relative w-20 shrink-0 border-r border-neutral-200 dark:border-neutral-800 overflow-hidden">
             <div class="absolute inset-0 flex items-center justify-center">
-                <UIcon name="i-hugeicons:image-02" class="text-dimmed/20 size-7" />
+                <UIcon :name="isGitHub ? 'i-hugeicons:github' : 'i-hugeicons:image-02'"
+                    class="text-dimmed/40 size-8" />
             </div>
         </div>
 
@@ -58,6 +59,16 @@ const isLoaded = ref(false)
 const handleLoad = () => {
     isLoaded.value = true
 }
+
+// 判断是否为 GitHub 链接
+const isGitHub = computed(() => {
+    try {
+        const host = new URL(props.data.url).hostname
+        return host === 'github.com' || host.endsWith('.github.com')
+    } catch {
+        return false
+    }
+})
 
 const displayUrl = computed(() => {
     return props.data.url
