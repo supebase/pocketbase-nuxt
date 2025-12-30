@@ -1,3 +1,6 @@
+import { createResolver } from 'nuxt/kit'
+const { resolve } = createResolver(import.meta.url)
+
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
@@ -63,7 +66,19 @@ export default defineNuxtConfig({
     minify: true,
     experimental: {
       tasks: true // 必须开启此项，否则 runTask 会报错
-    }
+    },
+    publicAssets: [
+      {
+        dir: resolve('./public'),
+        maxAge: 60 * 60 * 24 * 365
+      }
+    ],
+    serverAssets: [
+      {
+        baseName: 'public',
+        dir: resolve('./public')
+      }
+    ]
   },
   // 图片优化
   image: {
@@ -100,6 +115,11 @@ export default defineNuxtConfig({
 
     // 4. 提供者（如果你没有特殊后端，默认是 'ipx'）
     provider: 'ipx',
+    ipx: {
+      fs: {
+        dir: resolve('./public'),
+      }
+    }
   },
   // UI配置
   ui: {
