@@ -1,11 +1,8 @@
-import { createResolver } from 'nuxt/kit'
-const { resolve } = createResolver(import.meta.url)
-
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: false },
-  modules: ['nuxt-auth-utils', '@nuxt/ui', '@nuxtjs/mdc', 'nuxt-emoji-picker', '@nuxt/image'],
+  modules: ['nuxt-auth-utils', '@nuxt/ui', '@nuxtjs/mdc', 'nuxt-emoji-picker'],
   runtimeConfig: {
     session: {
       name: 'pb-session',
@@ -66,51 +63,6 @@ export default defineNuxtConfig({
     minify: true,
     experimental: {
       tasks: true // 必须开启此项，否则 runTask 会报错
-    },
-    publicAssets: [
-      {
-        dir: resolve('./public/previews'),
-        maxAge: 24 * 60 * 60 * 30, // 30 天
-        baseURL: '/previews',
-      },
-      {
-        dir: resolve('./public/uploads'),
-        maxAge: 24 * 60 * 60 * 30, // 30 天
-        baseURL: '/uploads',
-      }
-    ],
-  },
-  // 图片优化
-  image: {
-    // 1. 预设尺寸（关键）：解决重复加载
-    // 如果你定义了预设，放大时和缩略图使用同一个预设，URL 就会完全一致，直接从缓存读取
-    presets: {
-      preview: {
-        modifiers: {
-          width: 600,
-          format: 'webp',
-          quality: 80,
-        },
-      },
-      large: {
-        modifiers: {
-          width: 1200, // 放大后的尺寸
-          format: 'webp',
-          quality: 90,
-        },
-      },
-    },
-
-    // 2. 默认格式
-    format: ['webp', 'jpg'],
-
-    // 3. 响应式断点：自动根据屏幕宽度生成 srcset，防止小屏幕下载大图
-    screens: {
-      xs: 320,
-      sm: 640,
-      md: 768,
-      lg: 1024,
-      xl: 1280,
     },
   },
   // UI配置
