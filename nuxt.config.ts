@@ -69,16 +69,16 @@ export default defineNuxtConfig({
     },
     publicAssets: [
       {
-        dir: resolve('./public'),
-        maxAge: 60 * 60 * 24 * 365
+        dir: resolve('./public/previews'),
+        maxAge: 24 * 60 * 60 * 30, // 30 天
+        baseURL: '/previews',
+      },
+      {
+        dir: resolve('./public/uploads'),
+        maxAge: 24 * 60 * 60 * 30, // 30 天
+        baseURL: '/uploads',
       }
     ],
-    serverAssets: [
-      {
-        baseName: 'public',
-        dir: resolve('./public')
-      }
-    ]
   },
   // 图片优化
   image: {
@@ -112,19 +112,6 @@ export default defineNuxtConfig({
       lg: 1024,
       xl: 1280,
     },
-
-    alias: {
-      '/previews': resolve('./public/previews'),
-      '/uploads': resolve('./public/uploads')
-    },
-
-    // 4. 提供者（如果你没有特殊后端，默认是 'ipx'）
-    provider: 'ipx',
-    ipx: {
-      fs: {
-        dir: resolve('./public'),
-      }
-    }
   },
   // UI配置
   ui: {
