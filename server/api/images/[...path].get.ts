@@ -33,10 +33,14 @@ export default defineEventHandler((event) => {
       '.svg': 'image/svg+xml',
     };
 
+    // 如果匹配到了就用对应的，匹配不到可以给个通用的 image/png
+    // 或者让浏览器自己去猜 (不设置)
     if (mimeMap[ext]) {
       setResponseHeader(event, 'Content-Type', mimeMap[ext]);
+    } else {
+      // 可选：对于无法识别的图片文件，给一个通用的类型
+      setResponseHeader(event, 'Content-Type', 'image/png');
     }
-
     return fs.readFileSync(filePath);
   }
 

@@ -1,18 +1,8 @@
 <template>
-    <UDropdownMenu arrow size="lg" :ui="{ item: 'cursor-pointer' }"
-        :items="props.isLogined ? action : auth">
+    <UDropdownMenu arrow size="lg" :ui="{ item: 'cursor-pointer' }" :items="dropdownItems">
         <Icon name="i-hugeicons:more-horizontal"
             class="size-5 text-dimmed cursor-pointer hover:text-primary transition-colors" />
     </UDropdownMenu>
-
-    <ModalDelete v-model:open="isModalOpen" :loading="isDeleting" @confirm="confirmDelete">
-        <div class="flex flex-col gap-2">
-            <div class="text-sm text-primary font-semibold tracking-wider">即将消失的数据</div>
-            <div class="text-sm text-muted line-clamp-2">
-                {{ item.cleanContent }}
-            </div>
-        </div>
-    </ModalDelete>
 </template>
 
 <script setup lang="ts">
@@ -26,65 +16,61 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+const emit = defineEmits(['requestEdit', 'requestDelete']);
+
 const toast = useToast();
-
-const isModalOpen = ref(false);
-const isDeleting = ref(false);
-
-const auth = [
-    [{
-        icon: 'i-hugeicons:lock-key',
-        label: '请先登录',
-        onClick: () => navigateTo(`/auth`),
-    }],
-]
-
-const action = computed(() => [
-    [{
-        icon: 'i-hugeicons:edit-04',
-        label: '编辑',
-        onClick: () => props.canViewDrafts ? navigateTo(`/edit/${props.item.id}`) : showAuthToast(),
-    },
-    {
-        icon: 'i-hugeicons:delete-01',
-        label: '删除',
-        color: 'error' as const,
-        onClick: () => props.canViewDrafts ? (isModalOpen.value = true) : showAuthToast(),
-    }],
-]);
-
-const confirmDelete = async () => {
-    isDeleting.value = true;
-    try {
-        await $fetch(`/api/collections/post/${props.item.id}`, {
-            method: 'DELETE',
-        });
-
-        isModalOpen.value = false;
-
-        toast.add({
-            title: "删除成功",
-            icon: "i-hugeicons:checkmark-circle-03",
-            color: "success",
-        });
-    } catch (err: any) {
-        toast.add({
-            title: "删除失败",
-            description: err.data?.message || '请稍后重试',
-            icon: "i-hugeicons:alert-02",
-            color: "error",
-        });
-    } finally {
-        isDeleting.value = false;
-    }
-};
 
 const showAuthToast = () => {
     toast.add({
         title: '权限不足',
         description: '只有已认证用户可以进行此操作',
-        icon: "i-hugeicons:alert-02",
-        color: "warning",
+        icon: 'i-hugeicons:alert-02',
+        color: 'warning',
     });
 };
+
+const dropdownItems = computed(() => {
+    // 未登录逻辑
+    if (!props.isLogined) {
+        return [
+            [
+                {
+                    icon: 'i-hugeicons:lock-key',
+                    label: '请先登录',
+                    onClick: () => navigateTo(`/auth`),
+                },
+            ],
+        ];
+    }
+
+    // 已登录逻辑：不再自己处理逻辑，而是通知父组件
+    return [
+        [
+            {
+                icon: 'i-hugeicons:edit-04',
+                label: '编辑',
+                onClick: () => {
+                    if (props.canViewDrafts) {
+                        navigateTo(`/edit/${props.item.id}`);
+                    } else {
+                        showAuthToast();
+                    }
+                },
+            },
+            {
+                icon: 'i-hugeicons:delete-01',
+                label: '删除',
+                color: 'error' as const,
+                onClick: () => {
+                    if (props.canViewDrafts) {
+                        // 触发父组件的删除请求事件
+                        emit('requestDelete', props.item);
+                    } else {
+                        showAuthToast();
+                    }
+                },
+            },
+        ],
+    ];
+});
 </script>

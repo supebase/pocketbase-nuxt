@@ -2,23 +2,29 @@
     <UCommandPalette v-model:search-term="searchQuery" :loading="isLoading" :groups="groups"
         icon="i-hugeicons:search-01" placeholder="输入关键词后开始搜索 ..." class="h-[50vh] select-none"
         @update:model-value="onSelect" @compositionstart="handleCompositionStart"
-        @compositionend="handleCompositionEnd">
+        @compositionend="handleCompositionEnd" :ui="{
+            input: '[&>input]:h-14',
+            group: 'p-2',
+            label: 'px-4 py-2 text-sm text-dimmed/80 font-bold tracking-wider'
+
+        }">
         <template #item="{ item }">
-            <div class="flex items-center justify-between w-full group">
+            <div class="flex items-center justify-between w-full group px-2 py-1.5">
                 <div v-if="item.id === 'load-more-trigger'"
-                    class="flex items-center justify-center w-full py-1 font-medium gap-2">
+                    class="flex items-center justify-center w-full py-2 text-sm font-medium text-dimmed">
                     <UIcon v-if="isLoadingMore" name="i-hugeicons:loading-02"
-                        class="animate-spin size-5" />
+                        class="animate-spin size-4 mr-2" />
                     <span>{{ item.label }}</span>
                 </div>
 
-                <div v-else class="flex items-center gap-3 flex-1 min-w-0">
-                    <div class="flex flex-col min-w-0">
-                        <span class="text-sm text-muted font-medium line-clamp-2">
+                <div v-else class="flex items-center gap-4 flex-1 min-w-0">
+                    <div class="shrink-0 flex items-center justify-center">
+                        <UIcon name="i-hugeicons:file-02" class="size-5 text-dimmed" />
+                    </div>
+
+                    <div class="flex flex-col min-w-0 flex-1">
+                        <span class="text-sm font-medium text-muted line-clamp-1">
                             {{ item.label }}
-                        </span>
-                        <span class="text-xs text-dimmed">
-                            {{ item.date }}
                         </span>
                     </div>
                 </div>
@@ -79,7 +85,7 @@ const {
 const performSearch = async (query: string) => {
     isLoading.value = true;
     try {
-        const response = await $fetch<PostsListResponse>('/api/collections/posts/search', {
+        const response = await $fetch<PostsListResponse>('/api/collections/posts', {
             query: { q: query, page: 1 }
         });
         if (searchQuery.value === query) {
@@ -94,7 +100,7 @@ const performSearch = async (query: string) => {
 
 // 执行 API (加载更多)
 const fetchMoreData = async (page: number) => {
-    const response = await $fetch<PostsListResponse>('/api/collections/posts/search', {
+    const response = await $fetch<PostsListResponse>('/api/collections/posts', {
         query: { q: searchQuery.value, page }
     });
     return {
@@ -138,7 +144,6 @@ const groups = computed(() => {
     const items = allItems.value.map((post) => ({
         id: post.id,
         label: cleanMarkdown(post.content),
-        date: post.updated ? useRelativeTime(post.updated) : useRelativeTime(post.created),
         to: `/${post.id}`
     }));
 
@@ -147,7 +152,6 @@ const groups = computed(() => {
         items.push({
             id: 'load-more-trigger',
             label: isLoadingMore.value ? '正在加载...' : '显示更多结果',
-            date: computed(() => `已显示 ${allItems.value.length} / 共 ${totalItems.value} 条`),
             to: '' // 不跳转
         });
     }

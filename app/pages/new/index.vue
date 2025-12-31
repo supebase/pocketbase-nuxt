@@ -71,7 +71,16 @@
 </template>
 
 <script setup lang="ts">
-const form = reactive({ content: '', allow_comment: true, published: true, icon: '', action: 'dit', link: '' });
+const getInitialForm = () => ({
+  content: '',
+  allow_comment: true,
+  published: true,
+  icon: '',
+  action: 'dit',
+  link: ''
+});
+
+const form = reactive(getInitialForm());
 const isSubmitting = ref(false);
 const maxLimit = 10000;
 
@@ -88,6 +97,7 @@ const handleSubmit = async () => {
   try {
     await $fetch('/api/collections/posts', { method: 'POST', body: form });
     await refreshNuxtData('posts-list-data');
+    Object.assign(form, getInitialForm());
     await navigateTo('/');
   } finally {
     isSubmitting.value = false;

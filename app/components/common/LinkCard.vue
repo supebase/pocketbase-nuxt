@@ -3,7 +3,7 @@
         class="group mt-4 mb-1.5 flex items-stretch border border-neutral-200 dark:border-neutral-800 rounded-lg overflow-hidden no-underline">
 
         <div v-if="data.image"
-            class="relative w-20 shrink-0 border-r border-neutral-200 dark:border-neutral-800 overflow-hidden">
+            class="relative w-21 shrink-0 border-r border-neutral-200 dark:border-neutral-800 overflow-hidden">
 
             <div class="relative w-full h-full bg-neutral-100 dark:bg-neutral-900">
                 <img :src="data.image" @load="handleLoad" :class="[
@@ -18,7 +18,7 @@
         </div>
 
         <div v-else
-            class="relative w-20 shrink-0 border-r border-neutral-200 dark:border-neutral-800 overflow-hidden">
+            class="relative w-21 shrink-0 border-r border-neutral-200 dark:border-neutral-800 overflow-hidden bg-white/60 dark:bg-neutral-900/60 backdrop-blur">
             <div class="absolute inset-0 flex items-center justify-center">
                 <UIcon :name="isGitHub ? 'i-hugeicons:github' : 'i-hugeicons:image-02'"
                     class="text-dimmed/40 size-8" />
@@ -26,7 +26,7 @@
         </div>
 
         <div
-            class="flex-1 p-3 min-w-0 flex flex-col justify-center space-y-1 bg-neutral-50 dark:bg-neutral-950/20">
+            class="flex-1 p-3 min-w-0 flex flex-col justify-center space-y-1 bg-white dark:bg-neutral-900">
 
             <div class="text-sm font-bold text-primary line-clamp-1 w-full">
                 {{ data.title }}

@@ -52,7 +52,7 @@ export const getLinkPreview = async (url: string) => {
           finalImagePath = `/api/images/previews/${fileName}`;
         } catch (downloadError) {
           console.error('Image Cache Error:', downloadError);
-          finalImagePath = absoluteImageUrl;
+          finalImagePath = '';
         }
       }
 

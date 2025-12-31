@@ -54,8 +54,8 @@
                 <div class="text-base">{{ item.title }}</div>
                 <div v-if="!item.published && canViewDrafts" class="text-warning">待发布稿</div>
                 <UBadge v-else-if="item.action === 'dit'" label="DIRE" variant="outline"
-                  size="sm" />
-                <UBadge v-else label="PARTAGER" variant="outline" size="sm" />
+                  color="neutral" size="sm" />
+                <UBadge v-else label="PARTAGER" variant="outline" color="neutral" size="sm" />
               </div>
             </template>
 
@@ -63,15 +63,25 @@
               <div class="flex items-center gap-2.5">
                 <span class="text-dimmed/80">{{ item.date }}</span>
                 <PostsDelete :is-logined="loggedIn" :item="item"
-                  :can-view-drafts="canViewDrafts ?? false" />
+                  :can-view-drafts="canViewDrafts ?? false" @request-delete="handleRequestDelete" />
               </div>
             </template>
 
             <template #description="{ item, index }">
-              <PostsItem :item="item" :delay="index % 10 * 0.08"
+              <PostsItem :item="item" :delay="(index % 10) * 0.08"
                 :can-view-drafts="canViewDrafts ?? false" />
             </template>
           </CommonMotionTimeline>
+
+          <ModalDelete v-model:open="isDeleteModalOpen" :loading="isDeleting"
+            @confirm="confirmDelete">
+            <div v-if="pendingDeleteItem" class="flex flex-col gap-2">
+              <div class="text-sm text-primary font-semibold tracking-wider">即将消失的数据</div>
+              <div class="text-sm text-muted line-clamp-2">
+                {{ pendingDeleteItem.cleanContent }}
+              </div>
+            </div>
+          </ModalDelete>
         </template>
 
         <div v-if="allPosts.length > 0" class="flex flex-col items-center justify-center mt-8 mb-4">
@@ -106,8 +116,8 @@ import type { PostsListResponse } from '~/types/posts';
 
 // --- 1. 类型定义 ---
 type PostWithUser = PostsResponse<{ user: UsersResponse }> & {
-  cleanContent?: string // 💡 扩展字段
-}
+  cleanContent?: string; // 💡 扩展字段
+};
 
 // --- 2. 状态与认证 ---
 const { loggedIn, user } = useUserSession();
@@ -132,30 +142,39 @@ const fetchPostsApi = async (page: number) => {
   const res = await $fetch<PostsListResponse>('/api/collections/posts', { query: { page } });
   return {
     items: res.data.posts as PostWithUser[],
-    total: res.data.totalItems
+    total: res.data.totalItems,
   };
 };
 
 // --- 6. SSR 初始加载 ---
-const { data: fetchResult, status, error, refresh } = await useLazyFetch<PostsListResponse>('/api/collections/posts', {
+const {
+  data: fetchResult,
+  status,
+  error,
+  refresh,
+} = await useLazyFetch<PostsListResponse>('/api/collections/posts', {
   key: 'posts-list-data',
   server: true,
 });
 
 const transformPosts = (items: PostWithUser[]) => {
-  return items.map(item => ({
+  return items.map((item) => ({
     ...item,
-    cleanContent: cleanMarkdown(item.content) // 💡 预先清洗
+    cleanContent: cleanMarkdown(item.content), // 💡 预先清洗
   }));
 };
 
 // 监听 SSR 结果并同步到分页 Hook
-watch(fetchResult, (res) => {
-  if (res?.data && res.data.page === 1) {
-    // 💡 传入 transformPosts
-    resetPagination(res.data.posts as PostWithUser[], res.data.totalItems, transformPosts);
-  }
-}, { immediate: true });
+watch(
+  fetchResult,
+  (res) => {
+    if (res?.data && res.data.page === 1) {
+      // 💡 传入 transformPosts
+      resetPagination(res.data.posts as PostWithUser[], res.data.totalItems, transformPosts);
+    }
+  },
+  { immediate: true }
+);
 
 // --- 7. 计算属性 ---
 const canViewDrafts = computed(() => loggedIn.value && user.value?.verified);
@@ -164,7 +183,9 @@ const refreshCounter = ref(0);
 
 // 优化后的 displayItems：将内容清洗逻辑也包含在内
 const displayItems = computed(() => {
-  const filtered = canViewDrafts.value ? allPosts.value : allPosts.value.filter(p => p.published);
+  const filtered = canViewDrafts.value
+    ? allPosts.value
+    : allPosts.value.filter((p) => p.published);
 
   return filtered
     .slice()
@@ -185,15 +206,50 @@ const displayItems = computed(() => {
 });
 
 const visibleTotalItems = computed(() =>
-  canViewDrafts.value ? totalItems.value : allPosts.value.filter(p => p.published).length
+  canViewDrafts.value ? totalItems.value : allPosts.value.filter((p) => p.published).length
 );
+
+const toast = useToast();
+const isDeleteModalOpen = ref(false);
+const isDeleting = ref(false);
+const pendingDeleteItem = ref<any>(null);
+
+const handleRequestDelete = (item: any) => {
+  pendingDeleteItem.value = item;
+  isDeleteModalOpen.value = true;
+};
+
+const confirmDelete = async () => {
+  if (!pendingDeleteItem.value) return;
+  isDeleting.value = true;
+  try {
+    await $fetch(`/api/collections/post/${pendingDeleteItem.value.id}`, {
+      method: 'DELETE',
+    });
+    isDeleteModalOpen.value = false;
+    toast.add({ title: '删除成功', icon: 'i-hugeicons:checkmark-circle-03', color: 'success' });
+    // 注意：这里的列表刷新由于有 Realtime 监听，会自动同步数组，无需手动 splice
+  } catch (err: any) {
+    toast.add({
+      title: '删除失败',
+      description: err.data?.message,
+      icon: 'i-hugeicons:alert-02',
+      color: 'error',
+    });
+  } finally {
+    isDeleting.value = false;
+    setTimeout(() => {
+      pendingDeleteItem.value = null;
+    }, 200);
+  }
+};
 
 // --- 8. 实时流逻辑 ---
 onMounted(() => {
   listen(({ collection, action, record }) => {
     if (collection !== 'posts') return;
 
-    const idx = allPosts.value.findIndex(p => p.id === record.id);
+    const idx = allPosts.value.findIndex((p) => p.id === record.id);
 
     // 1. 优先处理删除：删除事件不判断 visible，只判断 ID 是否在列表里
     if (action === 'delete') {
@@ -211,7 +267,7 @@ onMounted(() => {
       if (isVisible && idx === -1) {
         allPosts.value.unshift({
           ...record,
-          cleanContent: cleanMarkdown(record.content || '')
+          cleanContent: cleanMarkdown(record.content || ''),
         });
         totalItems.value++;
       }
@@ -232,15 +288,15 @@ onMounted(() => {
             // 合并 expand 对象，确保新旧 expand 中的 user 信息都不会丢失
             expand: {
               ...oldExpand,
-              ...newExpand
+              ...newExpand,
             },
-            cleanContent: cleanMarkdown(record.content || '')
+            cleanContent: cleanMarkdown(record.content || ''),
           };
         }
       } else if (isVisible) {
         allPosts.value.unshift({
           ...record,
-          cleanContent: cleanMarkdown(record.content || '')
+          cleanContent: cleanMarkdown(record.content || ''),
         });
         totalItems.value++;
       }

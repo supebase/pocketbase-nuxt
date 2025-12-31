@@ -9,27 +9,36 @@
 import type { PostExpand } from '~/types/posts';
 // 从自动生成的类型文件中导入 PocketBase 相关的类型。
 import type {
-  Create,               // 用于创建记录时，确保数据结构正确的类型
-  Update,               // 用于更新记录时，允许字段为可选的类型
+  Create, // 用于创建记录时，确保数据结构正确的类型
+  Update, // 用于更新记录时，允许字段为可选的类型
   PostsResponse as PBPostsResponse, // 原始的、未展开的 `posts` 记录响应类型
-  TypedPocketBase,      // 经过类型加强的 PocketBase 实例类型
+  TypedPocketBase, // 经过类型加强的 PocketBase 实例类型
 } from '~/types/pocketbase-types';
 
 /**
- * 获取文章列表（分页）。
+ * 获取文章列表（支持搜索和分页）。
  * @param pb 由 API 路由层传入的、与当前请求上下文绑定的 PocketBase 实例。
  * @param page 要获取的页码，默认为 1。
  * @param perPage 每页的项目数量，默认为 10。
+ * @param query 可选的搜索关键词，用于过滤文章标题或内容。
  * @returns 返回一个分页后的文章列表。
  */
-export async function getPostsList(pb: TypedPocketBase, page: number = 1, perPage: number = 10) {
-  // 使用传入的 `pb` 实例执行查询。如果该实例包含了用户的认证信息，
-  // PocketBase 后端将自动根据数据库中设置的 API 规则进行权限校验。
-  return await pb.collection('posts').getList<PBPostsResponse<PostExpand>>(page, perPage, {
-    sort: '-created',   // 按创建时间降序排序（最新的在前）。
-    expand: 'user',   // **关键**: 告诉 PocketBase 在返回文章的同时，也完整地带上关联的 `user` 记录。
-    // 这避免了 N+1 查询问题，一次性获取了所有需要的数据。
-  });
+export async function getPostsList(
+  pb: TypedPocketBase,
+  page: number = 1,
+  perPage: number = 10,
+  query?: string
+) {
+  const options: any = {
+    sort: '-created',
+    expand: 'user',
+  };
+  // 如果传了 query，动态添加 filter
+  if (query) {
+    options.filter = pb.filter('content ~ {:q}', { q: query });
+  }
+
+  return await pb.collection('posts').getList<PBPostsResponse<PostExpand>>(page, perPage, options);
 }
 
 /**
@@ -76,21 +85,4 @@ export async function updatePost(pb: TypedPocketBase, postId: string, data: Upda
 export async function deletePost(pb: TypedPocketBase, postId: string) {
   // API 路由层应该在此函数被调用前，已完成对文章所有权的验证。
   return await pb.collection('posts').delete(postId);
-}
-
-/**
- * 搜索文章
- * @param pb 与当前请求上下文绑定的 PocketBase 实例。
- * @param query 搜索查询字符串。
- * @param page 要获取的页码，默认为 1。
- * @param perPage 每页的项目数量，默认为 10。
- * @returns 返回符合搜索条件的文章列表。
- */
-export async function searchPosts(pb: TypedPocketBase, query: string, page: number = 1, perPage: number = 10) {
-  // 使用 pb.filter 保证查询字符串的安全
-  return await pb.collection('posts').getList<PBPostsResponse<PostExpand>>(page, perPage, {
-    filter: pb.filter('content ~ {:q}', { q: query }),
-    sort: '-created',
-    expand: 'user', // 展开作者信息
-  });
 }

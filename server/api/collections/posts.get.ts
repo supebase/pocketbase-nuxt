@@ -27,6 +27,8 @@ export default defineEventHandler(async (event): Promise<PostsListResponse> => {
     // `perPage` 参数最小为 1，最大为 100，默认值为 10。
     // 限制 `perPage` 的最大值是一个很好的安全实践，可以防止客户端请求过多数据导致服务器压力过大。
     const perPageLimit = Math.min(100, Number(query.perPage) || 10);
+    // 获取关键词参数 'q'
+    const keyword = query.q as string | undefined;
 
     // 步骤 2: 获取本次请求专用的 PocketBase 实例。
     // 这个实例可能是匿名的（如果用户未登录），也可能包含了用户的认证信息。
@@ -38,7 +40,8 @@ export default defineEventHandler(async (event): Promise<PostsListResponse> => {
     const { items, totalItems, page, perPage } = await getPostsList(
       pb,
       requestedPage,
-      perPageLimit
+      perPageLimit,
+      keyword
     );
 
     // 步骤 4: 将服务层返回的数据包装成标准化的 API 响应格式。
@@ -46,9 +49,9 @@ export default defineEventHandler(async (event): Promise<PostsListResponse> => {
       message: '获取内容列表成功',
       data: {
         posts: items as any, // 使用 `as any` 以简化类型传递
-        totalItems,          // 总项目数
-        page,                // 当前页码
-        perPage,             // 每页项目数
+        totalItems, // 总项目数
+        page, // 当前页码
+        perPage, // 每页项目数
       },
     };
   } catch (error: any) {

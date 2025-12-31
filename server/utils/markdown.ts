@@ -14,6 +14,9 @@ export const processMarkdownImages = async (content: string): Promise<string> =>
 
   if (matches.length === 0) return content;
 
+  // 统一使用项目根目录下的 public 目录
+  // process.cwd() 在你的 PM2 配置下即为 /root
+  const baseDir = path.join(process.cwd(), 'public');
   // 使用 Map 存储 URL 到本地路径的映射，避免同一篇文章中重复的 URL 多次下载
   const urlMap = new Map<string, string>();
 
@@ -31,9 +34,11 @@ export const processMarkdownImages = async (content: string): Promise<string> =>
         const extension = imageUrl.split('.').pop()?.split(/[?#]/)[0] || 'png';
         const fileName = `${fileHash}.${extension}`;
 
-        const uploadDir = path.join(process.cwd(), 'public', 'uploads');
+        const uploadDir = path.join(baseDir, 'uploads');
         const filePath = path.join(uploadDir, fileName);
-        const publicUrl = `/uploads/${fileName}`;
+
+        // 统一返回接口路径
+        const publicUrl = `/api/images/uploads/${fileName}`;
 
         if (!fs.existsSync(uploadDir)) {
           fs.mkdirSync(uploadDir, { recursive: true });
@@ -43,7 +48,7 @@ export const processMarkdownImages = async (content: string): Promise<string> =>
         if (!fs.existsSync(filePath)) {
           const buffer = await $fetch<ArrayBuffer>(imageUrl, {
             responseType: 'arrayBuffer',
-            timeout: 5000,
+            timeout: 8000,
             headers: {
               'User-Agent':
                 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
