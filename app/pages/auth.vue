@@ -1,5 +1,6 @@
 <template>
-  <UCard variant="subtle" class="mx-auto max-w-md select-none">
+  <UCard variant="subtle"
+    class="mx-auto max-w-md select-none bg-white/60 dark:bg-neutral-900/60 backdrop-blur">
     <UTabs v-model="activeTab" :items="items" :content="false"
       :ui="{ trigger: 'grow cursor-pointer' }" variant="link" size="lg" color="primary"
       class="w-full gap-4" />

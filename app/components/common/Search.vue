@@ -53,8 +53,8 @@
         </template>
 
         <template #close>
-            <UButton color="neutral" variant="link" icon="i-hugeicons:cancel-01" class="-mr-1"
-                @click="$emit('close')" />
+            <UButton color="neutral" variant="link" icon="i-hugeicons:cancel-01"
+                class="-mr-1 cursor-pointer" @click="$emit('close')" />
         </template>
     </UCommandPalette>
 </template>

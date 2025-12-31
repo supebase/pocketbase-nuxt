@@ -4,12 +4,12 @@
     (showPreview && isDesktop) ? 'lg:w-[95vw] lg:-ml-[calc((95vw-100%)/2)] lg:gap-6' : 'w-full gap-0'
   ]">
     <div
-      class="editor-panel relative bg-neutral-50 dark:bg-neutral-950/50 border border-neutral-200/90 dark:border-neutral-800/70 rounded-lg p-4 shrink-0 overflow-hidden"
+      class="editor-panel relative bg-white/60 dark:bg-neutral-900/60 backdrop-blur border border-neutral-200/90 dark:border-neutral-800/70 rounded-lg p-4 shrink-0 overflow-hidden"
       :style="{ flexBasis: (showPreview && isDesktop) ? 'calc(50% - 12px)' : '100%', width: (showPreview && isDesktop) ? 'calc(50% - 12px)' : '100%' }">
 
       <div v-if="isLoading"
-        class="z-10 absolute inset-0 flex items-center justify-center bg-neutral-100/50 dark:bg-neutral-900/50 backdrop-blur-sm rounded-lg">
-        <UIcon name="i-hugeicons:loading-02" class="animate-spin text-2xl text-primary" />
+        class="z-10 absolute inset-0 flex items-center justify-center bg-white/80 dark:bg-neutral-900/80 backdrop-blur rounded-lg">
+        <UIcon name="i-hugeicons:loading-02" class="animate-spin size-6.5 text-primary" />
       </div>
 
       <form @submit.prevent="handleSubmit" class="space-y-6">
@@ -67,7 +67,7 @@
     <Transition name="side-slide">
       <div v-if="showPreview && isDesktop" ref="previewContainer"
         @mouseenter="activeElement = 'preview'" @scroll="onPreviewScroll"
-        class="lg:w-1/2 w-full bg-neutral-50 dark:bg-neutral-950/50 border border-neutral-200/90 dark:border-neutral-800/70 rounded-lg p-4 overflow-y-auto max-h-[85vh] sticky top-4 scroll-auto">
+        class="lg:w-1/2 w-full bg-white/60 dark:bg-neutral-900/60 backdrop-blur border border-neutral-200/90 dark:border-neutral-800/70 rounded-lg p-4 overflow-y-auto max-h-[85vh] sticky top-4 scroll-auto">
         <Transition name="fade-content" appear>
           <div v-if="showPreviewContent" class="prose dark:prose-invert max-w-none">
             <MDC :value="debouncedContent || '*等待输入内容 ...*'" />

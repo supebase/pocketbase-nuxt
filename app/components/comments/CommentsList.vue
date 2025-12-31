@@ -31,7 +31,7 @@
             <div class="flex items-center justify-center gap-5">
               <UIcon v-if="item.expand?.user?.id === user?.id" name="i-hugeicons:delete-01"
                 @click="openDeleteModal(item)"
-                class="size-5 text-dimmed cursor-pointer hover:text-primary transition-colors" />
+                class="size-5 text-dimmed cursor-pointer hover:text-error transition-colors" />
               <CommonLikeButton :key="item.id" :comment-id="item.id"
                 :initial-likes="item.likes || 0" :is-liked="item.isLiked || false"
                 @like-change="(liked, likes) => handleLikeChange(liked, likes, item.id, false)" />
