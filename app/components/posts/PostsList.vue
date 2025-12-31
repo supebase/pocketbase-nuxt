@@ -155,6 +155,7 @@ const {
 } = await useLazyFetch<PostsListResponse>('/api/collections/posts', {
   key: 'posts-list-data',
   server: true,
+  watch: [loggedIn],
 });
 
 const transformPosts = (items: PostWithUser[]) => {

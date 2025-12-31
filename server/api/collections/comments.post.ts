@@ -9,8 +9,6 @@
 import { createComment } from '../../services/comments.service';
 // 导入统一的 PocketBase 错误处理器。
 import { handlePocketBaseError } from '../../utils/errorHandler';
-// 导入用于获取当前请求唯一的 PocketBase 实例的函数。
-import { getPocketBaseInstance } from '../../utils/pocketbase';
 // 导入用于清理 HTML 的库，这是防止 XSS 攻击的关键。
 import sanitizeHtml from 'sanitize-html';
 // 导入相关的业务类型定义。
@@ -25,6 +23,7 @@ export default defineEventHandler(async (event) => {
   // 必须确保请求来自一个已登录的用户，因为我们需要将评论与用户关联。
   // 新增: 从事件上下文中获取用户信息
   // 认证逻辑已由中间件统一处理，此处可安全地使用非空断言 `!`。
+  const pb = event.context.pb;
   const user = event.context.user!;
 
   // 步骤 2: 读取并解析请求体。
@@ -67,11 +66,8 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  // 步骤 6: 获取 PocketBase 实例。
-  const pb = getPocketBaseInstance(event);
-
   try {
-    // 步骤 7: 构造符合数据库 `comments` 集合结构的 payload。
+    // 步骤 6: 构造符合数据库 `comments` 集合结构的 payload。
     // 这是即将要插入数据库的最终数据。
     const createData: Create<'comments'> = {
       comment: cleanComment,    // 使用经过安全清理的内容
@@ -79,12 +75,12 @@ export default defineEventHandler(async (event) => {
       user: user.id,            // **安全关键**：强制使用从服务端 Session 中获取的用户 ID，而不是客户端提交的任何 ID。
     };
 
-    // 步骤 8: 调用服务层函数来执行数据库创建操作。
+    // 步骤 7: 调用服务层函数来执行数据库创建操作。
     // `createComment` 内部会使用传入的 `pb` 实例，这意味着操作将以当前登录用户的身份执行。
     // 服务层通常还会处理 `expand` 等数据关联查询的逻辑。
     const comment = await createComment(pb, createData);
 
-    // 步骤 9: 如果创建成功，返回一个标准化的成功响应，并将新创建的评论数据包含其中。
+    // 步骤 8: 如果创建成功，返回一个标准化的成功响应，并将新创建的评论数据包含其中。
     return {
       message: '发表评论成功',
       data: {

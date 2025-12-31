@@ -29,14 +29,29 @@ export async function getPostsList(
   perPage: number = 10,
   query?: string
 ) {
+  // 1. 基础权限过滤：所有人可见已发布的
+  // 或者 (未发布 且 作者是自己)
+  let filterString = '(published = true';
+
+  const currentUser = pb.authStore.record;
+  if (currentUser) {
+    // 如果用户已登录，增加“可见自己草稿”的逻辑
+    filterString += ` || (published = false && user = "${currentUser.id}")`;
+  }
+  filterString += ')';
+
+  // 2. 关键词搜索逻辑
+  if (query) {
+    // 使用 pb.filter 防止注入，并将搜索逻辑与权限逻辑用 && 连接
+    const searchQuery = pb.filter('content ~ {:q}', { q: query });
+    filterString = `(${filterString} && ${searchQuery})`;
+  }
+
   const options: any = {
     sort: '-created',
     expand: 'user',
+    filter: filterString,
   };
-  // 如果传了 query，动态添加 filter
-  if (query) {
-    options.filter = pb.filter('content ~ {:q}', { q: query });
-  }
 
   return await pb.collection('posts').getList<PBPostsResponse<PostExpand>>(page, perPage, options);
 }
@@ -48,9 +63,27 @@ export async function getPostsList(
  * @returns 返回找到的文章记录。
  */
 export async function getPostById(pb: TypedPocketBase, postId: string) {
-  return await pb.collection('posts').getOne<PBPostsResponse<PostExpand>>(postId, {
-    expand: 'user', // 同样，展开 `user` 信息以获取文章作者的完整资料。
-  });
+  const currentUser = pb.authStore.record;
+
+  // 构建安全过滤规则
+  let filter = `id = "${postId}" && (published = true`;
+  if (currentUser) {
+    filter += ` || user = "${currentUser.id}"`;
+  }
+  filter += ')';
+
+  try {
+    // 💡 使用 getFirstListItem 配合 filter，可以在数据库层面直接完成安全校验
+    return await pb.collection('posts').getFirstListItem<PBPostsResponse<PostExpand>>(filter, {
+      expand: 'user',
+    });
+  } catch (error: any) {
+    // 如果找不到满足条件的记录（可能是 ID 不存在，也可能是权限不足），PocketBase 会抛出 404
+    throw createError({
+      statusCode: 404,
+      message: '文章不存在或您没有权限查看',
+    });
+  }
 }
 
 /**
@@ -73,7 +106,7 @@ export async function createPost(pb: TypedPocketBase, data: Create<'posts'>) {
  * @returns 返回更新后的文章记录。
  */
 export async function updatePost(pb: TypedPocketBase, postId: string, data: Update<'posts'>) {
-  // API 路由层应该在此函数被调用前，已完成对文章所有权的验证。
+  await ensureOwnership(pb, postId);
   return await pb.collection('posts').update<PBPostsResponse>(postId, data);
 }
 
@@ -83,6 +116,19 @@ export async function updatePost(pb: TypedPocketBase, postId: string, data: Upda
  * @param postId 要删除的文章的 ID。
  */
 export async function deletePost(pb: TypedPocketBase, postId: string) {
-  // API 路由层应该在此函数被调用前，已完成对文章所有权的验证。
+  await ensureOwnership(pb, postId);
   return await pb.collection('posts').delete(postId);
+}
+
+async function ensureOwnership(pb: TypedPocketBase, postId: string) {
+  const post = await pb.collection('posts').getOne(postId);
+  const currentUser = pb.authStore.record;
+
+  if (!currentUser || post.user !== currentUser.id) {
+    throw createError({
+      statusCode: 403,
+      message: '您没有权限操作此内容',
+    });
+  }
+  return post;
 }

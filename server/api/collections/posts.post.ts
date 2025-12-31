@@ -10,8 +10,6 @@ import { createPost } from '../../services/posts.service';
 import { handlePocketBaseError } from '../../utils/errorHandler';
 // 导入用于抓取链接预览的工具函数。
 import { getLinkPreview } from '~~/server/utils/unfurl';
-// 导入用于获取当前请求唯一的 PocketBase 实例的函数。
-import { getPocketBaseInstance } from '../../utils/pocketbase';
 // 导入用于处理 Markdown 中的图片的工具函数。
 import { processMarkdownImages } from '~~/server/utils/markdown';
 // 导入用于清理 HTML 的库，这是实现富文本安全的关键。
@@ -28,7 +26,8 @@ export default defineEventHandler(async (event): Promise<SinglePostResponse> => 
   // 新增: 从事件上下文中获取用户信息
   // 认证逻辑已由 /server/middleware/auth.ts 中间件统一处理。
   // 中间件确保了 user 对象在此处必然可用，因此使用非空断言 `!` 是安全的。
-  const user = event.context.user!;
+  const pb = event.context.pb;
+  const user = event.context.user;
 
   // 步骤 2: 读取请求体。
   const body = await readBody<CreatePostRequest>(event);
@@ -90,11 +89,8 @@ export default defineEventHandler(async (event): Promise<SinglePostResponse> => 
     });
   }
 
-  // 步骤 7: 获取 PocketBase 实例。
-  const pb = getPocketBaseInstance(event);
-
   try {
-    // 步骤 8: 构造符合数据库 `posts` 集合结构的 payload。
+    // 步骤 7: 构造符合数据库 `posts` 集合结构的 payload。
     const createData: Create<'posts'> = {
       content: cleanContent,            // 使用经过安全清理的富文本内容
       user: user.id,                    // **安全关键**：强制使用服务端的 `user.id`
@@ -106,16 +102,16 @@ export default defineEventHandler(async (event): Promise<SinglePostResponse> => 
       link_data: linkDataString,        // 存入序列化后的链接预览数据
     };
 
-    // 步骤 9: 调用服务层函数来执行数据库创建操作。
+    // 步骤 8: 调用服务层函数来执行数据库创建操作。
     const post = await createPost(pb, createData);
 
-    // 步骤 10: 返回标准化的成功响应。
+    // 步骤 9: 返回标准化的成功响应。
     return {
       message: '内容发布成功',
       data: post as any,
     };
   } catch (error) {
-    // 步骤 11: 统一处理创建过程中可能发生的任何错误。
+    // 步骤 10: 统一处理创建过程中可能发生的任何错误。
     return handlePocketBaseError(error, '内容发布异常，请稍后再试');
   }
 });

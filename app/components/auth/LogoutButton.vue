@@ -22,7 +22,7 @@ async function handleLogout() {
     await fetchSession();
 
     // 3. 跳转
-    await navigateTo("/auth");
+    await navigateTo("/auth", { replace: true });
   } catch (err: any) {
     toast.add({
       title: "退出失败",

@@ -34,8 +34,8 @@ export async function getCommentsList(
 ) {
   // 构建 PocketBase 查询参数对象。
   const queryOptions: any = {
-    sort: '-created',       // 按创建时间降序排序
-    expand: 'user',          // 关联查询创建该评论的用户完整信息
+    sort: '-created', // 按创建时间降序排序
+    expand: 'user', // 关联查询创建该评论的用户完整信息
   };
 
   if (filter) {
@@ -49,33 +49,28 @@ export async function getCommentsList(
     .getList<PBCommentsResponse<CommentExpand>>(page, perPage, queryOptions);
 
   // 步骤 2: 如果查询结果不为空，则进一步获取这些评论的点赞信息。
-  if (result.items.length > 0) {
-    // 提取所有评论的 ID，用于批量查询。
-    const commentIds = result.items.map((comment) => comment.id);
+  const commentIds = result.items.map((comment) => comment.id);
+  const likesMap = await getCommentsLikesMap(pb, commentIds, userId);
 
-    // 💡 关键：调用点赞服务，将当前的 `pb` 实例和评论 ID 列表传递过去。
-    // `getCommentsLikesMap` 会返回一个以评论 ID 为键，点赞信息为值的映射 (Map)。
-    const likesMap = await getCommentsLikesMap(pb, commentIds, userId || '');
+  // 💡 使用一个新的变量承载处理后的结果，避免原地修改带来的类型冲突
+  const processedItems: CommentRecord[] = result.items.map((comment) => {
+    const likeInfo = likesMap[comment.id];
+    return {
+      ...comment,
+      likes: likeInfo?.likes || 0,
+      isLiked: userId ? !!likeInfo?.isLiked : false, // 使用 !! 强制转为 boolean
+      initialized: true,
+    } as CommentRecord;
+  });
 
-    // 步骤 3: 将原始的 PocketBase 评论数据 (`PBCommentsResponse`) 映射为前端需要的业务数据 (`CommentRecord`)。
-    // 这里通过 `@ts-ignore` 忽略了一个类型警告，因为我们正在原地修改 `result.items` 的类型。
-    // @ts-ignore
-    result.items = result.items.map((comment) => {
-      // 从点赞映射中查找当前评论的点赞数据。
-      const likeInfo = likesMap[comment.id];
-      // 构建并返回整合后的评论对象。
-      return {
-        ...comment, // 展开原始评论的所有字段
-        likes: likeInfo?.likes || 0, // 附加总点赞数，默认为 0
-        // 如果传入了用户 ID，则附加该用户是否点赞的状态，否则为 false。
-        isLiked: userId ? likeInfo?.isLiked || false : false,
-        initialized: true, // 一个标记，表示这条记录的数据已经过服务端初始化整合
-      } as CommentRecord;
-    });
-  }
-
-  // 返回包含了完整信息的分页结果。
-  return result;
+  // 返回一个新的对象，保持原始的分页元数据
+  return {
+    items: processedItems,
+    totalItems: result.totalItems,
+    page: result.page,
+    perPage: result.perPage,
+    totalPages: result.totalPages,
+  };
 }
 
 /**
@@ -92,7 +87,7 @@ export async function getCommentById(pb: TypedPocketBase, commentId: string) {
 
 /**
  * 创建一条新评论。
- * @param pb PocketBase 实例。这个实例应该已经通过 `handleAuthSuccess` 或 `getPocketBaseInstance(event)`
+ * @param pb PocketBase 实例。这个实例应该已经通过 `handleAuthSuccess` 或 `getPocketBase(event)`
  *           加载了用户的认证信息。
  * @param data 符合 `Create<'comments'>` 类型的新评论数据。
  * @returns 返回创建成功后的评论记录，并关联了创建者的用户信息。
@@ -112,7 +107,17 @@ export async function createComment(pb: TypedPocketBase, data: Create<'comments'
  * @returns Promise<boolean> 删除成功时 PocketBase SDK 返回 true。
  */
 export async function deleteComment(pb: TypedPocketBase, commentId: string) {
-  // 💡 PocketBase 会在后端根据集合的 API 规则检查当前登录用户是否有权限删除这条评论。
-  // 如果没有权限，SDK 会抛出一个 403 Forbidden 错误。
+  // 1. 获取评论详情
+  const comment = await pb.collection('comments').getOne(commentId);
+
+  // 2. 业务级权限检查：如果不是作者本人，且不是管理员（如果需要的话）
+  const currentUser = pb.authStore.record;
+  if (!currentUser || comment.user !== currentUser.id) {
+    throw createError({
+      statusCode: 403,
+      message: '您没有权限删除此评论',
+    });
+  }
+
   return await pb.collection('comments').delete(commentId);
 }

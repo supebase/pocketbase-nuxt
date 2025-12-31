@@ -5,13 +5,11 @@
  */
 
 // 导入核心的文章服务（更新和获取）。
-import { updatePost, getPostById } from '../../../services/posts.service';
+import { updatePost } from '../../../services/posts.service';
 // 导入统一的 PocketBase 错误处理器。
 import { handlePocketBaseError } from '../../../utils/errorHandler';
 // 导入用于抓取链接预览的工具函数。
 import { getLinkPreview } from '~~/server/utils/unfurl';
-// 导入用于获取当前请求唯一的 PocketBase 实例的函数。
-import { getPocketBaseInstance } from '../../../utils/pocketbase';
 // 导入用于处理 Markdown 中的图片的工具函数。
 import { processMarkdownImages } from '~~/server/utils/markdown';
 // 导入用于清理 HTML 的库。
@@ -24,6 +22,7 @@ export default defineEventHandler(async (event): Promise<SinglePostResponse> => 
   // 步骤 1: 强制进行身份验证。
   // 新增: 从事件上下文中获取用户信息
   // 认证逻辑已由中间件统一处理，此处可安全地使用非空断言 `!`。
+  const pb = event.context.pb;
   const user = event.context.user!;
 
   // 步骤 2: 获取并验证路由参数。
@@ -72,36 +71,24 @@ export default defineEventHandler(async (event): Promise<SinglePostResponse> => 
     }
   }
 
-  // 步骤 4: 获取 PocketBase 实例。
-  const pb = getPocketBaseInstance(event);
-
   try {
-    // 步骤 5: **核心安全校验** - 验证文章所有权。
+    // 步骤 4: **核心安全校验** - 验证文章所有权。
     // 在更新之前，必须先查询一次，确保该文章属于当前操作的用户。
-    const existingPost = await getPostById(pb, postId);
+    const existingPost = await pb.collection('posts').getOne(postId);
 
-    if ((existingPost as any).user !== user.id) {
-      // 如果文章的创建者 ID 与当前登录用户的 ID 不匹配，立即拒绝请求。
-      throw createError({
-        statusCode: 403,
-        message: '您没有权限修改此内容',
-        statusMessage: 'Forbidden',
-      });
-    }
-
-    // 步骤 5.1: 智能处理链接预览。
+    // 步骤 4.1: 智能处理链接预览。
     if (body.link !== undefined) {
       if (body.link === '') {
         // 如果传入空字符串，表示用户想删除链接，将预览数据设为 null。
         linkDataString = '';
-      } else if (body.link !== (existingPost as any).link) {
+      } else if (body.link !== existingPost.link) {
         // 仅当新链接与旧链接不同时，才重新获取预览数据。
         const preview = await getLinkPreview(body.link);
         linkDataString = preview ? JSON.stringify(preview) : '';
       }
     }
 
-    // 步骤 6: 构造一个只包含已提供字段的更新载荷 (Payload)。
+    // 步骤 5: 构造一个只包含已提供字段的更新载荷 (Payload)。
     // 这种模式非常适合部分更新（PATCH-like behavior）。
     const updateData: Update<'posts'> = {
       ...(cleanContent !== undefined && { content: cleanContent }),
@@ -113,7 +100,7 @@ export default defineEventHandler(async (event): Promise<SinglePostResponse> => 
       ...(linkDataString !== undefined && { link_data: linkDataString }),
     };
 
-    // 步骤 7: 调用服务层执行更新操作。
+    // 步骤 6: 调用服务层执行更新操作。
     const post = await updatePost(pb, postId, updateData);
 
     return {

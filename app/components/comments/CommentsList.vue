@@ -32,9 +32,9 @@
               <UIcon v-if="item.expand?.user?.id === user?.id" name="i-hugeicons:delete-01"
                 @click="openDeleteModal(item)"
                 class="size-5 text-dimmed cursor-pointer hover:text-error transition-colors" />
-              <CommonLikeButton :key="item.id" :comment-id="item.id"
-                :initial-likes="item.likes || 0" :is-liked="item.isLiked || false"
-                @like-change="(liked, likes) => handleLikeChange(liked, likes, item.id, false)" />
+              <CommonLikeButton :key="item.id" :comment-id="item.id" :initial-likes="item.likes"
+                :is-liked="item.isLiked"
+                @like-change="(liked, lks) => handleLikeChange(liked, lks, item.id, false)" />
             </div>
           </div>
         </template>
@@ -66,134 +66,35 @@
 
 <script setup lang="ts">
 import type { CommentRecord } from '~/types/comments';
-import type { CommentLikesResponse } from '~/types/likes';
 
 const props = defineProps<{ postId: string; allowComment: boolean }>();
 const emit = defineEmits(['loading-change', 'update-commenters']);
 
-const { user } = useUserSession();
-const likeTimers = new Map<string, any>();
-
+const { user, loggedIn } = useUserSession();
 const {
-  allItems: comments,
+  comments,
   totalItems,
+  loading,
   isLoadingMore,
   hasMore,
-  loadMore,
-  resetPagination,
-} = usePagination<CommentRecord>();
+  fetchComments,
+  handleLoadMore,
+  syncSingleComment,
+  handleLikeChange,
+  getUniqueUsers,
+} = useComments(props.postId);
 
 const { listen } = usePocketRealtime(['comments', 'likes']);
-const loading = ref(false);
 const isModalOpen = ref(false);
 const isDeleting = ref(false);
 const selectedComment = ref<CommentRecord | null>(null);
-const lastLoadedPostId = ref<string | null>(null);
 
-// 1. 去重逻辑
-const getUniqueUsers = (list: CommentRecord[]) => {
-  const usersMap = new Map();
-  list.forEach((c) => {
-    // 关键：在 SSE 模式下，record.expand.user 必须存在
-    const u = c.expand?.user;
-    if (u) usersMap.set(u.id, { id: u.id, name: u.name, avatar: u.avatar, location: u.location });
-  });
-  return Array.from(usersMap.values());
-};
-
-// 2. 核心同步逻辑 (不再手动 emit)
-const syncSingleComment = (record: CommentRecord, action: 'create' | 'update' | 'delete') => {
-  const index = comments.value.findIndex((c) => c.id === record.id);
-  if (action === 'delete' && index !== -1) {
-    comments.value.splice(index, 1);
-    totalItems.value = Math.max(0, totalItems.value - 1);
-  } else if (action === 'create' && index === -1) {
-    comments.value.unshift({ ...record, relativeTime: useRelativeTime(record.created) });
-    totalItems.value++;
-  } else if (action === 'update' && index !== -1) {
-    comments.value[index] = {
-      ...comments.value[index],
-      ...record,
-      expand: { ...(comments.value[index]?.expand || {}), ...(record.expand || {}) },
-    };
-  }
-};
-
-// 3. 关键：监听数组变化并向上同步
-watch(
-  comments,
-  (newVal) => {
-    if (newVal) {
-      const users = getUniqueUsers(newVal);
-      emit('update-commenters', users);
-    }
-  },
-  { deep: true, immediate: true }
-);
-
-// 4. API 请求
-const fetchCommentsApi = async (page: number) => {
-  const res = await $fetch<any>(`/api/collections/comments`, {
-    query: { filter: `post="${props.postId}"`, sort: '-created', page, perPage: 10 },
-  });
-  const items = (res.data?.comments || []).map((c: any) => ({
-    ...c,
-    relativeTime: useRelativeTime(c.created),
-  }));
-  return { items, total: res.data?.totalItems || 0 };
-};
-
-const fetchComments = async (isSilent = false) => {
-  if (!isSilent && lastLoadedPostId.value === props.postId && comments.value.length > 0) return;
-  if (!isSilent) loading.value = true;
-  try {
-    const result = await fetchCommentsApi(1);
-    resetPagination(result.items, result.total);
-    lastLoadedPostId.value = props.postId;
-  } finally {
-    loading.value = false;
-  }
-};
-
-const handleLoadMore = () => loadMore(fetchCommentsApi);
-
-// 5. 点赞同步
-const handleLikeChange = (
-  liked: boolean,
-  likes: number,
-  commentId: string,
-  isFromRealtime = false
-) => {
-  const target = comments.value.find((c) => c.id === commentId);
-  if (target) {
-    target.likes = likes;
-    if (!isFromRealtime) target.isLiked = liked;
-  }
-};
-
-const triggerLikeSync = (commentId: string) => {
-  if (likeTimers.has(commentId)) clearTimeout(likeTimers.get(commentId));
-  likeTimers.set(
-    commentId,
-    setTimeout(async () => {
-      try {
-        const res = await $fetch<CommentLikesResponse>(`/api/collections/likes`, {
-          query: { commentIds: JSON.stringify([commentId]) },
-        });
-        const info = res.data.likesMap[commentId];
-        if (info) handleLikeChange(false, info.likes, commentId, true);
-      } finally {
-        likeTimers.delete(commentId);
-      }
-    }, 400)
-  );
-};
-
-// 6. 删除逻辑
+// 1. 删除处理
 const openDeleteModal = (item: CommentRecord) => {
   selectedComment.value = item;
   isModalOpen.value = true;
 };
+
 const confirmDelete = async () => {
   if (!selectedComment.value) return;
   isDeleting.value = true;
@@ -205,41 +106,57 @@ const confirmDelete = async () => {
   }
 };
 
-// 匹配 @用户名（假设用户名不含空格）
+// 2. 文本解析 (@提到)
 const MENTION_REGEX = /(@\S+)/g;
-
 const parsedContent = (text: string) => {
   if (!text) return [];
-
-  // 将字符串按 @用户名 切分
-  return text.split(MENTION_REGEX).map((part) => {
-    return {
-      text: part,
-      isMention: MENTION_REGEX.test(part)
-    };
-  });
+  return text.split(MENTION_REGEX).map((part) => ({
+    text: part,
+    isMention: MENTION_REGEX.test(part),
+  }));
 };
 
+// 3. 实时监听与初始化
 onMounted(async () => {
   await fetchComments();
+
   listen(({ collection, action, record }) => {
+    // 评论逻辑
     if (collection === 'comments' && record.post === props.postId) {
       syncSingleComment(record as CommentRecord, action as any);
     }
-    if (collection === 'likes' && comments.value.some((c) => c.id === record.comment)) {
-      triggerLikeSync(record.comment);
+    // 点赞逻辑
+    if (collection === 'likes') {
+      const targetCommentId = record.comment;
+      const target = comments.value.find((c) => c.id === targetCommentId);
+
+      if (target) {
+        // 1. 防御性处理：确保数字有效
+        if (typeof target.likes !== 'number') target.likes = 0;
+
+        const newLikes = action === 'create' ? target.likes + 1 : Math.max(0, target.likes - 1);
+
+        // 2. 核心修正点：使用 ?? false 确保传入的是 boolean 而非 undefined
+        handleLikeChange(
+          target.isLiked ?? false, // 如果是 undefined，则默认为 false
+          newLikes,
+          targetCommentId,
+          true
+        );
+      }
     }
   });
 });
 
-onUnmounted(() => likeTimers.forEach((t) => clearTimeout(t)));
+// 4. 向上层同步
+watch(comments, () => emit('update-commenters', getUniqueUsers()), { deep: true });
+watch(loggedIn, (val) => val && fetchComments(true));
+watch([loading, isLoadingMore], ([l1, l2]) => emit('loading-change', l1 || l2));
 
+// 暴露给外部 (如 CommentsForm)
 defineExpose({
   handleCommentCreated: (c: any) => syncSingleComment(c, 'create'),
-  fetchComments,
-  getUniqueUsers,
   comments,
+  getUniqueUsers,
 });
-
-watch([loading, isLoadingMore], ([l1, l2]) => emit('loading-change', l1 || l2));
 </script>

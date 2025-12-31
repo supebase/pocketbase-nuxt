@@ -1,53 +1,84 @@
-/**
- * @file 服务端 PocketBase 工具函数
- * @description 该文件提供用于在服务端环境中创建和管理 PocketBase 实例的核心功能，
- *              并包含一些与用户身份和数据处理相关的辅助函数。
- */
-
+// server/utils/pocketbase.ts
 import PocketBase from 'pocketbase';
-// 导入自动生成的 PocketBase 类型定义，以增强与数据库集合交互时的类型安全性。
 import type { TypedPocketBase } from '~/types/pocketbase-types';
-// 导入 H3Event 类型，用于在 Nitro 服务端路由中获取请求上下文。
 import type { H3Event } from 'h3';
 import { EventSource } from 'eventsource';
 
 /**
- * 获取一个经过身份验证和配置的 PocketBase 服务端实例。
- * 这个函数是与 PocketBase 后端进行所有服务端交互的入口点。
- *
- * @param event 可选的 H3Event 对象。如果提供此参数，函数将自动从传入请求的 Cookie 中
- *              加载用户的身份验证信息。这对于需要用户登录状态的 API 请求至关重要。
- * @returns 返回一个功能完整且类型安全的 PocketBase 实例 (TypedPocketBase)。
+ * 模块级全局变量，用于缓存管理员实例。
+ * 只要 Nitro 服务进程不重启，该实例就会保留在内存中，避免重复登录。
  */
-export function getPocketBaseInstance(event?: H3Event) {
-  // `useRuntimeConfig` 用于安全地访问在 `nuxt.config.ts` 中定义的环境变量。
+let systemPbInstance: TypedPocketBase | null = null;
+
+/**
+ * 内部私有函数：创建并配置 PocketBase 基础实例
+ */
+function createBaseInstance() {
   const config = useRuntimeConfig();
 
+  // 1. 处理 Node.js 环境下的 EventSource 补丁（用于 SSE/实时订阅支持）
   if (typeof global !== 'undefined' && !global.EventSource) {
     (global as any).EventSource = EventSource;
   }
 
-  // 创建一个新的 PocketBase 实例，并连接到配置中指定的后端服务 URL。
-  // 注意：这里使用的是服务端的内部地址 (config.pocketbaseBackend)，而不是面向公众的 URL，
-  // 这样做更安全、网络延迟也更低。
+  // 2. 初始化实例
   const pb = new PocketBase(config.pocketbaseBackend) as TypedPocketBase;
 
-  // 禁用请求的自动取消功能。在服务端环境中，我们通常需要确保请求能够完整执行，
-  // 而不是像在客户端那样因为页面导航等原因被自动取消。
+  // 3. 禁用自动取消，防止服务端请求因并发干扰而中断
   pb.autoCancellation(false);
 
-  // 如果 `event` 对象存在，说明这是一个真实的服务器请求上下文。
-  if (event) {
-    // 💡 从请求头中提取 'cookie' 字符串。这是实现会话和状态保持的关键步骤。
-    // 如果没有 cookie，则提供一个空字符串以避免错误。
-    const cookieHeader = getHeader(event, 'cookie') || '';
+  return pb;
+}
 
-    // 使用 PocketBase SDK 的内置功能，从 cookie 中加载认证状态。
-    // 'pb_auth' 是 PocketBase 默认用来存储认证令牌的 cookie 名称。
-    // 这行代码执行后，后续所有使用此 `pb` 实例发起的 API 请求都将自动携带用户的认证头信息。
+/**
+ * 获取用户级 PocketBase 实例
+ * 权限受 PocketBase 后端 API Rules 限制。
+ * @param event Nitro 请求事件，用于提取 Cookie 维持登录态
+ */
+export function getPocketBase(event?: H3Event) {
+  const pb = createBaseInstance();
+
+  if (event) {
+    const cookieHeader = getHeader(event, 'cookie') || '';
+    // 从 Cookie 中恢复 pb_auth 状态
     pb.authStore.loadFromCookie(cookieHeader, 'pb_auth');
   }
 
-  // 返回已配置好的 PocketBase 实例，可供上层 service 或 API handler 使用。
   return pb;
+}
+
+/**
+ * 获取系统管理员（超级用户）实例
+ * 权限最高，无视 API Rules。采用单例模式优化性能。
+ */
+export async function getSystemClient() {
+  // 1. 如果已有缓存实例且 Token 未过期，直接返回
+  if (systemPbInstance && systemPbInstance.authStore.isValid) {
+    return systemPbInstance;
+  }
+
+  // 2. 否则创建新实例并重新认证
+  const pb = createBaseInstance();
+  const config = useRuntimeConfig();
+
+  // 优先从 runtimeConfig 读取，兼容环境变量
+  const adminEmail = config.pbAdminEmail || process.env.NUXT_PB_ADMIN_EMAIL;
+  const adminPassword = config.pbAdminPassword || process.env.NUXT_PB_ADMIN_PASSWORD;
+
+  if (!adminEmail || !adminPassword) {
+    throw new Error('[PocketBase] 缺少管理员凭据配置');
+  }
+
+  try {
+    // 适配 PocketBase v0.22+ 的新超级用户集合名称
+    await pb.collection('_superusers').authWithPassword(adminEmail, adminPassword);
+
+    // 3. 存入单例缓存
+    systemPbInstance = pb;
+    console.log('[PocketBase] 系统管理员实例已初始化并缓存');
+    return systemPbInstance;
+  } catch (error) {
+    console.error('[PocketBase] 管理员登录失败:', error);
+    throw error;
+  }
 }

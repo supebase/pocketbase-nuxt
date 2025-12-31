@@ -7,8 +7,6 @@
 import { getPostById } from '../../../services/posts.service';
 // 导入统一的 PocketBase 错误处理器。
 import { handlePocketBaseError } from '../../../utils/errorHandler';
-// 导入用于获取当前请求唯一的 PocketBase 实例的函数。
-import { getPocketBaseInstance } from '../../../utils/pocketbase';
 // 导入前端期望的、经过包装的单篇文章响应类型。
 import type { SinglePostResponse } from '~/types/posts';
 
@@ -32,7 +30,7 @@ export default defineEventHandler(async (event): Promise<SinglePostResponse> => 
 
     // 步骤 3: 获取本次请求专用的 PocketBase 实例。
     // 实例可以是匿名的，也可以是认证过的，服务层可以根据此来决定数据访问权限。
-    const pb = getPocketBaseInstance(event);
+    const pb = event.context.pb;
 
     // 步骤 4: 调用服务层的 `getPostById` 函数来执行实际的数据库查询。
     // 传入 `pb` 实例和 `postId`，将具体的查询逻辑与 API 路由解耦。

@@ -8,8 +8,6 @@
 import { toggleLike } from '../../services/likes.service';
 // 导入统一的 PocketBase 错误处理器。
 import { handlePocketBaseError } from '../../utils/errorHandler';
-// 导入用于获取当前请求唯一的 PocketBase 实例的函数。
-import { getPocketBaseInstance } from '../../utils/pocketbase';
 // 导入与点赞相关的业务类型定义。
 import type { ToggleLikeRequest, ToggleLikeResponse } from '~/types/likes';
 
@@ -21,7 +19,8 @@ export default defineEventHandler(async (event): Promise<ToggleLikeResponse> => 
   // 点赞是一个与特定用户关联的操作，因此必须确保用户已登录。
   // 新增: 从事件上下文中获取用户信息
   // 认证逻辑已由中间件统一处理，此处可安全地使用非空断言 `!`。
-  const user = event.context.user!;
+  const pb = event.context.pb;
+  const user = event.context.user;
 
   // 步骤 2: 从请求体中读取并校验参数。
   const body = await readBody<ToggleLikeRequest>(event);
@@ -36,11 +35,8 @@ export default defineEventHandler(async (event): Promise<ToggleLikeResponse> => 
     });
   }
 
-  // 步骤 4: 获取 PocketBase 实例。
-  const pb = getPocketBaseInstance(event);
-
   try {
-    // 步骤 5: 调用服务层的 `toggleLike` 函数来执行核心业务逻辑。
+    // 步骤 4: 调用服务层的 `toggleLike` 函数来执行核心业务逻辑。
     // 这个函数会处理所有复杂性：
     //   a. 检查该用户是否已经为该评论点赞。
     //   b. 如果已点赞，则删除该点赞记录。
@@ -48,7 +44,7 @@ export default defineEventHandler(async (event): Promise<ToggleLikeResponse> => 
     //   d. 返回操作后的最新状态（是否点赞，以及最新的点赞总数）。
     const result = await toggleLike(pb, commentId, user.id);
 
-    // 步骤 6: 根据服务返回的结果，构建一个清晰、标准化的前端响应。
+    // 步骤 5: 根据服务返回的结果，构建一个清晰、标准化的前端响应。
     return {
       message: result.liked ? '点赞成功' : '已取消点赞', // 根据操作结果给出不同的提示信息
       data: {

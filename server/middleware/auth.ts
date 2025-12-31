@@ -8,7 +8,7 @@
  * 定义一个需要身份验证的路由和方法的列表。
  * 这使得认证逻辑与 API 路由处理程序本身分离，提高了代码的模块化和可维护性。
  */
-import { getPocketBaseInstance } from '../utils/pocketbase';
+import { getPocketBase } from '../utils/pocketbase';
 
 const protectedRoutes = [
   // 文章相关
@@ -30,21 +30,19 @@ export default defineEventHandler(async (event) => {
 
   // 1. 无论是否是受保护路由，先尝试初始化用户信息
   // 这样 event.context.user 就能在后续的 API 处理程序中使用了
-  const pb = getPocketBaseInstance(event);
+  const pb = getPocketBase(event);
+  event.context.pb = pb;
 
-  // 如果 pb.authStore 验证有效，则将用户信息注入上下文
-  if (pb.authStore.isValid) {
+  // 2. 身份解析
+  if (pb.authStore.isValid && pb.authStore.record) {
+    // 注入用户信息
     event.context.user = pb.authStore.record;
-    // 可选：将 pb 实例也存入 context，避免后续重复创建
-    event.context.pb = pb;
   }
 
-  // 2. 检查当前请求是否匹配受保护路由
+  // 3. 路由保护逻辑
   const isProtected = protectedRoutes.some((route) => {
-    if (route.path.endsWith('/')) {
-      return url.startsWith(route.path) && method === route.method;
-    }
-    return url === route.path && method === route.method;
+    const isMatch = route.path.endsWith('/') ? url.startsWith(route.path) : url === route.path;
+    return isMatch && method === route.method;
   });
 
   if (!isProtected) return;

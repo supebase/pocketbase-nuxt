@@ -29,7 +29,7 @@
         ]">
           <PostsToc :toc="toc" />
           <MDCRenderer v-if="ast" :key="postWithRelativeTime.updated" :body="ast.body"
-            :data="ast.data" @vue:mounted="handleMdcMounted"
+            :data="ast.data"
             class="prose prose-neutral prose-base dark:prose-invert prose-img:rounded-xl prose-img:ring-1 prose-img:ring-neutral-200 prose-img:dark:ring-neutral-800" />
         </div>
       </div>
@@ -54,9 +54,9 @@
             :is-list-loading="isListLoading" @comment-created="onCommentSuccess" class="mt-8" />
         </ClientOnly>
 
-        <CommentsList ref="commentListRef" :post-id="postWithRelativeTime.id"
-          :allow-comment="postWithRelativeTime.allow_comment"
-          @loading-change="(val) => (isListLoading = val)"
+        <CommentsList ref="commentListRef" :key="postWithRelativeTime?.id"
+          :post-id="postWithRelativeTime.id" :allow-comment="postWithRelativeTime.allow_comment"
+          :user-id="userId" @loading-change="(val) => (isListLoading = val)"
           @update-commenters="handleUpdateCommenters" />
       </div>
     </div>
@@ -69,32 +69,26 @@
 </template>
 
 <script setup lang="ts">
-import type { SinglePostResponse } from "~/types/posts";
-import { useIntersectionObserver } from "@vueuse/core";
-import { parseMarkdown } from "@nuxtjs/mdc/runtime";
+import type { SinglePostResponse } from '~/types/posts';
+import { useIntersectionObserver } from '@vueuse/core';
+import { parseMarkdown } from '@nuxtjs/mdc/runtime';
 
 // --- 1. 状态管理 ---
 const { updatedMarks, clearUpdateMark } = usePostUpdateTracker();
 const { loggedIn, user: currentUser } = useUserSession();
+const userId = computed(() => currentUser.value?.id);
 const { showHeaderBack } = useHeader();
 const route = useRoute();
 const { id } = route.params as { id: string };
 
 definePageMeta({
   validate: (route) => {
-    // 1. 将 params 断言为一个包含 id 的对象，解决 TS 报错
     const params = route.params as { id?: string };
-
-    // 2. 安全提取 id
     const targetId = params.id;
-
-    // 3. 验证逻辑
     if (!targetId) return false;
-
-    // 验证 PocketBase ID：15位字母数字
     return /^[a-z0-9]{15}$/i.test(targetId);
-  }
-})
+  },
+});
 
 const isListLoading = ref(false);
 const isUpdateRefresh = ref(false);
@@ -107,13 +101,15 @@ const { data, status, refresh, error } = await useLazyFetch<SinglePostResponse>(
   `/api/collections/post/${id}`,
   {
     key: `post-detail-${id}`,
-    server: true
+    server: true,
+    query: { userId },
+    watch: [() => id],
   }
 );
 
-// --- 3. 核心修复点：初始化 mdcReady ---
+// --- 3. 核心状态 ---
 const mdcReady = ref(false);
-const ast = ref<any>(null); // 存储解析后的 AST
+const ast = ref<any>(null);
 const toc = ref<any>(null);
 
 // --- 4. 计算属性 ---
@@ -128,16 +124,76 @@ const postWithRelativeTime = computed(() => {
 
 // --- 5. 逻辑处理 ---
 const handleUpdateCommenters = (uniqueUsers: any[]) => {
-  // 过滤掉当前登录用户，不提及自己
-  commenters.value = uniqueUsers.filter(u => u.id !== currentUser.value?.id);
+  commenters.value = uniqueUsers.filter((u) => u.id !== currentUser.value?.id);
 };
 
 const onCommentSuccess = (newComment: any) => {
   if (commentListRef.value) {
     commentListRef.value.handleCommentCreated(newComment);
   }
-  // 注意：不再需要 refreshNuxtData，实时流或乐观更新已覆盖
 };
+
+// 核心解析函数
+const parseContent = async (content: string) => {
+  if (!content) {
+    mdcReady.value = true;
+    return;
+  }
+
+  // 💡 逃生通道：3秒保底强制显示
+  const fallback = setTimeout(() => {
+    if (!mdcReady.value) {
+      console.warn('MDC Fallback triggered');
+      mdcReady.value = true;
+    }
+  }, 3000);
+
+  try {
+    const result = await parseMarkdown(content, {
+      toc: { depth: 4, searchDepth: 4 },
+    });
+    ast.value = result;
+    toc.value = result.toc;
+
+    if (import.meta.client) {
+      nextTick(() => {
+        setTimeout(() => {
+          mdcReady.value = true;
+          isUpdateRefresh.value = false;
+          clearTimeout(fallback); // 正常完成则清除保底
+        }, 100);
+      });
+    } else {
+      mdcReady.value = true;
+    }
+  } catch (e) {
+    console.error('MDC Parsing Error:', e);
+    mdcReady.value = true;
+    clearTimeout(fallback);
+  }
+};
+
+// --- 6. 核心监听逻辑 ---
+// 合并了之前的多个监听器，统一管理数据流
+watch(
+  [() => postWithRelativeTime.value?.content, status],
+  async ([newContent, newStatus]) => {
+    // 1. 开始加载新内容时（非刷新模式），重置状态
+    if (newStatus === 'pending' && !isUpdateRefresh.value) {
+      mdcReady.value = false;
+      ast.value = null;
+      return;
+    }
+
+    // 2. 数据到达时，触发解析
+    if ((newStatus === 'success' || newStatus === 'idle') && newContent) {
+      // 避免重复解析相同内容
+      if (ast.value && mdcReady.value && !isUpdateRefresh.value) return;
+      await parseContent(newContent);
+    }
+  },
+  { immediate: true }
+);
 
 watch(loggedIn, (isLogged) => {
   if (isLogged && commentListRef.value?.comments) {
@@ -145,56 +201,10 @@ watch(loggedIn, (isLogged) => {
   }
 });
 
-// 创建一个解析函数
-const parseContent = async (content: string) => {
-  if (!content) return;
-  try {
-    // 将 markdown 字符串解析为 AST
-    const result = await parseMarkdown(content, {
-      toc: {
-        depth: 4,
-        searchDepth: 4,
-      }
-    });
-    ast.value = result; // MDCRenderer 绑定的是 body
-    toc.value = result.toc;  // 提取目录结构
-  } catch (e) {
-    console.error('MDC Parsing Error:', e);
-  }
-};
-
-// 监听内容解析
-watch(() => postWithRelativeTime.value?.content, async (newContent) => {
-  if (!newContent) return;
-
-  // 关键：开始解析前，如果不是 SSR，可以把 mdcReady 设为 false 开启淡入效果
-  if (import.meta.client && !isUpdateRefresh.value) {
-    // mdcReady.value = false; // 如果你希望每次换内容都闪现一下动画，取消注释
-  }
-
-  await parseContent(newContent);
-
-  // 如果解析完后 AST 没变（例如内容一致），handleMdcMounted 可能不触发
-  // 这里做一个保底
-  if (import.meta.server) {
-    mdcReady.value = true;
-  }
-}, { immediate: true });
-
-const handleMdcMounted = () => {
-  // 使用 nextTick 确保渲染树已更新
-  nextTick(() => {
-    setTimeout(() => {
-      mdcReady.value = true;
-      isUpdateRefresh.value = false;
-    }, 100); // 稍微给一点点缓冲，防止闪烁
-  });
-};
-
-// --- 6. 生命周期与交互 ---
+// --- 7. 生命周期与交互 ---
 onMounted(() => {
-  // 确保客户端激活后，如果已有数据，一定要显示内容
-  if (postWithRelativeTime.value) {
+  // 水合保底：如果已有 AST 但没开启 UI，开启它
+  if (ast.value && !mdcReady.value) {
     mdcReady.value = true;
   }
 });
@@ -211,14 +221,14 @@ useIntersectionObserver(
       showHeaderBack.value = true;
     }
   },
-  { threshold: 0, rootMargin: "-20px 0px 0px 0px" }
+  { threshold: 0, rootMargin: '-20px 0px 0px 0px' }
 );
 
 onActivated(async () => {
   const currentId = id;
   if (updatedMarks.value[currentId]) {
     isUpdateRefresh.value = true;
-    mdcReady.value = false; // 标记加载态进行平滑同步
+    mdcReady.value = false;
     await refresh();
     if (commentListRef.value) {
       commentListRef.value.fetchComments(true);
@@ -227,32 +237,10 @@ onActivated(async () => {
   }
 });
 
-onBeforeRouteLeave(() => { showHeaderBack.value = false; });
-
-onUnmounted(() => {
+onBeforeRouteLeave(() => {
   showHeaderBack.value = false;
 });
-
-// --- 7. 侦听器 ---
-watch(() => data.value?.data?.updated, (newVal, oldVal) => {
-  if (oldVal && newVal !== oldVal) {
-    mdcReady.value = false;
-  }
-});
-
-// 修正 status 监听
-watch(status, (newStatus) => {
-  if (newStatus === 'pending') {
-    // 只有在非静默刷新（如路由跳转）时才彻底重置
-    if (!isUpdateRefresh.value) {
-      mdcReady.value = false;
-      ast.value = null; // 清空旧内容防止残留
-    }
-  }
-});
-
-watch(() => id, () => {
-  mdcReady.value = false;
-  commenters.value = [];
+onUnmounted(() => {
+  showHeaderBack.value = false;
 });
 </script>

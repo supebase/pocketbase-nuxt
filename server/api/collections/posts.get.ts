@@ -8,8 +8,6 @@
 import { getPostsList } from '../../services/posts.service';
 // 导入统一的 PocketBase 错误处理器。
 import { handlePocketBaseError } from '../../utils/errorHandler';
-// 导入用于获取当前请求唯一的 PocketBase 实例的函数。
-import { getPocketBaseInstance } from '../../utils/pocketbase';
 // 导入前端期望的、经过包装的响应类型。
 import type { PostsListResponse } from '~/types/posts';
 
@@ -33,7 +31,7 @@ export default defineEventHandler(async (event): Promise<PostsListResponse> => {
     // 步骤 2: 获取本次请求专用的 PocketBase 实例。
     // 这个实例可能是匿名的（如果用户未登录），也可能包含了用户的认证信息。
     // `getPostsList` 服务可以利用这一点来处理不同权限下的数据可见性（如果需要的话）。
-    const pb = getPocketBaseInstance(event);
+    const pb = event.context.pb;
 
     // 步骤 3: 调用服务层的 `getPostsList` 函数，传入 `pb` 实例和处理好的分页参数。
     // 所有实际的数据库查询逻辑都封装在服务层中，实现了关注点分离。

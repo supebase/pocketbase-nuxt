@@ -12,7 +12,7 @@ import { handlePocketBaseError } from '../../utils/errorHandler';
 // 导入认证成功后的处理器，用于设置 Nuxt Session 和 PocketBase Cookie。
 import { handleAuthSuccess } from '../../utils/authHelpers';
 // 导入用于获取当前请求唯一的 PocketBase 实例的函数。
-import { getPocketBaseInstance } from '../../utils/pocketbase';
+import { getPocketBase } from '../../utils/pocketbase';
 // 导入与认证相关的类型定义，增强代码的类型安全。
 import type { LoginRequest, AuthResponse } from '~/types/auth';
 
@@ -36,8 +36,8 @@ export default defineEventHandler(async (event): Promise<AuthResponse> => {
   }
 
   // 步骤 1: 为本次 HTTP 请求获取一个独立的、专用的 PocketBase 实例。
-  // 传入 `event` 对象，`getPocketBaseInstance` 内部可能会用它来处理某些与请求相关的逻辑。
-  const pb = getPocketBaseInstance(event);
+  // 传入 `event` 对象，`getPocketBase` 内部可能会用它来处理某些与请求相关的逻辑。
+  const pb = getPocketBase(event);
 
   try {
     // 步骤 2: 调用服务层的 `loginService`，并传入当前的 `pb` 实例以及用户凭证。

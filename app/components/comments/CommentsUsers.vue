@@ -1,49 +1,47 @@
 <template>
   <div ref="target" class="flex mt-2.5 h-6">
-    <div v-if="isRendered && status === 'pending'" class="flex items-center">
+    <div v-if="status === 'pending' && usersToShow.length === 0" class="flex items-center">
       <UIcon name="i-hugeicons:refresh" class="size-5 text-dimmed animate-spin" />
     </div>
 
     <template v-else-if="usersToShow.length > 0">
-      <div v-if="usersToShow.length === 1" class="flex items-center gap-2">
-        <div class="size-5.5 rounded-full overflow-hidden">
-          <CommonGravatar :avatar-id="usersToShow[0]?.expand?.user?.avatar" :size="32" />
-        </div>
-        <span class="text-sm font-medium text-dimmed">
-          {{ !allowComment ? '评论已关闭' : `${usersToShow[0]?.expand?.user?.name} 发表了评论` }}
-        </span>
-      </div>
-      <div v-else class="flex items-center">
-        <div class="flex -space-x-0.5 overflow-hidden">
+      <div class="flex items-center">
+        <div class="flex -space-x-1 overflow-hidden">
           <div v-for="(comment, index) in usersToShow.slice(0, 3)" :key="comment.id"
             class="inline-block size-5.5 rounded-full ring-2 ring-white dark:ring-neutral-900 overflow-hidden"
             :style="{ zIndex: 10 - index }">
             <CommonGravatar :avatar-id="comment.expand?.user?.avatar" :size="32" />
           </div>
         </div>
+
         <UBadge v-if="totalCount > 3" variant="soft" size="sm" color="neutral"
-          class="rounded-xl text-muted text-xs ml-1">
+          class="rounded-xl text-muted text-xs ml-1.5 px-1.5">
           +{{ remainingCount }}
         </UBadge>
-        <span class="text-sm font-medium text-dimmed ml-3">{{ !allowComment ? '评论已关闭' : '' }}</span>
+
+        <span class="text-sm font-medium text-dimmed ml-2 truncate max-w-40">
+          {{
+            !allowComment
+              ? '评论已关闭'
+              : totalCount === 1
+                ? `${usersToShow[0]?.expand?.user?.name} 发表评论`
+                : '参与了评论'
+          }}
+        </span>
       </div>
     </template>
 
-    <div v-else-if="!allowComment" class="flex items-center gap-2 text-sm text-dimmed">
-      <UIcon name="i-hugeicons:comment-block-02" class="size-4.5" />
-      <span class="text-sm">评论已关闭</span>
-    </div>
-
     <div v-else class="flex items-center gap-2 text-sm text-dimmed">
-      <UIcon name="i-hugeicons:comment-02" class="size-4.5" />
-      <span class="text-sm">暂无评论</span>
+      <UIcon :name="!allowComment ? 'i-hugeicons:comment-block-02' : 'i-hugeicons:comment-02'"
+        class="size-4.5" />
+      <span class="text-sm">{{ !allowComment ? '评论已关闭' : '暂无评论' }}</span>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import type { CommentsListResponse } from "~/types/comments";
-import { useIntersectionObserver } from "@vueuse/core";
+import type { CommentsListResponse } from '~/types/comments';
+import { useIntersectionObserver } from '@vueuse/core';
 
 const props = defineProps({
   postId: { type: String, required: true },
@@ -52,74 +50,68 @@ const props = defineProps({
 
 const target = ref(null);
 const isRendered = ref(false);
-const lastFetchTime = ref(0); // 记录上次请求的时间戳
-const REFRESH_THRESHOLD = 30 * 1000; // 刷新阈值：30秒
+const lastFetchTime = ref(0);
+const REFRESH_THRESHOLD = 60 * 1000; // 首页预览不需要太频繁，改为 60 秒
 
-// 使用 VueUse 监听元素是否进入可视区域
-const { stop } = useIntersectionObserver(
+// 1. 视口监听：进入视口才标记为可渲染
+useIntersectionObserver(
   target,
-  (entries) => {
-    // 💡 检查 entries 是否存在且有元素
-    const entry = entries[0];
-    if (entry && entry.isIntersecting) {
+  ([entry]) => {
+    if (entry?.isIntersecting && !isRendered.value) {
       isRendered.value = true;
-      stop(); // 触发后停止监听，节省性能
     }
-  }
+  },
+  { threshold: 0.1 }
 );
 
-// 1. 优化 Key：确保 key 是唯一的，且能对应该组件实例
-const cacheKey = computed(() => `comments-preview-${props.postId}`);
-
-const { data: commentsResponse, status, refresh } = await useLazyFetch<CommentsListResponse>(`/api/collections/comments`, {
-  key: cacheKey.value,
-  server: true,
+// 2. 数据获取
+const {
+  data: commentsResponse,
+  status,
+  refresh,
+} = await useLazyFetch<CommentsListResponse>(`/api/collections/comments`, {
+  key: `comments-preview-${props.postId}`,
+  // 💡 只有当 isRendered 变为 true 时才发起请求
   immediate: false,
+  watch: [isRendered],
   query: {
-    filter: `post="${props.postId}"`,
-    sort: "-created",
+    post: props.postId, // 💡 对齐后端 API 参数
     page: 1,
     perPage: 5,
-    pick: ['expand.user.name', 'expand.user.avatar'],
   },
-  // 2. 移除 dedupe: "cancel"，这在快速滚动列表时会导致大量请求被取消从而显示不正常
-  // 3. 增加 pick 减少负载（可选）
-  // watch: [() => props.postId], // 监听 ID 变化
-  // 监听渲染状态，一旦进入视图则触发刷新
-  watch: [isRendered],
-  // 每次请求成功后更新时间戳
   onResponse() {
     lastFetchTime.value = Date.now();
-  }
+  },
 });
 
-/**
- * 智能刷新函数
- * 只有在：1.已渲染 2.非加载中 3.距离上次请求超过阈值 时才真正执行
- */
+// 3. 智能刷新逻辑
 const smartRefresh = () => {
   if (!isRendered.value || status.value === 'pending') return;
-
-  const now = Date.now();
-  if (now - lastFetchTime.value > REFRESH_THRESHOLD) {
+  if (Date.now() - lastFetchTime.value > REFRESH_THRESHOLD) {
     refresh();
   }
 };
 
-// 3. 处理从详情页返回首页时的逻辑
-// 如果你的页面使用了 <NuxtPage keepalive />
 onActivated(() => {
-  smartRefresh();
+  // 从详情页返回时，如果已经在视口内，尝试刷新过期数据
+  if (isRendered.value) smartRefresh();
 });
 
-// 如果没有使用 keep-alive，普通的挂载逻辑
-onMounted(() => {
-  if (isRendered.value) {
-    smartRefresh();
-  }
+// 4. 数据转化
+// 使用 Set 对用户 ID 去重，预览位展示的是“有哪些人参与”，而不是“最新的三条评论”
+const usersToShow = computed(() => {
+  const comments = commentsResponse.value?.data?.comments || [];
+  const seenUsers = new Set();
+  return comments
+    .filter((c) => {
+      const userId = c.expand?.user?.id;
+      if (!userId || seenUsers.has(userId)) return false;
+      seenUsers.add(userId);
+      return true;
+    })
+    .slice(0, 3);
 });
 
-const usersToShow = computed(() => commentsResponse.value?.data?.comments || []);
 const totalCount = computed(() => commentsResponse.value?.data?.totalItems || 0);
-const remainingCount = computed(() => Math.max(0, totalCount.value - 3));
+const remainingCount = computed(() => Math.max(0, totalCount.value - usersToShow.value.length));
 </script>

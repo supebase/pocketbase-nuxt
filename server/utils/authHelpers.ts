@@ -36,7 +36,7 @@ export async function handleAuthSuccess(
     id: pbUser.id,
     email: pbUser.email,
     name: pbUser.name,
-    avatar: pbUser.avatar,       // 用户头像 URL
+    avatar: pbUser.avatar, // 用户头像 URL
     verified: pbUser.verified, // 邮箱是否已验证
     location: pbUser.location, // 用户位置
   };
@@ -51,18 +51,23 @@ export async function handleAuthSuccess(
 
   // 步骤 3: 将 PocketBase 的认证 Token 导出为 Cookie，并附加到响应头中。
   // 这个 Cookie 主要供客户端 JavaScript 使用，特别是 PocketBase 的 JS SDK 和 WebSocket 实时通信。
-  const pbCookie = pb.authStore.exportToCookie({
-    httpOnly: true,
-    // 在生产环境中，强制 Cookie 只能通过 HTTPS 发送，增加安全性。
-    secure: process.env.NODE_ENV === 'production',
-    // `Lax` 是一种平衡了安全性和用户体验的 SameSite 策略。
-    sameSite: 'Lax',
-    // `path: '/'` 确保该 Cookie 在整个站点都可用。
-    path: '/',
-    // 设置 Cookie 的有效期。这里设置为 7 天（单位：秒），
-    // 建议与 Nuxt Session 的配置保持一致，以获得统一的用户体验。
-    maxAge: 60 * 60 * 24 * 7, // 7 days in seconds
-  });
+  const MAX_AGE = 60 * 60 * 24 * 7; // 7 天
+
+  const pbCookie = pb.authStore.exportToCookie(
+    {
+      httpOnly: true,
+      // 在生产环境中，强制 Cookie 只能通过 HTTPS 发送，增加安全性。
+      secure: process.env.NODE_ENV === 'production',
+      // `Lax` 是一种平衡了安全性和用户体验的 SameSite 策略。
+      sameSite: 'Lax',
+      // `path: '/'` 确保该 Cookie 在整个站点都可用。
+      path: '/',
+      // 设置 Cookie 的有效期。这里设置为 7 天（单位：秒），
+      // 建议与 Nuxt Session 的配置保持一致，以获得统一的用户体验。
+      maxAge: MAX_AGE,
+    },
+    'pb_auth'
+  );
 
   // 将生成的 `Set-Cookie` 字符串附加到当前请求的响应头中，浏览器会自动保存这个 Cookie。
   appendResponseHeader(event, 'Set-Cookie', pbCookie);

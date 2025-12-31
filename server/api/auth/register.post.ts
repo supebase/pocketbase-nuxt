@@ -12,7 +12,7 @@ import { handlePocketBaseError } from '../../utils/errorHandler';
 // 导入认证成功后的统一处理器。
 import { handleAuthSuccess } from '../../utils/authHelpers';
 // 导入用于获取当前请求唯一的 PocketBase 实例的函数。
-import { getPocketBaseInstance } from '../../utils/pocketbase';
+import { getPocketBase } from '../../utils/pocketbase';
 // 导入与认证相关的请求和响应类型。
 import type { RegisterRequest, AuthResponse } from '~/types/auth';
 
@@ -44,7 +44,7 @@ export default defineEventHandler(async (event): Promise<AuthResponse> => {
   }
 
   // 步骤 3: 为本次 HTTP 请求获取一个独立的 PocketBase 实例。
-  const pb = getPocketBaseInstance(event);
+  const pb = getPocketBase(event);
 
   try {
     // 步骤 4: 调用服务层的 `registerService`，传入 `pb` 实例和注册信息。

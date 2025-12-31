@@ -8,8 +8,6 @@
 import { getCommentsLikesMap } from '../../services/likes.service';
 // 导入统一的 PocketBase 错误处理器。
 import { handlePocketBaseError } from '../../utils/errorHandler';
-// 导入用于获取当前请求唯一的 PocketBase 实例的函数。
-import { getPocketBaseInstance } from '../../utils/pocketbase';
 // 导入与点赞相关的业务响应类型。
 import type { CommentLikesResponse } from '~/types/likes';
 
@@ -19,8 +17,8 @@ import type { CommentLikesResponse } from '~/types/likes';
 export default defineEventHandler(async (event): Promise<CommentLikesResponse> => {
   // 步骤 1: 获取当前用户信息。
   // 即使未登录，接口也能工作（返回公开的点赞数），但 `userId` 是区分当前用户是否点赞的关键。
-  const session = await getUserSession(event);
-  const userId = session?.user?.id || '';
+  const pb = event.context.pb;
+  const userId = event.context.user?.id || '';
 
   // 步骤 2: 从 URL 查询字符串中获取参数。
   // e.g., /api/likes?commentIds=["id1","id2","id3"]
@@ -57,15 +55,12 @@ export default defineEventHandler(async (event): Promise<CommentLikesResponse> =
     });
   }
 
-  // 步骤 5: 获取本次请求专用的 PocketBase 实例。
-  const pb = getPocketBaseInstance(event);
-
   try {
-    // 步骤 6: 调用服务层的 `getCommentsLikesMap` 函数。
+    // 步骤 5: 调用服务层的 `getCommentsLikesMap` 函数。
     // 传入 `pb` 实例、评论 ID 数组和当前用户 ID，服务层将完成所有复杂的数据库查询和数据组装工作。
     const likesMap = await getCommentsLikesMap(pb, commentIds, userId);
 
-    // 步骤 7: 将服务层返回的数据组装成标准化的 API 响应。
+    // 步骤 6: 将服务层返回的数据组装成标准化的 API 响应。
     // `likesMap` 的结构通常是 { commentId: { likes: 10, isLiked: true }, ... }
     return {
       message: '点赞状态获取成功',

@@ -11,6 +11,7 @@ import { getMd5Hash } from '../utils/md5hash';
 import { normalizeEmail, formatDefaultName } from '~/utils/index';
 // 导入 PocketBase 自动生成的类型，以确保与数据库交互时的数据结构正确。
 import type { UsersResponse, Create, TypedPocketBase } from '~/types/pocketbase-types';
+import type { H3Event } from 'h3';
 
 /**
  * 用户登录服务。
@@ -86,10 +87,18 @@ export async function registerService(
  * @param pb 与当前请求绑定的 PocketBase 实例。
  * @returns Promise<void>
  */
-export async function logoutService(pb: TypedPocketBase): Promise<void> {
+export async function logoutService(event: H3Event, pb: TypedPocketBase): Promise<void> {
   // 调用 PocketBase 认证存储的 `clear` 方法。
   // 这会清除当前 `pb` 实例内存中的认证 token 和用户模型。
   // 注意：这本身是一个无状态的操作，它只影响这个在单次请求中创建的 `pb` 实例。
   // 真正的登出效果依赖于上层 API handler 清除浏览器端的认证 Cookie。
   pb.authStore.clear();
+
+  // 清理服务端 Session (nuxt-auth-utils)
+  await clearUserSession(event);
+
+  // 清理客户端 Cookie (PocketBase SDK 依赖)
+  deleteCookie(event, 'pb_auth', {
+    path: '/',
+  });
 }
