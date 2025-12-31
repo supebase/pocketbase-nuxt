@@ -25,7 +25,7 @@ const startViewTransition = (event: MouseEvent) => {
   });
 
   transition.ready.then(() => {
-    const duration = 600;
+    const duration = 500;
     document.documentElement.animate(
       {
         clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${endRadius}px at ${x}px ${y}px)`],
@@ -38,6 +38,16 @@ const startViewTransition = (event: MouseEvent) => {
     );
   });
 };
+
+useHead({
+  meta: [
+    {
+      id: "theme-color",
+      name: "theme-color",
+      content: () => colorMode.value === "dark" ? "#171717" : "#ffffff",
+    },
+  ],
+});
 </script>
 
 <template>

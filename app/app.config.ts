@@ -13,6 +13,7 @@ export default defineAppConfig({
     },
     header: {
       slots: {
+        root: 'bg-white dark:bg-neutral-900 backdrop-blur-none',
         container: 'max-w-xl',
       },
     },
@@ -47,6 +48,9 @@ export default defineAppConfig({
         description: 'text-muted/80',
         fieldset: 'gap-3 justify-center',
       },
+    },
+    skeleton: {
+      base: 'animate-none',
     },
     prose: {
       codeCollapse: {
