@@ -54,28 +54,30 @@
 </template>
 
 <script setup lang="ts">
-const { fetch: fetchSession } = useUserSession();
-const { locationData, fetchGeo } = useGeoLocation();
-const toast = useToast();
-
 const props = defineProps<{
   isLoginMode: boolean;
 }>();
 
-// 状态
-const email = ref('');
-const password = ref('');
-const passwordConfirm = ref('');
-const loading = ref(false);
-const error = ref('');
+// 1. 引入 Auth 逻辑
+const {
+  email,
+  password,
+  passwordConfirm,
+  loading,
+  error,
+  strength,
+  color,
+  handleAuth,
+  fetchGeo,
+} = useAuth(toRef(props, 'isLoginMode'));
 
-// 使用密码显示/隐藏组合式函数
+// 2. 密码可见性逻辑 (保持原始自定义组合函数)
 const { isVisible: showPassword, toggleVisibility: togglePasswordVisibility } =
   usePasswordVisibility();
 const { isVisible: showPasswordConfirm, toggleVisibility: togglePasswordConfirmVisibility } =
   usePasswordVisibility();
 
-// 计算属性
+// 3. 这里的 formState 主要是给 UForm 的 state 绑定的
 const formState = computed(() => ({
   email: email.value,
   password: password.value,
@@ -87,98 +89,7 @@ const buttonLabel = computed(() => {
   return props.isLoginMode ? '登录账户' : '创建新账户';
 });
 
-// 处理表单提交的函数
-async function handleAuth() {
-  loading.value = true;
-  error.value = '';
-
-  // 1. 前端验证
-  if (!email.value || !password.value) {
-    error.value = '请输入电子邮件和登录密码';
-    loading.value = false;
-    return;
-  }
-
-  if (!props.isLoginMode && password.value !== passwordConfirm.value) {
-    error.value = '两次输入的密码不一致';
-    loading.value = false;
-    return;
-  }
-
-  // 2. API 调用
-  const endpoint = props.isLoginMode ? '/api/auth/login' : '/api/auth/register';
-
-  try {
-    const body = props.isLoginMode
-      ? { email: email.value, password: password.value }
-      : {
-        email: email.value,
-        password: password.value,
-        passwordConfirm: passwordConfirm.value,
-        location: locationData.value.location,
-      };
-
-    // 使用 $fetch 发起认证请求
-    await $fetch<any>(endpoint, {
-      method: 'POST',
-      body,
-    });
-
-    // 刷新 Nuxt Session (nuxt-auth-utils)
-    await fetchSession();
-
-    toast.add({
-      title: props.isLoginMode ? "登录成功" : "创建成功",
-      description: props.isLoginMode ? `欢迎回来，${email.value}` : "您已成功创建账户并登录",
-      icon: "i-hugeicons:checkmark-circle-03",
-      color: "success",
-    });
-
-    email.value = '';
-    password.value = '';
-    passwordConfirm.value = '';
-
-    // 成功后跳转
-    const route = useRoute();
-    let redirectPath = (route.query.redirect as string) || '/';
-
-    // 安全检查：确保是内部路径，防止外部钓鱼链接
-    if (!redirectPath.startsWith('/') || redirectPath.includes('//')) {
-      redirectPath = '/';
-    }
-
-    // 6. 执行跳转
-    await navigateTo(redirectPath, { replace: true });
-  } catch (err: any) {
-    // 1. 优先读取 err.data.message (这是我们后端 handlePocketBaseError 传回的友好中文)
-    if (err.data?.message) {
-      error.value = err.data.message;
-    }
-    // 2. 如果没有 data.message，尝试读取外层的 err.message
-    else if (err.message) {
-      // 这里的 err.message 可能是 Nuxt 自动生成的，也可能是网络错误
-      error.value = err.message.includes('fetch') ? '无法连接到服务器，请检查网络' : err.message;
-    }
-    // 3. 最后兜底
-    else {
-      error.value = '发生未知错误，请稍后再试';
-    }
-
-    console.error('Auth Error Details:', {
-      status: err.statusCode,
-      message: err.message,
-      data: err.data,
-    });
-  } finally {
-    loading.value = false;
-  }
-}
-
-// 密码强度相关计算
-const strength = computed(() => checkPasswordStrength(password.value));
-const score = computed(() => calculatePasswordScore(strength.value));
-const color = computed(() => getPasswordStrengthColor(score.value));
-
+// 4. 初始化
 onMounted(() => {
   if (!props.isLoginMode) {
     fetchGeo();

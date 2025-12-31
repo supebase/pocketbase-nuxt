@@ -43,3 +43,7 @@ export interface LinkPreviewData {
   siteName: string;
   favicon: string;
 }
+
+export type PostWithUser = PBPostResponse<{ user: UsersResponse }> & {
+  cleanContent?: string;
+};

@@ -14,7 +14,7 @@
           </div>
         </div>
 
-        <UBadge v-if="totalCount > 3" variant="soft" size="sm" color="neutral"
+        <UBadge v-if="totalCount > 1" variant="soft" size="sm" color="neutral"
           class="rounded-xl text-muted text-xs ml-1.5 px-1.5">
           +{{ remainingCount }}
         </UBadge>
@@ -24,7 +24,7 @@
             !allowComment
               ? '评论已关闭'
               : totalCount === 1
-                ? `${usersToShow[0]?.expand?.user?.name} 发表评论`
+                ? `${usersToShow[0]?.expand?.user?.name} 发表了评论`
                 : '参与了评论'
           }}
         </span>
