@@ -3,50 +3,81 @@
  * @description 更新指定 ID 内容（文章）的 API 端点。
  *              实现了严格的所有权验证和智能的部分更新逻辑。
  */
-
-// 导入核心的文章服务（更新和获取）。
-import { updatePost } from '../../../services/posts.service';
-// 导入统一的 PocketBase 错误处理器。
 import { handlePocketBaseError } from '../../../utils/errorHandler';
-// 导入用于抓取链接预览的工具函数。
-import { getLinkPreview } from '~~/server/utils/unfurl';
-// 导入用于处理 Markdown 中的图片的工具函数。
-import { processMarkdownImages } from '~~/server/utils/markdown';
-// 导入用于清理 HTML 的库。
+import { getLinkPreview } from '~~/server/utils/graphScraper';
+import { processMarkdownImages } from '~~/server/utils/markdownImages';
 import sanitizeHtml from 'sanitize-html';
-// 导入相关的业务类型定义。
-import type { SinglePostResponse, CreatePostRequest } from '~/types/posts';
-import type { Update } from '~/types/pocketbase-types';
 
-export default defineEventHandler(async (event): Promise<SinglePostResponse> => {
-  // 步骤 1: 强制进行身份验证。
-  // 新增: 从事件上下文中获取用户信息
-  // 认证逻辑已由中间件统一处理，此处可安全地使用非空断言 `!`。
+export default defineEventHandler(async (event) => {
   const pb = event.context.pb;
   const user = event.context.user!;
+  const postId = getRouterParam(event, 'id')!;
+  const body = await readBody(event);
 
-  // 步骤 2: 获取并验证路由参数。
-  const postId = getRouterParam(event, 'id');
-  if (!postId) {
-    throw createError({ statusCode: 400, message: '内容 ID 不能为空' });
-  }
+  try {
+    // 1. 获取旧数据并校验权限
+    const existing = await pb.collection('posts').getOne(postId);
+    if (existing.user !== user.id) throw createError({ statusCode: 403, message: '无权操作' });
 
-  // 步骤 3: 读取并处理请求体（作为部分更新）。
-  const body = await readBody<Partial<CreatePostRequest>>(event);
-  let cleanContent: string | undefined;
-  let linkDataString: string | null | undefined = undefined;
+    const formData = new FormData();
+    let remoteUrls: string[] = [];
 
-  // 步骤 3.1: 如果请求体包含 `content`，则进行清理和验证。
-  if (body.content !== undefined) {
-    if (typeof body.content !== 'string' || body.content.trim() === '') {
-      throw createError({ statusCode: 400, message: '有效内容不能为空' });
+    // 2. 处理 Content 和图片下载
+    if (body.content !== undefined) {
+      const result = await processMarkdownImages(body.content);
+      remoteUrls = result.remoteUrls;
+
+      // 将新图片加入 FormData
+      result.blobs.forEach((blob, i) => {
+        formData.append('markdown_images', blob, `upd_${Date.now()}_${i}.png`);
+      });
+      // 注意：这里先不 append content，因为链接还没替换
     }
 
-    // 在编辑内容时也执行并发图片下载本地化 ---
-    const localizedContent = await processMarkdownImages(body.content);
+    // 3. 处理 LinkCard (保持原样)
+    if (body.link !== undefined) {
+      formData.append('link', body.link);
+      if (body.link === '') {
+        formData.append('link_data', '');
+        formData.append('link_image', '');
+      } else if (body.link !== existing.link) {
+        const preview = await getLinkPreview(body.link);
+        if (preview?.image?.startsWith('http')) {
+          try {
+            const buf = await $fetch<ArrayBuffer>(preview.image, { responseType: 'arrayBuffer' });
+            formData.append('link_image', new Blob([buf]), 'preview.png');
+            preview.image = '';
+          } catch (e) {}
+        }
+        formData.append('link_data', JSON.stringify(preview || ''));
+      }
+    }
 
-    // 使用与创建时相同的规则进行 HTML 清理，防止安全漏洞。
-    cleanContent = sanitizeHtml(localizedContent, {
+    // 4. 处理基础字段
+    if (body.allow_comment !== undefined)
+      formData.append('allow_comment', String(body.allow_comment));
+    if (body.published !== undefined) formData.append('published', String(body.published));
+    if (body.icon) formData.append('icon', body.icon);
+    if (body.action) formData.append('action', body.action);
+
+    // 5. 【关键修改】第一次更新：仅上传文件
+    // 我们需要先拿到上传后的文件名，才能生成正确的代理 URL
+    const uploadedRecord = await pb.collection('posts').update(postId, formData);
+
+    // 6. 替换 URL 并清洗 HTML
+    let finalContent = body.content !== undefined ? body.content : existing.content;
+
+    if (remoteUrls.length > 0) {
+      // 这里的逻辑必须极其严格：新文件在数组末尾
+      const startIndex = uploadedRecord.markdown_images.length - remoteUrls.length;
+      remoteUrls.forEach((url, i) => {
+        const fileName = uploadedRecord.markdown_images[startIndex + i];
+        const proxyUrl = `/api/images/posts/${postId}/${fileName}`;
+        finalContent = finalContent.split(url).join(proxyUrl);
+      });
+    }
+
+    const cleanContent = sanitizeHtml(finalContent, {
       allowedTags: [
         ...sanitizeHtml.defaults.allowedTags,
         'img',
@@ -63,52 +94,16 @@ export default defineEventHandler(async (event): Promise<SinglePostResponse> => 
         span: ['class'],
         div: ['class'],
       },
-      transformTags: { a: sanitizeHtml.simpleTransform('a', { rel: 'nofollow' }) },
     });
-    // 可选：添加内容长度限制
-    if (cleanContent.length > 10000) {
-      throw createError({ statusCode: 400, message: '内容长度超出限制' });
-    }
-  }
 
-  try {
-    // 步骤 4: **核心安全校验** - 验证文章所有权。
-    // 在更新之前，必须先查询一次，确保该文章属于当前操作的用户。
-    const existingPost = await pb.collection('posts').getOne(postId);
+    // 7. 【终极修复】第二次更新：仅更新内容字段
+    // 💡 重点：不要传整个对象，只传 content，确保不触发文件字段的重新处理
+    const finalPost = await pb.collection('posts').update(postId, {
+      content: cleanContent,
+    });
 
-    // 步骤 4.1: 智能处理链接预览。
-    if (body.link !== undefined) {
-      if (body.link === '') {
-        // 如果传入空字符串，表示用户想删除链接，将预览数据设为 null。
-        linkDataString = '';
-      } else if (body.link !== existingPost.link) {
-        // 仅当新链接与旧链接不同时，才重新获取预览数据。
-        const preview = await getLinkPreview(body.link);
-        linkDataString = preview ? JSON.stringify(preview) : '';
-      }
-    }
-
-    // 步骤 5: 构造一个只包含已提供字段的更新载荷 (Payload)。
-    // 这种模式非常适合部分更新（PATCH-like behavior）。
-    const updateData: Update<'posts'> = {
-      ...(cleanContent !== undefined && { content: cleanContent }),
-      ...(body.allow_comment !== undefined && { allow_comment: body.allow_comment }),
-      ...(body.published !== undefined && { published: body.published }),
-      ...(body.icon !== undefined && { icon: body.icon }),
-      ...(body.action !== undefined && { action: body.action }),
-      ...(body.link !== undefined && { link: body.link }),
-      ...(linkDataString !== undefined && { link_data: linkDataString }),
-    };
-
-    // 步骤 6: 调用服务层执行更新操作。
-    const post = await updatePost(pb, postId, updateData);
-
-    return {
-      message: '内容已成功更新',
-      data: post as any,
-    };
+    return { message: '更新成功', data: finalPost as any };
   } catch (error) {
-    // 统一处理过程中可能发生的各种错误（如文章不存在、数据库写入失败等）。
-    return handlePocketBaseError(error, '内容更新异常');
+    return handlePocketBaseError(error, '更新异常');
   }
 });

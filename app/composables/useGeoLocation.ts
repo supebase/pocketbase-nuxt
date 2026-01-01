@@ -15,7 +15,7 @@ export const useGeoLocation = () => {
 
     try {
       // 2. 首先从我们自己的服务器接口获取真实客户端 IP
-      const ipRes = await $fetch<{ ip: string }>('/api/get-ip');
+      const ipRes = await $fetch<{ ip: string }>('/api/ip');
       realIp = ipRes.ip;
 
       // 3. 处理本地回环地址

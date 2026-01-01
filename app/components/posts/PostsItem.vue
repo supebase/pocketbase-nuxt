@@ -22,12 +22,15 @@
       </div>
     </ULink>
 
-    <CommonLinkCard v-if="item.link_data" :data="item.link_data" />
+    <CommonLinkCard v-if="item.link_data" :data="item.link_data"
+      :link-image="getLinkImage(item, item.link_image)" />
     <CommentsUsers :post-id="item.id" :allow-comment="item.allowComment" />
   </div>
 </template>
 
 <script setup lang="ts">
+const { getLinkImage } = useAssets();
+
 interface Props {
   item: {
     id: string;
@@ -41,6 +44,7 @@ interface Props {
     avatarId: string | null;
     firstImage: string | null;
     link_data: any;
+    link_image?: string;
   };
   delay: number;
   canViewDrafts: boolean;

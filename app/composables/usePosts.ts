@@ -45,6 +45,7 @@ export const usePosts = () => {
         avatarId: item.expand?.user?.avatar,
         firstImage: getFirstImageUrl(item.content),
         link_data: item.link_data,
+        link_image: item.link_image,
         content: item.content,
       }));
   });

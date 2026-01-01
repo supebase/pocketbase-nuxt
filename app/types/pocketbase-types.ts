@@ -128,6 +128,8 @@ export type PostsRecord = {
 	user?: RecordIdString
 	link?: string
 	link_data?: string
+	link_image?: string
+	markdown_images?: string[]
 }
 
 export type UsersRecord = {

@@ -6,7 +6,7 @@
  */
 
 // 从工具函数中导入 MD5 哈希生成器，用于创建 Gravatar 头像链接。
-import { getMd5Hash } from '../utils/md5hash';
+import { getMd5Hash } from '../utils/md5Hash';
 // 从共享的工具函数中导入邮箱和名称格式化函数。
 import { normalizeEmail, formatDefaultName } from '~/utils/index';
 // 导入 PocketBase 自动生成的类型，以确保与数据库交互时的数据结构正确。

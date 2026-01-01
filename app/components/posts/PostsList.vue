@@ -186,10 +186,11 @@ const manualRefresh = async () => {
 };
 
 const handleLoadMore = () =>
-  loadMore(() => {
-    return $fetch<PostsListResponse>('/api/collections/posts', {
+  loadMore(async () => {
+    const res = await $fetch<PostsListResponse>('/api/collections/posts', {
       query: { page: currentPage.value },
-    }).then((res) => ({ items: res.data.posts as PostWithUser[], total: res.data.totalItems }));
+    });
+    return ({ items: res.data.posts as PostWithUser[], total: res.data.totalItems });
   }, transformPosts);
 
 const handleRequestDelete = (item: any) => {

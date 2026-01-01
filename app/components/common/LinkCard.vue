@@ -2,11 +2,11 @@
     <a :href="data.url" target="_blank" tabindex="-1"
         class="group mt-4 mb-1.5 flex items-stretch border border-neutral-200 dark:border-neutral-800 rounded-lg overflow-hidden no-underline">
 
-        <div v-if="data.image"
+        <div v-if="linkImage"
             class="relative w-21 shrink-0 border-r border-neutral-200 dark:border-neutral-800 overflow-hidden">
 
             <div class="relative w-full h-full bg-neutral-100 dark:bg-neutral-900">
-                <img :src="data.image" @load="handleLoad" :class="[
+                <img :src="linkImage" @load="handleLoad" :class="[
                     'w-full h-full object-cover transition-all duration-700 ease-in-out',
                     isLoaded ? 'blur-0 scale-100 opacity-100' : 'blur-xl scale-110 opacity-0',
                 ]" alt="preview" loading="lazy" />
@@ -49,9 +49,9 @@ const props = defineProps<{
         url: string
         title: string
         description: string
-        image: string
         siteName: string
-    }
+    },
+    linkImage?: string
 }>()
 
 const isLoaded = ref(false)

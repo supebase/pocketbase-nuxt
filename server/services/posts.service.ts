@@ -9,8 +9,6 @@
 import type { PostExpand } from '~/types/posts';
 // 从自动生成的类型文件中导入 PocketBase 相关的类型。
 import type {
-  Create, // 用于创建记录时，确保数据结构正确的类型
-  Update, // 用于更新记录时，允许字段为可选的类型
   PostsResponse as PBPostsResponse, // 原始的、未展开的 `posts` 记录响应类型
   TypedPocketBase, // 经过类型加强的 PocketBase 实例类型
 } from '~/types/pocketbase-types';
@@ -92,10 +90,8 @@ export async function getPostById(pb: TypedPocketBase, postId: string) {
  * @param data 要创建的文章数据。`Create<'posts'>` 类型确保了传入的数据符合数据库 `posts` 集合的字段要求。
  * @returns 返回新创建的文章记录。
  */
-export async function createPost(pb: TypedPocketBase, data: Create<'posts'>) {
-  // `pb.collection('posts').create` 会自动使用 `pb` 实例中存储的 AuthStore（认证令牌），
-  // 因此 PocketBase 知道是哪个用户正在创建这篇文章。
-  return await pb.collection('posts').create<PBPostsResponse>(data);
+export async function createPost(pb: TypedPocketBase, formData: FormData) {
+  return await pb.collection('posts').create<PBPostsResponse>(formData);
 }
 
 /**
@@ -105,7 +101,7 @@ export async function createPost(pb: TypedPocketBase, data: Create<'posts'>) {
  * @param data 要更新的文章数据。`Update<'posts'>` 类型使得所有字段都是可选的，允许部分更新。
  * @returns 返回更新后的文章记录。
  */
-export async function updatePost(pb: TypedPocketBase, postId: string, data: Update<'posts'>) {
+export async function updatePost(pb: TypedPocketBase, postId: string, data: FormData | any) {
   await ensureOwnership(pb, postId);
   return await pb.collection('posts').update<PBPostsResponse>(postId, data);
 }
