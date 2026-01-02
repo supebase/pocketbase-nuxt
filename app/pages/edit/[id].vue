@@ -1,12 +1,16 @@
 <template>
   <div :class="[
     'layout-container mx-auto flex flex-col lg:flex-row items-stretch overflow-visible',
-    (showPreview && isDesktop) ? 'lg:w-[95vw] lg:-ml-[calc((95vw-100%)/2)] lg:gap-6' : 'w-full gap-0'
+    showPreview && isDesktop
+      ? 'lg:w-[95vw] lg:-ml-[calc((95vw-100%)/2)] lg:gap-6'
+      : 'w-full gap-0',
   ]">
     <div
       class="editor-panel relative bg-white/60 dark:bg-neutral-900/60 backdrop-blur border border-neutral-200/90 dark:border-neutral-800/70 rounded-lg p-4 shrink-0 overflow-hidden"
-      :style="{ flexBasis: (showPreview && isDesktop) ? 'calc(50% - 12px)' : '100%', width: (showPreview && isDesktop) ? 'calc(50% - 12px)' : '100%' }">
-
+      :style="{
+        flexBasis: showPreview && isDesktop ? 'calc(50% - 12px)' : '100%',
+        width: showPreview && isDesktop ? 'calc(50% - 12px)' : '100%',
+      }">
       <div v-if="isLoading"
         class="z-10 absolute inset-0 flex items-center justify-center bg-white/80 dark:bg-neutral-900/80 backdrop-blur rounded-lg">
         <UIcon name="i-hugeicons:loading-02" class="animate-spin size-6.5 text-primary" />
@@ -14,8 +18,10 @@
 
       <form @submit.prevent="handleSubmit" class="space-y-6">
         <URadioGroup v-model="form.action" indicator="hidden" orientation="horizontal"
-          variant="card" class="select-none w-full"
-          :items="[{ label: '贴文', description: '记录观点、动态与生活', value: 'dit' }, { label: '分享', description: '转发并分享优质内容', value: 'partager' }]" />
+          variant="card" class="select-none w-full" :items="[
+            { label: '贴文', description: '记录观点、动态与生活', value: 'dit' },
+            { label: '分享', description: '转发并分享优质内容', value: 'partager' },
+          ]" />
 
         <div class="relative">
           <UTextarea v-model="form.content" ref="editorRef" @mouseenter="activeElement = 'editor'"
@@ -23,7 +29,7 @@
             :placeholder="form.action === 'partager' ? '分享内容...' : '记录内容...'" size="xl" :rows="8"
             :maxrows="12" :disabled="isSubmitting" class="w-full" />
           <USeparator class="py-6" />
-          <div class="absolute -bottom-2 left-0" :class="{ 'hidden': !isDesktop }">
+          <div class="absolute -bottom-2 left-0" :class="{ hidden: !isDesktop }">
             <UCheckbox :model-value="showPreview" @update:model-value="togglePreview"
               color="neutral" label="开启实时预览（Markdown）" />
           </div>
@@ -85,7 +91,14 @@ const { markAsUpdated } = usePostUpdateTracker();
 const route = useRoute();
 const { id } = route.params as { id: string };
 
-const form = ref({ content: '', allow_comment: true, published: true, icon: '', action: 'dit', link: '' });
+const form = ref({
+  content: '',
+  allow_comment: true,
+  published: true,
+  icon: '',
+  action: 'dit',
+  link: '',
+});
 const maxLimit = 10000;
 const isLoading = ref(false);
 const isSubmitting = ref(false);
@@ -93,9 +106,16 @@ const globalError = ref('');
 
 // 使用 Composable
 const {
-  showPreview, showPreviewContent, debouncedContent, isDesktop,
-  activeElement, editorRef, previewContainer,
-  togglePreview, onPreviewScroll, setupContentWatch
+  showPreview,
+  showPreviewContent,
+  debouncedContent,
+  isDesktop,
+  activeElement,
+  editorRef,
+  previewContainer,
+  togglePreview,
+  onPreviewScroll,
+  setupContentWatch,
 } = useEditorLogic();
 
 setupContentWatch(() => form.value.content);
@@ -119,7 +139,16 @@ const loadPostData = async () => {
 const handleSubmit = async () => {
   isSubmitting.value = true;
   try {
-    await $fetch(`/api/collections/post/${id}`, { method: 'PUT', body: form.value });
+    const response = await $fetch<SinglePostResponse>(`/api/collections/post/${id}`, {
+      method: 'PUT',
+      body: form.value,
+    });
+
+    if (response?.data) {
+      form.value = { ...response.data };
+      debouncedContent.value = response.data.content || '';
+    }
+
     await refreshNuxtData('posts-list-data');
     markAsUpdated(id);
     await navigateTo('/');

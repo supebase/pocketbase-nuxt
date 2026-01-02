@@ -25,11 +25,13 @@ export const getLinkPreview = async (url: string) => {
     if (result.success) {
       const urlObj = new URL(url);
 
+      const isGitHub = urlObj.hostname === 'github.com' || urlObj.hostname.endsWith('.github.com');
+
       // 2. 提取原始图片链接
       const rawImage = result.ogImage?.[0]?.url || result.twitterImage?.[0]?.url || '';
 
-      // 3. 确保是绝对路径
-      const finalImage = rawImage ? ensureAbsoluteUrl(rawImage, url) : '';
+      // 3. 如果是 GitHub，我们将 image 置为空，这样后续 API 就不会去下载图片了
+      const finalImage = !isGitHub && rawImage ? ensureAbsoluteUrl(rawImage, url) : '';
 
       // 返回标准化数据
       return {

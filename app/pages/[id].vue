@@ -230,9 +230,6 @@ onActivated(async () => {
     isUpdateRefresh.value = true;
     mdcReady.value = false;
     await refresh();
-    if (commentListRef.value) {
-      commentListRef.value.fetchComments(true);
-    }
     clearUpdateMark(currentId);
   }
 });

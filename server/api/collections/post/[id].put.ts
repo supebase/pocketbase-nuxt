@@ -15,26 +15,32 @@ export default defineEventHandler(async (event) => {
   const body = await readBody(event);
 
   try {
-    // 1. 获取旧数据并校验权限
     const existing = await pb.collection('posts').getOne(postId);
     if (existing.user !== user.id) throw createError({ statusCode: 403, message: '无权操作' });
 
     const formData = new FormData();
     let remoteUrls: string[] = [];
 
-    // 2. 处理 Content 和图片下载
+    // 1. 处理 Content 和图片下载
     if (body.content !== undefined) {
+      // --- 关键修复：保留旧文件 ---
+      // 根据 PocketBase 文档，必须显式提交想要保留的旧文件名
+      if (existing.markdown_images && existing.markdown_images.length > 0) {
+        existing.markdown_images.forEach((name: string) => {
+          formData.append('markdown_images', name);
+        });
+      }
+
       const result = await processMarkdownImages(body.content);
       remoteUrls = result.remoteUrls;
 
-      // 将新图片加入 FormData
+      // 添加新文件
       result.blobs.forEach((blob, i) => {
         formData.append('markdown_images', blob, `upd_${Date.now()}_${i}.png`);
       });
-      // 注意：这里先不 append content，因为链接还没替换
     }
 
-    // 3. 处理 LinkCard (保持原样)
+    // 2. 处理 LinkCard (保持原样)
     if (body.link !== undefined) {
       formData.append('link', body.link);
       if (body.link === '') {
@@ -53,22 +59,21 @@ export default defineEventHandler(async (event) => {
       }
     }
 
-    // 4. 处理基础字段
+    // 3. 处理基础字段
     if (body.allow_comment !== undefined)
       formData.append('allow_comment', String(body.allow_comment));
     if (body.published !== undefined) formData.append('published', String(body.published));
     if (body.icon) formData.append('icon', body.icon);
     if (body.action) formData.append('action', body.action);
 
-    // 5. 【关键修改】第一次更新：仅上传文件
-    // 我们需要先拿到上传后的文件名，才能生成正确的代理 URL
+    // 4. 执行第一次更新：上传新文件并维持旧文件引用
     const uploadedRecord = await pb.collection('posts').update(postId, formData);
 
-    // 6. 替换 URL 并清洗 HTML
+    // 5. 替换 URL：此时 uploadedRecord.markdown_images 包含了 [旧文件..., 新文件...]
     let finalContent = body.content !== undefined ? body.content : existing.content;
 
     if (remoteUrls.length > 0) {
-      // 这里的逻辑必须极其严格：新文件在数组末尾
+      // 这里的逻辑依然正确：新文件永远在数组末尾
       const startIndex = uploadedRecord.markdown_images.length - remoteUrls.length;
       remoteUrls.forEach((url, i) => {
         const fileName = uploadedRecord.markdown_images[startIndex + i];
@@ -77,6 +82,7 @@ export default defineEventHandler(async (event) => {
       });
     }
 
+    // 6. 安全清洗 HTML
     const cleanContent = sanitizeHtml(finalContent, {
       allowedTags: [
         ...sanitizeHtml.defaults.allowedTags,
@@ -96,8 +102,7 @@ export default defineEventHandler(async (event) => {
       },
     });
 
-    // 7. 【终极修复】第二次更新：仅更新内容字段
-    // 💡 重点：不要传整个对象，只传 content，确保不触发文件字段的重新处理
+    // 7. 第二次更新：仅保存内容
     const finalPost = await pb.collection('posts').update(postId, {
       content: cleanContent,
     });
