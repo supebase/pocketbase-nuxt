@@ -3,11 +3,8 @@
  * @description 删除单篇内容（文章）的 API 端点。
  *              执行严格的权限验证，确保只有文章的创建者本人才能删除该文章。
  */
-
-// 导入获取和删除文章的服务函数。
-import { deletePost, getPostById } from '../../../services/posts.service';
-// 导入统一的 PocketBase 错误处理器。
-import { handlePocketBaseError } from '../../../utils/errorHandler';
+import { deletePost } from '../../../services/posts.service';
+import { handlePocketBaseError } from '../../../utils/error-handler';
 
 /**
  * 定义处理删除文章请求的事件处理器。

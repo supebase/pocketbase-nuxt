@@ -4,16 +4,10 @@
  *              接收用户的注册信息，调用认证服务创建新用户，
  *              并在成功后自动为用户登录并建立会话。
  */
-
-// 导入核心的注册服务。
 import { registerService } from '../../services/auth.service';
-// 导入统一的 PocketBase 错误处理器。
-import { handlePocketBaseError } from '../../utils/errorHandler';
-// 导入认证成功后的统一处理器。
-import { handleAuthSuccess } from '../../utils/authHelpers';
-// 导入用于获取当前请求唯一的 PocketBase 实例的函数。
+import { handlePocketBaseError } from '../../utils/error-handler';
+import { handleAuthSuccess } from '../../utils/auth-helpers';
 import { getPocketBase } from '../../utils/pocketbase';
-// 导入与认证相关的请求和响应类型。
 import type { RegisterRequest, AuthResponse } from '~/types/auth';
 
 /**
@@ -57,7 +51,6 @@ export default defineEventHandler(async (event): Promise<AuthResponse> => {
     // 步骤 5: 注册和自动登录成功后，调用统一的成功处理器 `handleAuthSuccess`。
     // 我们将包含了新用户认证信息的 `pb` 实例传递给它，它会负责设置 Session、Cookie 并返回标准响应。
     return await handleAuthSuccess(event, pb, '注册成功');
-
   } catch (error) {
     // 步骤 6: 如果 `registerService` 在任何步骤（创建用户或登录）失败，
     //          统一由 `handlePocketBaseError` 捕获并处理错误。

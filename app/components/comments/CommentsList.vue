@@ -49,7 +49,7 @@
           <div class="text-sm text-dimmed mt-1.5">
             {{ item.relativeTime
             }}{{ item.expand?.user?.location ? `，来自${formatLocation(item.expand?.user?.location)}` :
-            '' }}
+              '' }}
           </div>
         </template>
       </CommonMotionTimeline>

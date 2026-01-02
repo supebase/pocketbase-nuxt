@@ -41,7 +41,8 @@ const FIELD_ERROR_CODE_MAP: Record<string, string> = {
 export function handlePocketBaseError(
   error: unknown,
   defaultMessage: string = '请求失败，请稍后再试'
-): never { // `never` 类型表示这个函数永远不会正常返回一个值。
+): never {
+  // `never` 类型表示这个函数永远不会正常返回一个值。
   let friendlyMessage = defaultMessage;
   let statusCode = 500;
   let technicalMessage = 'Internal Server Error';

@@ -3,11 +3,11 @@
  * @description 创建新内容（文章）的 API 端点。
  *              支持富文本、链接预览等高级功能，并执行严格的安全过滤。
  */
-import { handlePocketBaseError } from '../../utils/errorHandler';
-import { getLinkPreview } from '~~/server/utils/graphScraper';
-import { processMarkdownImages } from '~~/server/utils/markdownImages';
-import sanitizeHtml from 'sanitize-html';
+import { handlePocketBaseError } from '../../utils/error-handler';
+import { getLinkPreview } from '~~/server/utils/graph-scraper';
+import { processMarkdownImages } from '~~/server/utils/markdown-image';
 import type { CreatePostRequest, SinglePostResponse } from '~/types/posts';
+import sanitizeHtml from 'sanitize-html';
 
 export default defineEventHandler(async (event): Promise<SinglePostResponse> => {
   const pb = event.context.pb;
@@ -29,7 +29,9 @@ export default defineEventHandler(async (event): Promise<SinglePostResponse> => 
 
     // 1. 下载图片并准备上传
     const { blobs, remoteUrls } = await processMarkdownImages(content);
-    blobs.forEach((blob, i) => formData.append('markdown_images', blob, `img_${Date.now()}_${i}.png`));
+    blobs.forEach((blob, i) =>
+      formData.append('markdown_images', blob, `img_${Date.now()}_${i}.png`)
+    );
 
     // 2. 处理 LinkCard 预览图
     let linkDataJson: any = null;

@@ -3,11 +3,8 @@
  * @description 删除单条评论的 API 端点。
  *              执行严格的权限验证，确保只有评论的创建者本人才能删除该评论。
  */
-
-// 导入获取和删除评论的服务函数。
-import { deleteComment, getCommentById } from '../../../services/comments.service';
-// 导入统一的 PocketBase 错误处理器。
-import { handlePocketBaseError } from '../../../utils/errorHandler';
+import { deleteComment } from '../../../services/comments.service';
+import { handlePocketBaseError } from '../../../utils/error-handler';
 
 /**
  * 定义处理删除评论请求的事件处理器。

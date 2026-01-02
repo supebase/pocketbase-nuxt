@@ -4,14 +4,8 @@
  *              该文件遵循“依赖注入”的设计模式，所有函数都接收一个 PocketBase 实例作为参数，
  *              以确保操作的上下文（特别是用户认证状态）由调用方（API 路由）决定。
  */
-
-// 导入项目自定义的、包含了 `expand` 类型的文章类型定义。
 import type { PostExpand } from '~/types/posts';
-// 从自动生成的类型文件中导入 PocketBase 相关的类型。
-import type {
-  PostsResponse as PBPostsResponse, // 原始的、未展开的 `posts` 记录响应类型
-  TypedPocketBase, // 经过类型加强的 PocketBase 实例类型
-} from '~/types/pocketbase-types';
+import type { PostsResponse as PBPostsResponse, TypedPocketBase } from '~/types/pocketbase-types';
 
 /**
  * 获取文章列表（支持搜索和分页）。

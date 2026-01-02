@@ -4,12 +4,8 @@
  *              这个服务层的一个关键特性是它会聚合来自点赞服务 (`likes.service`) 的数据，
  *              为每条评论附加点赞数和当前用户的点赞状态。
  */
-
-// 导入点赞服务中的函数，用于批量获取评论的点赞信息。
 import { getCommentsLikesMap } from './likes.service';
-// 导入前端业务所需的、经过整合的评论记录类型。
 import type { CommentRecord, CommentExpand } from '~/types/comments';
-// 导入从 PocketBase schema 自动生成的原始评论响应类型和创建类型。
 import type {
   CommentsResponse as PBCommentsResponse,
   Create,

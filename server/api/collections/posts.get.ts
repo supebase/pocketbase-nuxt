@@ -3,12 +3,8 @@
  * @description 获取内容（文章）列表的 API 端点。
  *              支持分页功能。
  */
-
-// 导入核心的文章列表获取服务。
 import { getPostsList } from '../../services/posts.service';
-// 导入统一的 PocketBase 错误处理器。
-import { handlePocketBaseError } from '../../utils/errorHandler';
-// 导入前端期望的、经过包装的响应类型。
+import { handlePocketBaseError } from '../../utils/error-handler';
 import type { PostsListResponse } from '~/types/posts';
 
 /**

@@ -4,16 +4,10 @@
  *              接收用户的电子邮件和密码，调用认证服务进行验证，
  *              并在成功后建立用户的会话状态。
  */
-
-// 导入核心的登录服务，该服务封装了与 PocketBase 交互的认证逻辑。
 import { loginService } from '../../services/auth.service';
-// 导入统一的 PocketBase 错误处理器，用于将技术错误转换为用户友好的响应。
-import { handlePocketBaseError } from '../../utils/errorHandler';
-// 导入认证成功后的处理器，用于设置 Nuxt Session 和 PocketBase Cookie。
-import { handleAuthSuccess } from '../../utils/authHelpers';
-// 导入用于获取当前请求唯一的 PocketBase 实例的函数。
+import { handlePocketBaseError } from '../../utils/error-handler';
+import { handleAuthSuccess } from '../../utils/auth-helpers';
 import { getPocketBase } from '../../utils/pocketbase';
-// 导入与认证相关的类型定义，增强代码的类型安全。
 import type { LoginRequest, AuthResponse } from '~/types/auth';
 
 /**
@@ -31,7 +25,7 @@ export default defineEventHandler(async (event): Promise<AuthResponse> => {
     throw createError({
       statusCode: 400,
       message: '请输入电子邮件和登录密码', // 用户友好的中文提示
-      statusMessage: 'Invalid Input',      // HTTP 状态文本
+      statusMessage: 'Invalid Input', // HTTP 状态文本
     });
   }
 
@@ -53,7 +47,6 @@ export default defineEventHandler(async (event): Promise<AuthResponse> => {
     //   - 将 PocketBase 的 `pb_auth` Token 设置到浏览器的 Cookie 中
     //   - 返回一个标准化的成功响应体。
     return await handleAuthSuccess(event, pb, '登录成功');
-
   } catch (error) {
     // 步骤 4: 如果在 `try` 块中的任何 `await` 步骤（主要是 `loginService`）抛出了错误，
     //          在这里统一捕获。

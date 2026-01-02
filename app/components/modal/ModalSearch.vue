@@ -4,8 +4,7 @@
             class="rounded-full cursor-pointer focus:outline-none! focus-visible:ring-0!"
             @click="isOpen = true" />
 
-        <UModal v-model:open="isOpen"
-            :ui="{ overlay: 'backdrop-blur-xs', content: 'sm:max-w-2xl' }"
+        <UModal v-model:open="isOpen" :ui="{ overlay: 'backdrop-blur-xs', content: 'sm:max-w-2xl' }"
             title="Search" description="站内搜索">
             <template #content>
                 <CommonSearch @close="isOpen = false" />

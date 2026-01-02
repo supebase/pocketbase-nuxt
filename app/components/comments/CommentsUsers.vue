@@ -51,7 +51,7 @@ const props = defineProps({
 const target = ref(null);
 const isRendered = ref(false);
 const lastFetchTime = ref(0);
-const REFRESH_THRESHOLD = 60 * 1000; // 首页预览不需要太频繁，改为 60 秒
+const REFRESH_THRESHOLD = 30 * 1000; // 首页预览不需要太频繁，改为 30 秒
 
 // 1. 视口监听：进入视口才标记为可渲染
 useIntersectionObserver(

@@ -55,7 +55,8 @@
                 <div v-if="!item.published && canViewDrafts" class="text-warning">待发布稿</div>
                 <UBadge v-else-if="item.action === 'dit'" label="DIRE" variant="outline"
                   color="neutral" size="sm" class="text-dimmed" />
-                <UBadge v-else label="PARTAGER" variant="outline" color="neutral" size="sm" class="text-dimmed" />
+                <UBadge v-else label="PARTAGER" variant="outline" color="neutral" size="sm"
+                  class="text-dimmed" />
               </div>
             </template>
 

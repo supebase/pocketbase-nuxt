@@ -1,10 +1,10 @@
 module.exports = {
   semi: true,
   singleQuote: true,
-  trailingComma: 'es5',
+  trailingComma: 'all',
   tabWidth: 2,
   useTabs: false,
-  printWidth: 100,
+  printWidth: 80,
   bracketSpacing: true,
   arrowParens: 'always',
   vueIndentScriptAndStyle: true,

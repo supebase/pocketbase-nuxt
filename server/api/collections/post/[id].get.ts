@@ -2,12 +2,8 @@
  * @file API Route: /api/collections/post/:id [GET]
  * @description 获取单篇内容（文章）详情的 API 端点。
  */
-
-// 导入核心的文章获取服务。
 import { getPostById } from '../../../services/posts.service';
-// 导入统一的 PocketBase 错误处理器。
-import { handlePocketBaseError } from '../../../utils/errorHandler';
-// 导入前端期望的、经过包装的单篇文章响应类型。
+import { handlePocketBaseError } from '../../../utils/error-handler';
 import type { SinglePostResponse } from '~/types/posts';
 
 /**

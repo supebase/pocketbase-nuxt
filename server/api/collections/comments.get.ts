@@ -3,12 +3,8 @@
  * @description 获取评论列表的 API 端点。
  *              支持分页、过滤，并能根据当前登录的用户信息，返回每条评论的点赞状态。
  */
-
-// 导入核心的评论列表获取服务。
 import { getCommentsList } from '../../services/comments.service';
-// 导入统一的 PocketBase 错误处理器。
-import { handlePocketBaseError } from '../../utils/errorHandler';
-// 导入前端期望的、经过包装的响应类型。
+import { handlePocketBaseError } from '../../utils/error-handler';
 import type { CommentsListResponse } from '~/types/comments';
 
 /**
@@ -44,9 +40,9 @@ export default defineEventHandler(async (event): Promise<CommentsListResponse> =
     // 步骤 5: 调用服务层的 `getCommentsList` 函数，并传入所有处理好的参数。
     // 所有的数据获取和整合逻辑都在服务层完成。
     const {
-      items,          // 经过处理的评论列表 (CommentRecord[])
-      totalItems,     // 符合条件的总项目数
-      page: currentPage,   // 当前页码
+      items, // 经过处理的评论列表 (CommentRecord[])
+      totalItems, // 符合条件的总项目数
+      page: currentPage, // 当前页码
       perPage: currentPerPage, // 每页数量
     } = await getCommentsList(pb, page, perPage, filter, userId);
 

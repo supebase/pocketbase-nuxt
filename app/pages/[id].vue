@@ -1,8 +1,5 @@
 <template>
   <div class="container mx-auto">
-    <UAlert v-if="error" :description="error.data?.message || '获取内容失败，请稍后重试'" variant="soft"
-      icon="i-hugeicons:alert-02" color="error" class="mb-4" />
-
     <div v-if="status === 'pending' && !postWithRelativeTime" key="loading"
       class="flex flex-col gap-6 mt-4">
       <SkeletonPost class="opacity-70 mask-b-from-10" />
@@ -60,11 +57,6 @@
           @update-commenters="handleUpdateCommenters" />
       </div>
     </div>
-
-    <div v-else key="empty" class="flex flex-col items-center justify-center py-20 select-none">
-      <UEmpty variant="naked" title="内容无法找到" description="当前访问的内容可能已被删除，返回首页浏览更多"
-        :actions="[{ label: '返回首页', color: 'neutral', to: '/' }]" />
-    </div>
   </div>
 </template>
 
@@ -81,15 +73,6 @@ const { showHeaderBack } = useHeader();
 const route = useRoute();
 const { id } = route.params as { id: string };
 
-definePageMeta({
-  validate: (route) => {
-    const params = route.params as { id?: string };
-    const targetId = params.id;
-    if (!targetId) return false;
-    return /^[a-z0-9]{15}$/i.test(targetId);
-  },
-});
-
 const isListLoading = ref(false);
 const isUpdateRefresh = ref(false);
 const authorRow = ref<HTMLElement | null>(null);
@@ -98,12 +81,12 @@ const commenters = ref<any[]>([]);
 
 // --- 2. 数据获取 ---
 const { data, status, refresh, error } = await useLazyFetch<SinglePostResponse>(
-  `/api/collections/post/${id}`,
+  () => `/api/collections/post/${id}`, // 使用 getter 函数形式
   {
     key: `post-detail-${id}`,
     server: true,
     query: { userId },
-    watch: [() => id],
+    // watch 已经不再需要显式写 watch: [() => id]，因为第一个参数已经是响应式的了
   }
 );
 
@@ -200,6 +183,17 @@ watch(loggedIn, (isLogged) => {
     handleUpdateCommenters(commentListRef.value.getUniqueUsers(commentListRef.value.comments));
   }
 });
+
+watch(error, (newErr) => {
+  if (newErr) {
+    // 无论是 404 (ID不存在) 还是 500 (后端崩溃)
+    // 都会直接触发全屏的 error.vue
+    throw createError({
+      ...newErr,
+      fatal: true
+    })
+  }
+}, { immediate: true }) // 建议加上 immediate，防止 SSR 期间的错误被漏掉
 
 // --- 7. 生命周期与交互 ---
 onMounted(() => {

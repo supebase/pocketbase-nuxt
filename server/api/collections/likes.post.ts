@@ -3,12 +3,8 @@
  * @description 处理用户对评论的点赞/取消点赞操作的 API 端点。
  *              这是一个 "toggle" 接口，会根据当前的点赞状态自动执行相反的操作。
  */
-
-// 导入核心的点赞切换服务。
 import { toggleLike } from '../../services/likes.service';
-// 导入统一的 PocketBase 错误处理器。
-import { handlePocketBaseError } from '../../utils/errorHandler';
-// 导入与点赞相关的业务类型定义。
+import { handlePocketBaseError } from '../../utils/error-handler';
 import type { ToggleLikeRequest, ToggleLikeResponse } from '~/types/likes';
 
 /**
@@ -48,9 +44,9 @@ export default defineEventHandler(async (event): Promise<ToggleLikeResponse> => 
     return {
       message: result.liked ? '点赞成功' : '已取消点赞', // 根据操作结果给出不同的提示信息
       data: {
-        liked: result.liked,             // 当前是否点赞 (boolean)
-        likes: result.likes,             // 最新的点赞总数 (number)
-        commentId: result.commentId,     // 操作的评论 ID (string)
+        liked: result.liked, // 当前是否点赞 (boolean)
+        likes: result.likes, // 最新的点赞总数 (number)
+        commentId: result.commentId, // 操作的评论 ID (string)
       },
     };
   } catch (error) {

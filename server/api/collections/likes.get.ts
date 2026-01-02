@@ -3,12 +3,8 @@
  * @description 批量获取一组评论的点赞信息的 API 端点。
  *              用于高效解决 "N+1" 查询问题，一次性返回多个评论的点赞总数和当前用户的点赞状态。
  */
-
-// 导入用于批量获取评论点赞映射的服务。
 import { getCommentsLikesMap } from '../../services/likes.service';
-// 导入统一的 PocketBase 错误处理器。
-import { handlePocketBaseError } from '../../utils/errorHandler';
-// 导入与点赞相关的业务响应类型。
+import { handlePocketBaseError } from '../../utils/error-handler';
 import type { CommentLikesResponse } from '~/types/likes';
 
 /**

@@ -3,7 +3,6 @@
  * @description 该文件封装了所有与点赞功能相关的业务逻辑，
  *              包括切换点赞状态、获取单条评论的点赞数，以及最高效的批量获取多条评论的点赞信息。
  */
-
 import type {
   LikesResponse as PBLikesResponse,
   Create,

@@ -3,9 +3,9 @@
  * @description 更新指定 ID 内容（文章）的 API 端点。
  *              实现了严格的所有权验证和智能的部分更新逻辑。
  */
-import { handlePocketBaseError } from '../../../utils/errorHandler';
-import { getLinkPreview } from '~~/server/utils/graphScraper';
-import { processMarkdownImages } from '~~/server/utils/markdownImages';
+import { handlePocketBaseError } from '../../../utils/error-handler';
+import { getLinkPreview } from '~~/server/utils/graph-scraper';
+import { processMarkdownImages } from '~~/server/utils/markdown-image';
 import sanitizeHtml from 'sanitize-html';
 
 export default defineEventHandler(async (event) => {

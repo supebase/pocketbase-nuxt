@@ -4,16 +4,11 @@
  *              该接口负责处理用户提交的评论，执行安全检查和数据验证，
  *              然后将新评论存入数据库。
  */
-
-// 导入核心的评论创建服务。
 import { createComment } from '../../services/comments.service';
-// 导入统一的 PocketBase 错误处理器。
-import { handlePocketBaseError } from '../../utils/errorHandler';
-// 导入用于清理 HTML 的库，这是防止 XSS 攻击的关键。
-import sanitizeHtml from 'sanitize-html';
-// 导入相关的业务类型定义。
+import { handlePocketBaseError } from '../../utils/error-handler';
 import type { CreateCommentRequest } from '~/types/comments';
 import type { Create } from '~/types/pocketbase-types';
+import sanitizeHtml from 'sanitize-html';
 
 /**
  * 定义处理创建评论请求的事件处理器。
@@ -70,9 +65,9 @@ export default defineEventHandler(async (event) => {
     // 步骤 6: 构造符合数据库 `comments` 集合结构的 payload。
     // 这是即将要插入数据库的最终数据。
     const createData: Create<'comments'> = {
-      comment: cleanComment,    // 使用经过安全清理的内容
-      post: post,               // 关联的帖子 ID
-      user: user.id,            // **安全关键**：强制使用从服务端 Session 中获取的用户 ID，而不是客户端提交的任何 ID。
+      comment: cleanComment, // 使用经过安全清理的内容
+      post: post, // 关联的帖子 ID
+      user: user.id, // **安全关键**：强制使用从服务端 Session 中获取的用户 ID，而不是客户端提交的任何 ID。
     };
 
     // 步骤 7: 调用服务层函数来执行数据库创建操作。

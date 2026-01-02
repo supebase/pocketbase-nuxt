@@ -3,10 +3,7 @@
  * @description 用户登出的 API 端点。
  *              该接口负责清理所有与用户会话相关的状态，包括服务端的 Session 和客户端的 Cookies。
  */
-
-// 导入登出服务，该服务会清理 PocketBase 实例内存中的认证信息。
 import { logoutService } from '../../services/auth.service';
-// 导入用于获取当前请求唯一的 PocketBase 实例的函数。
 import { getPocketBase } from '../../utils/pocketbase';
 
 /**

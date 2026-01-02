@@ -4,12 +4,8 @@
  *              包括登录、注册和登出。服务层不直接处理 HTTP 请求和响应，
  *              而是专注于执行具体的业务操作，并供上层的 API handlers 调用。
  */
-
-// 从工具函数中导入 MD5 哈希生成器，用于创建 Gravatar 头像链接。
-import { getMd5Hash } from '../utils/md5Hash';
-// 从共享的工具函数中导入邮箱和名称格式化函数。
+import { getMd5Hash } from '../utils/md5-hash';
 import { normalizeEmail, formatDefaultName } from '~/utils/index';
-// 导入 PocketBase 自动生成的类型，以确保与数据库交互时的数据结构正确。
 import type { UsersResponse, Create, TypedPocketBase } from '~/types/pocketbase-types';
 import type { H3Event } from 'h3';
 

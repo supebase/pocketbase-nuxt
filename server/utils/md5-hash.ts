@@ -1,4 +1,3 @@
-// 从 Node.js 内置模块导入 `createHash`，用于加密操作，例如生成 MD5 哈希。
 import { createHash } from 'node:crypto';
 
 /**

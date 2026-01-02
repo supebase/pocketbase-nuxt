@@ -3,12 +3,8 @@
  * @description 该文件包含了处理用户认证成功后的通用逻辑，
  *              旨在统一管理 Nuxt Session 和 PocketBase Cookie，确保前后端状态一致。
  */
-
-// 导入 H3Event 类型，用于在 Nitro 服务端路由中获取请求上下文。
 import type { H3Event } from 'h3';
-// 导入自定义的用户记录和认证响应类型，增强代码的可读性和健壮性。
 import type { UserRecord, AuthResponse } from '~/types/auth';
-// 导入类型安全的 PocketBase 实例类型。
 import type { TypedPocketBase } from '~/types/pocketbase-types';
 
 /**
