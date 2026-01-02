@@ -1,26 +1,46 @@
 <template>
   <div class="gravatar-wrapper size-full">
-    <slot :src="avatarUrl" :is-loaded="!isLoading && !hasError && !!avatarId"
-      :is-loading="isLoading" :has-error="hasError">
+    <slot
+      :src="avatarUrl"
+      :is-loaded="!isLoading && !hasError && !!avatarId"
+      :is-loading="isLoading"
+      :has-error="hasError"
+    >
       <div
-        class="relative overflow-hidden rounded-full size-full flex items-center justify-center group">
+        class="relative overflow-hidden rounded-full size-full flex items-center justify-center group"
+      >
+        <div
+          v-if="isLoading && !hasError"
+          class="absolute inset-0 z-10 bg-neutral-100 dark:bg-neutral-800"
+        />
 
-        <div v-if="isLoading && !hasError"
-          class="absolute inset-0 z-10 bg-neutral-100 dark:bg-neutral-800" />
-
-        <img v-if="avatarId" ref="imgRef" :src="avatarUrl" @load="handleLoad" @error="handleError"
+        <img
+          v-if="avatarId"
+          ref="imgRef"
+          :src="avatarUrl"
+          @load="handleLoad"
+          @error="handleError"
           :class="[
             'object-cover size-full transition-all duration-700 ease-in-out z-0',
-            isLoading ? 'scale-110 opacity-0' : 'scale-100 opacity-100'
-          ]" />
+            isLoading ? 'scale-110 opacity-0' : 'scale-100 opacity-100',
+          ]"
+        />
 
-        <div v-if="hasError || (!avatarId && !isLoading)"
-          class="z-20 flex items-center justify-center">
+        <div
+          v-if="hasError || (!avatarId && !isLoading)"
+          class="z-20 flex items-center justify-center"
+        >
           <UIcon name="i-hugeicons:image-02" class="text-muted size-5" />
         </div>
 
-        <div v-if="isLoading" class="absolute inset-0 z-30 flex items-center justify-center">
-          <UIcon name="i-hugeicons:refresh" class="size-4 text-muted animate-spin" />
+        <div
+          v-if="isLoading"
+          class="absolute inset-0 z-30 flex items-center justify-center"
+        >
+          <UIcon
+            name="i-hugeicons:refresh"
+            class="size-4 text-muted animate-spin"
+          />
         </div>
       </div>
     </slot>
@@ -31,36 +51,33 @@
 import { ref, watch, onMounted, nextTick } from 'vue';
 
 const props = defineProps<{
-  avatarId?: string | null;
-  size?: number;
-  rank?: string;
+    avatarId?: string | null;
+    size?: number;
+    rank?: string;
 }>();
 
 const imgRef = ref<HTMLImageElement | null>(null);
 
-const { avatarUrl, isLoading, hasError, handleLoad, handleError } = useGravatar(
-  () => props.avatarId,
-  { size: props.size, rank: props.rank }
-);
+const { avatarUrl, isLoading, hasError, handleLoad, handleError } = useGravatar(() => props.avatarId, { size: props.size, rank: props.rank });
 
-/**
- * 核心：处理浏览器缓存
- * 如果图片已经加载完成（从缓存读取），手动触发 handleLoad
- */
+  /**
+   * 核心：处理浏览器缓存
+   * 如果图片已经加载完成（从缓存读取），手动触发 handleLoad
+   */
 const checkImageComplete = () => {
-  if (imgRef.value?.complete && imgRef.value?.naturalWidth !== 0) {
-    handleLoad();
-  }
+    if (imgRef.value?.complete && imgRef.value?.naturalWidth !== 0) {
+      handleLoad();
+    }
 };
 
 onMounted(() => {
-  checkImageComplete();
+    checkImageComplete();
 });
 
 // 当 URL 改变时（如列表翻页），在 DOM 更新后再次检查
 watch(avatarUrl, async (newVal) => {
-  if (!newVal) return;
-  await nextTick();
-  checkImageComplete();
+    if (!newVal) return;
+    await nextTick();
+    checkImageComplete();
 });
 </script>

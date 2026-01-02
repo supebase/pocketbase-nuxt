@@ -8,8 +8,8 @@
  * @returns 是否为有效的电子邮件格式
  */
 export function isValidEmail(email: string): boolean {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
+	const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+	return emailRegex.test(email);
 }
 
 /**
@@ -19,7 +19,7 @@ export function isValidEmail(email: string): boolean {
  * @returns 是否满足最小长度要求
  */
 export function isValidPasswordLength(password: string, minLength: number = 8): boolean {
-  return password.length >= minLength;
+	return password.length >= minLength;
 }
 
 /**
@@ -28,8 +28,8 @@ export function isValidPasswordLength(password: string, minLength: number = 8): 
  * @returns 是否包含至少一个数字
  */
 export function hasPasswordNumber(password: string): boolean {
-  const numberRegex = /\d/;
-  return numberRegex.test(password);
+	const numberRegex = /\d/;
+	return numberRegex.test(password);
 }
 
 /**
@@ -38,8 +38,8 @@ export function hasPasswordNumber(password: string): boolean {
  * @returns 是否包含至少一个小写字母
  */
 export function hasPasswordLowerCase(password: string): boolean {
-  const lowerCaseRegex = /[a-z]/;
-  return lowerCaseRegex.test(password);
+	const lowerCaseRegex = /[a-z]/;
+	return lowerCaseRegex.test(password);
 }
 
 /**
@@ -48,8 +48,8 @@ export function hasPasswordLowerCase(password: string): boolean {
  * @returns 是否包含至少一个大写字母
  */
 export function hasPasswordUpperCase(password: string): boolean {
-  const upperCaseRegex = /[A-Z]/;
-  return upperCaseRegex.test(password);
+	const upperCaseRegex = /[A-Z]/;
+	return upperCaseRegex.test(password);
 }
 
 /**
@@ -59,7 +59,7 @@ export function hasPasswordUpperCase(password: string): boolean {
  * @returns 两个密码是否匹配
  */
 export function doPasswordsMatch(password: string, confirmPassword: string): boolean {
-  return password === confirmPassword;
+	return password === confirmPassword;
 }
 
 /**
@@ -68,5 +68,5 @@ export function doPasswordsMatch(password: string, confirmPassword: string): boo
  * @returns 是否为空或只包含空格、回车
  */
 export function isEmptyString(str: string): boolean {
-  return str.trim() === '';
+	return str.trim() === '';
 }

@@ -1,15 +1,29 @@
 <template>
-  <UPopover :ui="{ content: 'ring-0 shadow-none bg-transparent' }" v-model:open="isPickerVisible">
+  <UPopover
+    :ui="{ content: 'ring-0 shadow-none bg-transparent' }"
+    v-model:open="isPickerVisible"
+  >
     <div class="mt-1.5">
-      <UIcon name="i-hugeicons:smile" @click.stop="openPicker"
-        class="size-5 text-muted cursor-pointer hover:text-primary transition-colors" />
+      <UIcon
+        name="i-hugeicons:smile"
+        @click.stop="openPicker"
+        class="size-5 text-muted cursor-pointer hover:text-primary transition-colors"
+      />
     </div>
 
     <template #content>
       <div class="p-2">
-        <NuxtEmojiPicker native hide-search hide-group-icons hide-group-names
-          disable-sticky-group-names disable-skin-tones :theme="theme" @select="handleEmojiSelect"
-          :disabled-groups="disabledGroups" />
+        <NuxtEmojiPicker
+          native
+          hide-search
+          hide-group-icons
+          hide-group-names
+          disable-sticky-group-names
+          disable-skin-tones
+          :theme="theme"
+          @select="handleEmojiSelect"
+          :disabled-groups="disabledGroups"
+        />
       </div>
     </template>
   </UPopover>
@@ -17,39 +31,39 @@
 
 <script setup lang="ts">
 const colorMode = useColorMode();
-const theme = computed(() => (colorMode.value === "dark" ? "dark" : "light"));
+const theme = computed(() => (colorMode.value === 'dark' ? 'dark' : 'light'));
 
 const isPickerVisible = ref(false);
 
 const openPicker = () => {
-  isPickerVisible.value = true;
+    isPickerVisible.value = true;
 
-  nextTick(() => {
-    // 延迟一点时间，确保组件渲染完毕后移除焦点
-    setTimeout(() => {
-      (document.activeElement as HTMLElement)?.blur();
-    }, 0);
-  });
+    nextTick(() => {
+      // 延迟一点时间，确保组件渲染完毕后移除焦点
+      setTimeout(() => {
+        (document.activeElement as HTMLElement)?.blur();
+      }, 0);
+    });
 };
 
 const disabledGroups = ref([
-  "animals_nature",
-  "food_drink",
-  "activities",
-  "travel_places",
-  "objects",
-  "symbols",
-  "flags",
+    'animals_nature',
+    'food_drink',
+    'activities',
+    'travel_places',
+    'objects',
+    'symbols',
+    'flags',
 ]);
 
-const emit = defineEmits(["emoji"]);
+const emit = defineEmits(['emoji']);
 
 const handleEmojiSelect = (emoji: { i: string }) => {
-  if (typeof emoji.i === "string") {
-    emit("emoji", emoji.i);
-    isPickerVisible.value = false;
-  } else {
-    console.error("Invalid emoji:", emoji);
-  }
+    if (typeof emoji.i === 'string') {
+      emit('emoji', emoji.i);
+      isPickerVisible.value = false;
+    } else {
+      console.error('Invalid emoji:', emoji);
+    }
 };
 </script>

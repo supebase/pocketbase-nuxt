@@ -19,18 +19,17 @@
 </template>
 
 <script setup lang="ts">
-import type { NuxtError } from '#app';
+  import type { NuxtError } from '#app';
 
-// 定义属性
-const props = defineProps<{
-  error: NuxtError;
-}>();
+  const props = defineProps<{
+    error: NuxtError;
+  }>();
 
-/**
- * 清除错误并重定向
- * clearError 是 Nuxt 内置函数，用于重置应用状态
- */
-const handleError = () => {
-  clearError({ redirect: '/' });
-};
+  /**
+   * 清除错误并重定向
+   * clearError 是 Nuxt 内置函数，用于重置应用状态
+   */
+  const handleError = () => {
+    clearError({ redirect: '/' });
+  };
 </script>

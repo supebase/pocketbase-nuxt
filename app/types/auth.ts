@@ -8,30 +8,30 @@ import type { UsersResponse } from './pocketbase-types';
 export type UserRecord = Pick<UsersResponse, 'id' | 'email' | 'name' | 'avatar' | 'verified' | 'location'>;
 
 export interface LoginRequest {
-  email: string;
-  password: string;
+	email: string;
+	password: string;
 }
 
 export interface RegisterRequest {
-  email: string;
-  password: string;
-  passwordConfirm: string;
-  location: string;
+	email: string;
+	password: string;
+	passwordConfirm: string;
+	location: string;
 }
 
 export interface AuthResponse {
-  message: string;
-  data: {
-    user: UserRecord;
-  };
+	message: string;
+	data: {
+		user: UserRecord;
+	};
 }
 
 declare module '#auth-utils' {
-  // 这里的 User 接口直接继承自我们定义的 UserRecord
-  interface User extends UserRecord {}
+	// 这里的 User 接口直接继承自我们定义的 UserRecord
+	interface User extends UserRecord { }
 
-  interface UserSession {
-    user?: User;
-    loggedInAt?: string;
-  }
+	interface UserSession {
+		user?: User;
+		loggedInAt?: string;
+	}
 }

@@ -23,12 +23,12 @@
       </div>
     </div>
 
-    <div class="mt-10 pt-8 border-t border-neutral-100 dark:border-neutral-800 space-y-4">
+    <div
+      class="mt-10 pt-8 border-t border-neutral-100 dark:border-neutral-800 space-y-4"
+    >
       <USkeleton class="h-20 w-full rounded-lg" />
     </div>
   </div>
 </template>
 
-<script setup lang="ts">
-
-</script>
+<script setup lang="ts"></script>
