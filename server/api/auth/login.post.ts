@@ -7,14 +7,14 @@
 import { getPocketBase } from '../../utils/pocketbase';
 import { loginService } from '../../services/auth.service';
 import { handleAuthSuccess } from '../../utils/auth-helpers';
-import { handlePocketBaseError } from '../../utils/error-handler';
+import { defineApiHandler } from '~~/server/utils/api-wrapper';
 import type { LoginRequest, AuthResponse } from '~/types/auth';
 
 /**
  * 定义处理用户登录请求的事件处理器 (Event Handler)。
  * 这是 Nitro (Nuxt 的服务端引擎) 的标准写法。
  */
-export default defineEventHandler(async (event): Promise<AuthResponse> => {
+export default defineApiHandler(async (event): Promise<AuthResponse> => {
 	// 从请求体中异步读取 JSON 数据，并断言其类型为 `LoginRequest`。
 	const body = await readBody<LoginRequest>(event);
 	const { email, password } = body;
@@ -33,14 +33,10 @@ export default defineEventHandler(async (event): Promise<AuthResponse> => {
 	// 传入 `event` 对象，`getPocketBase` 内部可能会用它来处理某些与请求相关的逻辑。
 	const pb = getPocketBase(event);
 
-	try {
-		// 步骤 2: 调用服务层的 `loginService`，并传入当前的 `pb` 实例以及用户凭证。
-		await loginService(pb, email, password);
+	// 步骤 2: 调用服务层的 `loginService`，并传入当前的 `pb` 实例以及用户凭证。
+	await loginService(pb, email, password);
 
-		// 步骤 3: 如果 `loginService` 没有抛出错误，说明登录成功。
-		// 接着，调用 `handleAuthSuccess` 并将已经填充了认证信息的 `pb` 实例传递给它。
-		return await handleAuthSuccess(event, pb, '登录成功');
-	} catch (error) {
-		return handlePocketBaseError(error, '登录失败，请检查账号信息是否正确');
-	}
+	// 步骤 3: 如果 `loginService` 没有抛出错误，说明登录成功。
+	// 接着，调用 `handleAuthSuccess` 并将已经填充了认证信息的 `pb` 实例传递给它。
+	return await handleAuthSuccess(event, pb, '登录成功');
 });
