@@ -3,7 +3,6 @@
  * @description 获取内容（文章）列表的 API 端点。
  *              支持分页功能。
  */
-import { getPostsList } from '../../services/posts.service';
 import { getPaginationParams } from '../../utils/pagination';
 import { defineApiHandler } from '~~/server/utils/api-wrapper';
 import type { PostsListResponse } from '~/types/posts';

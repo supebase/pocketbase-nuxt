@@ -3,7 +3,6 @@
  * @description 创建新内容（文章）的 API 端点。
  *              支持富文本、链接预览等高级功能，并执行严格的安全过滤。
  */
-import { createPost } from '~~/server/services/posts.service';
 import { getLinkPreview } from '~~/server/utils/graph-scraper';
 import { defineApiHandler } from '~~/server/utils/api-wrapper';
 import type { CreatePostRequest, SinglePostResponse } from '~/types/posts';

@@ -4,7 +4,7 @@
  *              该文件遵循“依赖注入”的设计模式，所有函数都接收一个 PocketBase 实例作为参数，
  *              以确保操作的上下文（特别是用户认证状态）由调用方（API 路由）决定。
  */
-import { ensureOwnership } from '~~/server/utils/auth';
+import { ensureOwnership } from '~~/server/utils/validate-owner';
 import type { PostsResponse as PBPostsResponse, TypedPocketBase } from '~/types/pocketbase-types';
 import type { PostExpand } from '~/types/posts';
 import { processMarkdownImages } from '~~/server/utils/markdown';
@@ -78,58 +78,83 @@ export async function getPostById(pb: TypedPocketBase, postId: string) {
 }
 
 /**
- * 内部核心方法：同步 Markdown 图片到本地，并处理 PB 的文件引用逻辑
+ * 内部核心方法：同步 Markdown 图片到本地
+ * (保持逻辑不变，但确保它能处理异常)
  */
 async function syncPostImages(pb: TypedPocketBase, postId: string, content: string, existingImages: string[] = []) {
-	const { blobs, remoteUrls } = await processMarkdownImages(content);
+	const { successResults } = await processMarkdownImages(content);
 
-	// 如果没有远程图片，直接清洗返回
-	if (remoteUrls.length === 0) {
+	// 如果没有图片需要处理，直接返回清洗后的内容
+	if (successResults.length === 0) {
 		return sanitizePostContent(content);
 	}
 
 	const formData = new FormData();
-	// 关键细节：保留旧图片引用（PUT 逻辑必备，POST 时 existingImages 为空不影响）
+	// 保留旧图片
 	existingImages.forEach(name => formData.append('markdown_images', name));
 
 	// 追加新下载的图片
-	blobs.forEach((blob, i) => {
-		formData.append('markdown_images', blob, `img_${Date.now()}_${i}.png`);
+	successResults.forEach((item, i) => {
+		formData.append('markdown_images', item.blob, `img_${Date.now()}_${i}.png`);
 	});
 
-	// 第一次更新：为了获得上传后的文件名
+	// 更新 PB 记录的文件字段
 	const record = await pb.collection('posts').update(postId, formData);
 
-	// 第二次处理：替换内容中的远程 URL 为本地 API 代理 URL
 	let finalContent = content;
+	const allImages = record.markdown_images;
+	const startIndex = allImages.length - successResults.length;
 
-	const allImages = record.markdown_images; // 包含 旧图 + 新图
-	const startIndex = allImages.length - remoteUrls.length;
-
-	remoteUrls.forEach((url, i) => {
+	// 将原始 URL 替换为本地代理 URL
+	successResults.forEach((item, i) => {
 		const fileName = allImages[startIndex + i];
 		const proxyUrl = `/api/images/posts/${postId}/${fileName}`;
-		finalContent = finalContent.split(url).join(proxyUrl);
+		finalContent = finalContent.split(item.url).join(proxyUrl);
 	});
 
 	return sanitizePostContent(finalContent);
 }
 
 /**
- * 创建一篇新文章。
+ * 创建一篇新文章 (增强一致性版)
+ * 逻辑：强制初始状态为草稿 (published = false)，确保图片同步成功后再根据需要上线。
  * @param pb 与当前请求上下文绑定的 PocketBase 实例（必须是已认证用户的实例）。
  * @param data 要创建的文章数据。`Create<'posts'>` 类型确保了传入的数据符合数据库 `posts` 集合的字段要求。
  * @returns 返回新创建的文章记录。
  */
 export async function createPost(pb: TypedPocketBase, initialData: FormData, rawContent: string) {
-	// 1. 先用原始数据（含 content 占位）创建记录，拿到 postId
+	// 1. 获取用户意愿：记录调用方原本是否想直接发布
+	const originalPublishedStatus = initialData.get('published') === 'true';
+
+	// 2. 强制初始状态为草稿，确保处理期间前端列表不可见（根据你的权限过滤逻辑）
+	initialData.set('published', 'false');
 	initialData.append('content', rawContent);
 
+	// 3. 创建记录
 	const post = await pb.collection('posts').create(initialData);
-	// 2. 处理图片和 HTML 清洗
-	const cleanContent = await syncPostImages(pb, post.id, rawContent);
-	// 3. 最终更新内容
-	return await pb.collection('posts').update(post.id, { content: cleanContent });
+
+	try {
+		// 4. 处理图片同步和清洗
+		// 如果失败，会抛出异常，此时记录已存在且为 published = false
+		const cleanContent = await syncPostImages(pb, post.id, rawContent);
+
+		// 5. 第二次更新：填入清洗后的内容，并恢复用户原始的发布状态
+		return await pb.collection('posts').update(post.id, {
+			content: cleanContent,
+			published: originalPublishedStatus // 此时才真正根据用户意愿发布
+		});
+	} catch (error: any) {
+		// 这里不删除记录，而是将错误向上抛出
+		// 结果：数据库里留下了一篇 content 为原始 Markdown 的草稿
+		console.error(`[PostService] 图片同步失败，文章已保留为草稿: ${post.id}`, error);
+
+		// 抛出一个带有特定信息的错误，方便前端给用户更具体的提示
+		throw createError({
+			statusCode: 202, // Accepted 但未完全处理
+			message: '文章已保存至草稿，但部分远程图片下载失败，请手动编辑检查。',
+			data: { postId: post.id }
+		});
+	}
 }
 
 /**

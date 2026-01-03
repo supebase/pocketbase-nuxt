@@ -5,7 +5,6 @@
  *              并在成功后自动为用户登录并建立会话。
  */
 import { getPocketBase } from '../../utils/pocketbase';
-import { registerService } from '../../services/auth.service';
 import { handleAuthSuccess } from '../../utils/auth-helpers';
 import { defineApiHandler } from '~~/server/utils/api-wrapper';
 import type { RegisterRequest, AuthResponse } from '~/types/auth';

@@ -3,7 +3,6 @@
  * @description 删除单篇内容（文章）的 API 端点。
  *              执行严格的权限验证，确保只有文章的创建者本人才能删除该文章。
  */
-import { deletePost } from '../../../services/posts.service';
 import { defineApiHandler } from '~~/server/utils/api-wrapper';
 
 /**

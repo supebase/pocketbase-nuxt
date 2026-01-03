@@ -256,7 +256,6 @@ const handleSubmit = async () => {
 
       await refreshNuxtData('posts-list-data');
       markAsUpdated(id);
-
       await navigateTo('/');
     } finally {
       isSubmitting.value = false;

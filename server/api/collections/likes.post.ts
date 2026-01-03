@@ -3,7 +3,6 @@
  * @description 处理用户对评论的点赞/取消点赞操作的 API 端点。
  *              这是一个 "toggle" 接口，会根据当前的点赞状态自动执行相反的操作。
  */
-import { toggleLike } from '../../services/likes.service';
 import { defineApiHandler } from '~~/server/utils/api-wrapper';
 import type { ToggleLikeRequest, ToggleLikeResponse } from '~/types/likes';
 

@@ -1,44 +1,47 @@
 /**
- * 提取 Markdown 中的外部远程图片并下载
+ * 提取 Markdown 中的外部远程图片并下载 (高效并行版)
  */
 export const processMarkdownImages = async (content: string) => {
 	const imageRegex = /!\[.*?\]\((https?:\/\/.*?)\)/g;
 	const matches = [...content.matchAll(imageRegex)];
 
-	const blobs: Blob[] = [];
-	const remoteUrls: string[] = [];
+	const tasks: Promise<{ url: string; blob: Blob } | null>[] = [];
 	const seen = new Set<string>();
 
 	for (const match of matches) {
 		const url = match[1];
 
-		// 1. 去重判断
-		if (seen.has(url)) continue;
-
-		// 2. 核心：判断是否已经是本地化后的图片
-		// 逻辑：如果链接里包含 '/api/images/'，说明它已经是存储在 PB 里的文件了，跳过下载
-		if (url.includes('/api/images/')) {
-			continue;
-		}
-
+		// 1. 去重及本地路径判断
+		if (seen.has(url) || url.includes('/api/images/')) continue;
 		seen.add(url);
 
-		try {
-			// 3. 只下载真正的外部链接
-			const buffer = await $fetch<ArrayBuffer>(url, {
-				responseType: 'arrayBuffer',
-				timeout: 8000,
-			});
+		// 2. 创建下载任务 (暂不 await)
+		tasks.push((async () => {
+			try {
+				const response = await $fetch.raw<ArrayBuffer>(url, {
+					responseType: 'arrayBuffer',
+					timeout: 8000,
+				});
 
-			const ext = url.split('.').pop()?.split(/[?#]/)[0] || 'png';
-			const blob = new Blob([buffer], { type: `image/${ext}` });
+				const contentType = response.headers.get('content-type') || '';
+				if (!contentType.startsWith('image/')) {
+					return null;
+				}
 
-			blobs.push(blob);
-			remoteUrls.push(url);
-		} catch (e) {
-			console.error(`[Markdown Image] 外部图片下载失败: ${url}`);
-		}
+				const blob = new Blob([response._data!], { type: contentType });
+				return { url, blob };
+			} catch (e) {
+				console.error(`[Markdown Image] 下载失败: ${url}`);
+				return null;
+			}
+		})());
 	}
 
-	return { blobs, remoteUrls };
+	// 3. 并行执行所有任务
+	const results = await Promise.all(tasks);
+
+	// 4. 过滤掉失败的任务 (null)
+	const successResults = results.filter((r): r is { url: string; blob: Blob } => r !== null);
+
+	return { successResults };
 };

@@ -3,7 +3,6 @@
  * @description 删除单条评论的 API 端点。
  *              执行严格的权限验证，确保只有评论的创建者本人才能删除该评论。
  */
-import { deleteComment } from '../../../services/comments.service';
 import { defineApiHandler } from '~~/server/utils/api-wrapper';
 
 /**

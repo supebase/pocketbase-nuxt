@@ -3,7 +3,6 @@
  * @description 批量获取一组评论的点赞信息的 API 端点。
  *              用于高效解决 "N+1" 查询问题，一次性返回多个评论的点赞总数和当前用户的点赞状态。
  */
-import { getCommentsLikesMap } from '../../services/likes.service';
 import { defineApiHandler } from '~~/server/utils/api-wrapper';
 import type { CommentLikesResponse } from '~/types/likes';
 

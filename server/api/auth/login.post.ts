@@ -5,7 +5,6 @@
  *              并在成功后建立用户的会话状态。
  */
 import { getPocketBase } from '../../utils/pocketbase';
-import { loginService } from '../../services/auth.service';
 import { handleAuthSuccess } from '../../utils/auth-helpers';
 import { defineApiHandler } from '~~/server/utils/api-wrapper';
 import type { LoginRequest, AuthResponse } from '~/types/auth';

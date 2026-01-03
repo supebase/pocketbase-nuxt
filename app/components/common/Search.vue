@@ -20,6 +20,7 @@
         <div
           v-if="item.id === 'load-more-trigger'"
           class="flex items-center justify-center w-full py-2 text-sm font-medium text-dimmed"
+          @click.stop.prevent="onSelect(item)"
         >
           <UIcon
             v-if="isLoadingMore"
@@ -200,21 +201,20 @@ const groups = computed(() => {
 });
 
 function onSelect(item: any) {
-    // 拦截加载更多触发器
-    if (item?.id === 'load-more-trigger') {
+    if (!item) return;
+
+    // 1. 处理加载更多
+    if (item.id === 'load-more-trigger') {
       if (!isLoadingMore.value) {
         loadMore(fetchMoreData);
       }
-
-      return; // 保持搜索框开启
+      return; // 直接返回，不再向下执行 navigateTo
     }
 
-    // 正常跳转结果
-    if (item?.to) {
+    // 2. 处理正常跳转 (item.to 存在的情况)
+    if (item.to) {
       emit('close');
-
       searchQuery.value = '';
-      
       resetPagination([], 0);
       navigateTo(item.to);
     }

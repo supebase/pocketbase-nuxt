@@ -10,7 +10,14 @@ export const useAuth = (isLoginMode?: Ref<boolean>) => {
 	const passwordConfirm = ref('');
 	const loading = ref(false); // 用于登录/注册
 	const isLoggingOut = ref(false); // 用于登出
+
 	const error = ref('');
+
+	if (isLoginMode) {
+		watch(isLoginMode, () => {
+			error.value = '';
+		});
+	}
 
 	// --- 2. 密码强度计算 ---
 	const strength = computed(() => checkPasswordStrength(password.value));
@@ -86,12 +93,19 @@ export const useAuth = (isLoginMode?: Ref<boolean>) => {
 
 			await navigateTo(redirectPath, { replace: true });
 		} catch (err: any) {
-			if (err.data?.message) {
+			// 联动 handlePocketBaseError 返回的数据结构
+			const pbErrorData = err.data?.data;
+
+			if (pbErrorData?._isPocketBaseError) {
+				// 如果后端返回了具体的字段错误 (email, password 等)
+				if (pbErrorData.fields && Object.keys(pbErrorData.fields).length > 0) {
+					error.value = pbErrorData.fields;
+				}
+				// 统一显示汇总后的友好信息
 				error.value = err.data.message;
-			} else if (err.message) {
-				error.value = err.message.includes('fetch') ? '无法连接到服务器，请检查网络' : err.message;
 			} else {
-				error.value = '发生未知错误，请稍后再试';
+				// 处理网络错误或其他异常
+				error.value = err.data?.message || err.message || '服务器响应异常';
 			}
 		} finally {
 			loading.value = false;
@@ -103,7 +117,7 @@ export const useAuth = (isLoginMode?: Ref<boolean>) => {
 		if (isLoggingOut.value) return;
 
 		isLoggingOut.value = true;
-		
+
 		try {
 			await $fetch('/api/auth/logout', { method: 'POST' });
 			await fetchSession();

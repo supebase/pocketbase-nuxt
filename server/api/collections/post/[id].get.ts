@@ -2,7 +2,6 @@
  * @file API Route: /api/collections/post/:id [GET]
  * @description 获取单篇内容（文章）详情的 API 端点。
  */
-import { getPostById } from '../../../services/posts.service';
 import { defineApiHandler } from '~~/server/utils/api-wrapper';
 import type { SinglePostResponse } from '~/types/posts';
 

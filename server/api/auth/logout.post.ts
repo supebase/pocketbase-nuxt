@@ -4,7 +4,6 @@
  *              该接口负责清理所有与用户会话相关的状态，包括服务端的 Session 和客户端的 Cookies。
  */
 import { getPocketBase } from '../../utils/pocketbase';
-import { logoutService } from '../../services/auth.service';
 
 /**
  * 定义处理用户登出请求的事件处理器。

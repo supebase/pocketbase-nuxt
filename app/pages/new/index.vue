@@ -159,20 +159,20 @@
 </template>
 
 <script setup lang="ts">
-  const getInitialForm = () => ({
+const getInitialForm = () => ({
     content: '',
     allow_comment: true,
     published: true,
     icon: '',
     action: 'dit',
     link: '',
-  });
+});
 
-  const form = reactive(getInitialForm());
-  const isSubmitting = ref(false);
-  const maxLimit = 10000;
+const form = reactive(getInitialForm());
+const isSubmitting = ref(false);
+const maxLimit = 10000;
 
-  const {
+const {
     showPreview,
     showPreviewContent,
     debouncedContent,
@@ -183,27 +183,41 @@
     togglePreview,
     onPreviewScroll,
     setupContentWatch,
-  } = useEditorLogic();
+} = useEditorLogic();
 
-  setupContentWatch(() => form.content);
+setupContentWatch(() => form.content);
 
-  const handleSubmit = async () => {
+const handleSubmit = async () => {
     isSubmitting.value = true;
-    try {
-      await $fetch('/api/collections/posts', { method: 'POST', body: form });
-      await refreshNuxtData('posts-list-data');
 
+    try {
+      // 构建 FormData 以匹配后端服务要求
+      const formData = new FormData();
+      formData.append('action', form.action);
+      formData.append('allow_comment', String(form.allow_comment));
+      formData.append('published', String(form.published));
+      formData.append('icon', form.icon);
+      formData.append('link', form.link);
+
+      await $fetch('/api/collections/posts', {
+        method: 'POST',
+        body: {
+          ...form,
+          content: form.content,
+        },
+      });
+
+      await refreshNuxtData('posts-list-data');
       Object.assign(form, getInitialForm());
-	  
       await navigateTo('/');
     } finally {
       isSubmitting.value = false;
     }
-  };
+};
 </script>
 
 <style scoped>
-  .prose img {
+.prose img {
     aspect-ratio: attr(width) / attr(height) !important;
-  }
+}
 </style>

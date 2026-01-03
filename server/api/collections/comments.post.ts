@@ -4,7 +4,6 @@
  *              该接口负责处理用户提交的评论，执行安全检查和数据验证，
  *              然后将新评论存入数据库。
  */
-import { createComment } from '../../services/comments.service';
 import { defineApiHandler } from '~~/server/utils/api-wrapper';
 import type { Create } from '~/types/pocketbase-types';
 import type { CreateCommentRequest } from '~/types/comments';

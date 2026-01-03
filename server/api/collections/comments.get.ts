@@ -3,7 +3,6 @@
  * @description 获取评论列表的 API 端点。
  *              支持分页、过滤，并能根据当前登录的用户信息，返回每条评论的点赞状态。
  */
-import { getCommentsList } from '../../services/comments.service';
 import { getPaginationParams } from '../../utils/pagination';
 import { defineApiHandler } from '~~/server/utils/api-wrapper';
 import type { CommentsListResponse } from '~/types/comments';

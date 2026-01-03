@@ -4,8 +4,7 @@
  *              这个服务层的一个关键特性是它会聚合来自点赞服务 (`likes.service`) 的数据，
  *              为每条评论附加点赞数和当前用户的点赞状态。
  */
-import { ensureOwnership } from '~~/server/utils/auth';
-import { getCommentsLikesMap } from './likes.service';
+import { ensureOwnership } from '~~/server/utils/validate-owner';
 import type { CommentsResponse as PBCommentsResponse, Create, TypedPocketBase } from '~/types/pocketbase-types';
 import type { CommentRecord, CommentExpand } from '~/types/comments';
 
