@@ -114,29 +114,29 @@
 </template>
 
 <script setup lang="ts">
-  import type { SinglePostResponse } from '~/types/posts';
-  import { useIntersectionObserver } from '@vueuse/core';
-  import { parseMarkdown } from '@nuxtjs/mdc/runtime';
+import type { SinglePostResponse } from '~/types/posts';
+import { useIntersectionObserver } from '@vueuse/core';
+import { parseMarkdown } from '@nuxtjs/mdc/runtime';
 
-  // --- 1. 状态管理 ---
-  const { updatedMarks, clearUpdateMark } = usePostUpdateTracker();
-  const { loggedIn, user: currentUser } = useUserSession();
+// --- 1. 状态管理 ---
+const { updatedMarks, clearUpdateMark } = usePostUpdateTracker();
+const { loggedIn, user: currentUser } = useUserSession();
 
-  const userId = computed(() => currentUser.value?.id);
+const userId = computed(() => currentUser.value?.id);
 
-  const { showHeaderBack } = useHeader();
+const { showHeaderBack } = useHeader();
 
-  const route = useRoute();
-  const { id } = route.params as { id: string };
+const route = useRoute();
+const { id } = route.params as { id: string };
 
-  const isListLoading = ref(false);
-  const isUpdateRefresh = ref(false);
-  const authorRow = ref<HTMLElement | null>(null);
-  const commentListRef = ref();
-  const commenters = ref<any[]>([]);
+const isListLoading = ref(false);
+const isUpdateRefresh = ref(false);
+const authorRow = ref<HTMLElement | null>(null);
+const commentListRef = ref();
+const commenters = ref<any[]>([]);
 
-  // --- 2. 数据获取 ---
-  const { data, status, refresh, error } =
+// --- 2. 数据获取 ---
+const { data, status, refresh, error } =
     await useLazyFetch<SinglePostResponse>(
       () => `/api/collections/post/${id}`,
       {
@@ -162,23 +162,23 @@
       ...postData,
       relativeTime: useRelativeTime(postData.created),
     };
-  });
+});
 
-  // --- 5. 逻辑处理 ---
-  const handleUpdateCommenters = (uniqueUsers: any[]) => {
+// --- 5. 逻辑处理 ---
+const handleUpdateCommenters = (uniqueUsers: any[]) => {
     commenters.value = uniqueUsers.filter(
       (u) => u.id !== currentUser.value?.id,
     );
-  };
+};
 
-  const onCommentSuccess = (newComment: any) => {
+const onCommentSuccess = (newComment: any) => {
     if (commentListRef.value) {
       commentListRef.value.handleCommentCreated(newComment);
     }
-  };
+};
 
-  // 核心解析函数
-  const parseContent = async (content: string) => {
+// 核心解析函数
+const parseContent = async (content: string) => {
     if (!content) {
       mdcReady.value = true;
 
@@ -218,11 +218,11 @@
 
       clearTimeout(fallback);
     }
-  };
+};
 
-  // --- 6. 核心监听逻辑 ---
-  // 合并了之前的多个监听器，统一管理数据流
-  watch(
+// --- 6. 核心监听逻辑 ---
+// 合并了之前的多个监听器，统一管理数据流
+watch(
     [() => postWithRelativeTime.value?.content, status],
     async ([newContent, newStatus]) => {
       // 1. 开始加载新内容时（非刷新模式），重置状态
@@ -242,17 +242,17 @@
       }
     },
     { immediate: true },
-  );
+);
 
-  watch(loggedIn, (isLogged) => {
+watch(loggedIn, (isLogged) => {
     if (isLogged && commentListRef.value?.comments) {
       handleUpdateCommenters(
         commentListRef.value.getUniqueUsers(commentListRef.value.comments),
       );
     }
-  });
+});
 
-  watch(
+watch(
     error,
     (newErr) => {
       if (newErr) {
@@ -265,17 +265,17 @@
       }
     },
     { immediate: true },
-  ); // 建议加上 immediate，防止 SSR 期间的错误被漏掉
+); // 建议加上 immediate，防止 SSR 期间的错误被漏掉
 
-  // --- 7. 生命周期与交互 ---
-  onMounted(() => {
+// --- 7. 生命周期与交互 ---
+onMounted(() => {
     // 水合保底：如果已有 AST 但没开启 UI，开启它
     if (ast.value && !mdcReady.value) {
       mdcReady.value = true;
     }
-  });
+});
 
-  useIntersectionObserver(
+useIntersectionObserver(
     authorRow,
     (entries) => {
       const entry = entries[0];
@@ -290,9 +290,9 @@
       }
     },
     { threshold: 0, rootMargin: '-20px 0px 0px 0px' },
-  );
+);
 
-  onActivated(async () => {
+onActivated(async () => {
     const currentId = id;
 
     if (updatedMarks.value[currentId]) {
@@ -302,12 +302,12 @@
       await refresh();
       clearUpdateMark(currentId);
     }
-  });
+});
 
-  onBeforeRouteLeave(() => {
+onBeforeRouteLeave(() => {
     showHeaderBack.value = false;
-  });
-  onUnmounted(() => {
+});
+onUnmounted(() => {
     showHeaderBack.value = false;
-  });
+});
 </script>

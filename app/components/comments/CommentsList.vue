@@ -108,6 +108,7 @@
 
 <script setup lang="ts">
 import type { CommentRecord } from '~/types/comments';
+import { MENTION_REGEX } from '~/constants';
 
 const props = defineProps<{ postId: string; allowComment: boolean }>();
 const emit = defineEmits(['loading-change', 'update-commenters']);
@@ -154,7 +155,6 @@ const confirmDelete = async () => {
 };
 
 // 2. 文本解析 (@提到)
-const MENTION_REGEX = /(@\S+)/g;
 const parsedContent = (text: string) => {
     if (!text) return [];
 

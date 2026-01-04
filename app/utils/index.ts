@@ -3,9 +3,9 @@
  * @param text - 包含 Markdown 语法的文本
  * @returns 清理后的纯文本
  */
+import { MAX_CACHE_SIZE } from '~/constants';
 
 const markdownCache = new Map<string, string>();
-const MAX_CACHE_SIZE = 500;
 
 export function cleanMarkdown(text: string): string {
 	if (typeof text !== 'string' || !text) return '';

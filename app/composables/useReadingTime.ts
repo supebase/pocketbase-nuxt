@@ -1,19 +1,4 @@
-/**
- * 阅读速度配置常量
- * WORDS_PER_MINUTE: 英文单词阅读速度（词/分钟）
- * CHINESE_CHARS_PER_MINUTE: 中文字符阅读速度（字/分钟）
- * IMAGE_TIME: 单张图片预计观看时间（分钟）
- * CODE_BLOCK_BASE_TIME: 代码块基础阅读时间（分钟）
- * CODE_LINE_TIME: 每行代码预计阅读时间（分钟）
- */
-const READ_SPEED_CONFIG = {
-	WORDS_PER_MINUTE: 200,
-	CHINESE_CHARS_PER_MINUTE: 300,
-	IMAGE_TIME: 0.25,
-	CAROUSEL_BASE_TIME: 0.25,
-	CODE_BLOCK_BASE_TIME: 0.3,
-	CODE_LINE_TIME: 0.07,
-} as const;
+import { READ_SPEED_CONFIG } from '~/constants';
 
 /**
  * 计算文章阅读时间的组合式函数

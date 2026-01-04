@@ -85,11 +85,11 @@
 <script setup lang="ts">
 import type { PostRecord, PostsListResponse } from '~/types/posts';
 import { useDebounceFn } from '@vueuse/core';
+import { MIN_SEARCH_LENGTH } from '~/constants';
 
 const emit = defineEmits(['close']);
 
 // --- 搜索核心逻辑 ---
-const MIN_SEARCH_LENGTH = 2;
 const searchQuery = ref('');
 const isLoading = ref(false);
 const isComposing = ref(false);

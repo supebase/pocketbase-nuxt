@@ -7,6 +7,7 @@
 import { defineApiHandler } from '~~/server/utils/api-wrapper';
 import type { Create } from '~/types/pocketbase-types';
 import type { CreateCommentRequest } from '~/types/comments';
+import { COMMENT_MAX_LENGTH } from '~/constants';
 import sanitizeHtml from 'sanitize-html';
 
 /**
@@ -53,10 +54,10 @@ export default defineApiHandler(async (event) => {
 	}
 
 	// 步骤 5: 检查评论内容的长度限制。
-	if (cleanComment.length > 300) {
+	if (cleanComment.length > COMMENT_MAX_LENGTH) {
 		throw createError({
 			statusCode: 400,
-			message: '评论内容字数已达上限 (300)',
+			message: '评论内容字数已达上限',
 		});
 	}
 

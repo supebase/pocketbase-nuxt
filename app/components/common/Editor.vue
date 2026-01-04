@@ -35,7 +35,7 @@
             color="neutral"
             variant="none"
             :placeholder="
-              modelValue.action === 'partager' ? '分享内容...' : '记录内容...'
+              modelValue.action === 'partager' ? '转发并分享优质内容 ...' : '记录观点、动态与生活 ...'
             "
             size="xl"
             :rows="8"
@@ -148,15 +148,17 @@
 </template>
 
 <script setup lang="ts">
-  const props = defineProps<{
+import { actionItems } from '~/constants';
+
+const props = defineProps<{
     modelValue: any;
     maxLimit: number;
     disabled?: boolean;
-  }>();
+}>();
 
-  defineEmits(['submit']);
+defineEmits(['submit']);
 
-  const {
+const {
     showPreview,
     showPreviewContent,
     debouncedContent,
@@ -167,15 +169,10 @@
     togglePreview,
     onPreviewScroll,
     setupContentWatch,
-  } = useEditorLogic();
+} = useEditorLogic();
 
-  // 核心逻辑绑定
-  setupContentWatch(() => props.modelValue.content);
-
-  const actionItems = [
-    { label: '贴文', description: '记录观点、动态与生活', value: 'dit' },
-    { label: '分享', description: '转发并分享优质内容', value: 'partager' },
-  ];
+// 核心逻辑绑定
+setupContentWatch(() => props.modelValue.content);
 </script>
 
 <style scoped>

@@ -27,6 +27,8 @@
 </template>
 
 <script setup lang="ts">
+import { CONTENT_MAX_LENGTH } from '~/constants';
+
 const getInitialForm = () => ({
     content: '',
     allow_comment: true,
@@ -38,7 +40,7 @@ const getInitialForm = () => ({
 
 const form = reactive(getInitialForm());
 const isSubmitting = ref(false);
-const maxLimit = 10000;
+const maxLimit = CONTENT_MAX_LENGTH;
 
 const handleSubmit = async () => {
     isSubmitting.value = true;

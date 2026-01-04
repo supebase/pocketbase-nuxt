@@ -143,6 +143,7 @@
 
 <script setup lang="ts">
 import type { CommentRecord } from '~/types/comments';
+import { placeholders, COMMENT_MAX_LENGTH } from '~/constants';
 
 const { user: currentUser } = useUserSession();
 const toast = useToast();
@@ -151,7 +152,7 @@ const props = defineProps({
     postId: { type: String, required: true },
     isListLoading: { type: Boolean, default: false },
     rawSuggestions: { type: Array as PropType<any[]>, default: () => [] },
-    maxLimit: { type: Number, default: 200 }, // 建议设为 prop 增加灵活性
+    maxLimit: { type: Number, default: COMMENT_MAX_LENGTH }, // 建议设为 prop 增加灵活性
 });
 
 const emit = defineEmits<{
@@ -159,14 +160,6 @@ const emit = defineEmits<{
 }>();
 
 const textareaRef = ref<any>(null);
-
-const placeholders = [
-    '聚焦核心话题，留下你的专业分析',
-    '理性发声，用观点传递价值',
-    '干货满满，说说你的独到见解',
-    '专业视角交流，助力经验沉淀',
-];
-
 const randomPlaceholder = ref();
 
 // 随机获取 placeholder

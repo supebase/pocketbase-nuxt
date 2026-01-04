@@ -6,6 +6,7 @@
 import { getLinkPreview } from '~~/server/utils/graph-scraper';
 import { defineApiHandler } from '~~/server/utils/api-wrapper';
 import type { CreatePostRequest, SinglePostResponse } from '~/types/posts';
+import { CONTENT_MAX_LENGTH } from '~/constants';
 
 export default defineApiHandler(async (event): Promise<SinglePostResponse> => {
 	const { pb, user } = event.context;
@@ -19,6 +20,13 @@ export default defineApiHandler(async (event): Promise<SinglePostResponse> => {
 			message: '内容不能为空',
 		}
 	);
+
+	if (content.length > CONTENT_MAX_LENGTH) {
+		throw createError({
+			statusCode: 400,
+			message: '内容字数已达上限',
+		});
+	}
 
 	const formData = new FormData();
 

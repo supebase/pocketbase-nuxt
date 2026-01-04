@@ -40,6 +40,8 @@
 
 <script setup lang="ts">
 import type { SinglePostResponse } from '~/types/posts';
+import { CONTENT_MAX_LENGTH } from '~/constants';
+
 const { markAsUpdated } = usePostUpdateTracker();
 const route = useRoute();
 const { id } = route.params as { id: string };
@@ -53,7 +55,7 @@ const form = ref({
     link: '',
 });
 
-const maxLimit = 10000;
+const maxLimit = CONTENT_MAX_LENGTH;
 const isLoading = ref(false);
 const isSubmitting = ref(false);
 
