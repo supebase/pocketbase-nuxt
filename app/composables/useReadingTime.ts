@@ -3,7 +3,6 @@
  * WORDS_PER_MINUTE: 英文单词阅读速度（词/分钟）
  * CHINESE_CHARS_PER_MINUTE: 中文字符阅读速度（字/分钟）
  * IMAGE_TIME: 单张图片预计观看时间（分钟）
- * CAROUSEL_BASE_TIME: 图片组基础观看时间（分钟）
  * CODE_BLOCK_BASE_TIME: 代码块基础阅读时间（分钟）
  * CODE_LINE_TIME: 每行代码预计阅读时间（分钟）
  */
@@ -22,7 +21,7 @@ const READ_SPEED_CONFIG = {
  * @param images - 文章关联的图片元数据数组
  * @returns 预计阅读时间（分钟）
  */
-export const useReadingTime = (content: string, images?: string): string => {
+export const useReadingTime = (content: string, externalImagesCount: number = 0): string => {
 	const safeContent = content || '';
 
 	/**
@@ -79,18 +78,24 @@ export const useReadingTime = (content: string, images?: string): string => {
 	 * @param imagesCount - 图片数量
 	 * @returns 总阅读时间（分钟）
 	 */
-	const calculateReadingTime = (content: string, imagesCount: number = 0): number => {
-		if (!content) return 0;
+	const calculateReadingTime = (content: string, totalImages: number): number => {
+        if (!content && totalImages === 0) return 0;
 
-		const codeTime = calculateCodeTime(content);
-		const textTime = calculateTextTime(content);
-		const imageTime = calculateImageTime(imagesCount);
+        const codeTime = calculateCodeTime(content);
+        const textTime = calculateTextTime(content);
+        const imageTime = calculateImageTime(totalImages);
 
-		return Math.ceil(textTime + imageTime + codeTime);
-	};
+        // 向上取整，最少 1 分钟
+        return Math.max(1, Math.ceil(textTime + imageTime + codeTime));
+    };
 
-	// 计算文章中的总图片数（包括 Markdown 内联图片和外部图片）
-	const totalImages = (images?.length || 0) + (safeContent.match(/!\[.*?\]\(.*?\)/g) || []).length;
+    // 1. 提取 Markdown 图片：匹配 ![alt](url) 
+    // 2. 考虑更严谨的正则，防止匹配到代码块内部的文本
+    const contentWithoutCode = safeContent.replace(/```[\s\S]*?```/g, '');
+    const markdownImagesCount = (contentWithoutCode.match(/!\[.*?\]\(.*?\)/g) || []).length;
 
-	return `约需 ${calculateReadingTime(safeContent, totalImages)} 分钟`;
+    // 总图片 = 正文内的图片 + 外部传入的（如封面图、图集等不属于正文的内容）
+    const totalImages = markdownImagesCount + externalImagesCount;
+
+    return `约需 ${calculateReadingTime(safeContent, totalImages)} 分钟`;
 };

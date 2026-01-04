@@ -16,6 +16,7 @@ export const useAuth = (isLoginMode?: Ref<boolean>) => {
 	if (isLoginMode) {
 		watch(isLoginMode, () => {
 			error.value = '';
+			passwordConfirm.value = '';
 		});
 	}
 
@@ -93,20 +94,12 @@ export const useAuth = (isLoginMode?: Ref<boolean>) => {
 
 			await navigateTo(redirectPath, { replace: true });
 		} catch (err: any) {
-			// 联动 handlePocketBaseError 返回的数据结构
-			const pbErrorData = err.data?.data;
-
-			if (pbErrorData?._isPocketBaseError) {
-				// 如果后端返回了具体的字段错误 (email, password 等)
-				if (pbErrorData.fields && Object.keys(pbErrorData.fields).length > 0) {
-					error.value = pbErrorData.fields;
-				}
-				// 统一显示汇总后的友好信息
-				error.value = err.data.message;
-			} else {
-				// 处理网络错误或其他异常
-				error.value = err.data?.message || err.message || '服务器响应异常';
-			}
+			error.value = err.data?.message || err.message || '服务器响应异常';
+        
+        	// 如果你将来想在控制台调试原始字段数据，可以保留这个，但不要赋给 error.value
+        	// if (err.data?.data?.fields) {
+            // 	console.warn('[Field Validation Errors]:', err.data.data.fields);
+        	// }
 		} finally {
 			loading.value = false;
 		}

@@ -32,21 +32,34 @@ const props = defineProps<{
     value: number;
 }>();
 
+const formatter = new Intl.NumberFormat('en-US');
+
 const processedDigits = computed(() => {
-    // 将数字转为字符串并反转，例如 1,234 -> ["4", "3", "2", ",", "1"]
-    const str = new Intl.NumberFormat().format(props.value);
+    // 强制使用 en-US 确保分隔符一定是逗号
+    const str = formatter.format(props.value);
     const chars = str.split('').reverse();
 
-    return chars.map((char, index) => {
-      // 关键点：Key 必须基于它的位数（个位、十位...）而不是内容或索引
-      // 我们通过当前位置是第几个数字（不计逗号）来生成 ID
-      const isComma = char === ',';
-	  
-      return {
-        id: `pos-${index}`, // 固定的位置标识
-        digit: isComma ? ',' : char,
-        isComma,
-      };
+    let digitCount = 0;
+
+    return chars.map((char) => {
+      const isDigit = /\d/.test(char);
+      
+      if (isDigit) {
+        // 当前数字位的权重（0=个位, 1=十位...）
+        const id = `digit-${digitCount}`;
+        const item = { id, digit: char, isComma: false };
+        digitCount++; // 只有是数字时才增加权重计数
+        return item;
+      } else {
+        // 逗号的 Key 绑定在它右侧已经出现的数字个数上
+        // 例如 1,000 -> 逗号前面有 3 个数字，Key 就是 sep-3
+        // 这样即便数字变成 10,000，这个逗号的 Key 依然是 sep-3，DOM 不会重建
+        return {
+          id: `sep-${digitCount}`, 
+          digit: char,
+          isComma: true,
+        };
+      }
     });
 });
 </script>
