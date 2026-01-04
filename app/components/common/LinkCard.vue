@@ -3,7 +3,7 @@
     :href="data.url"
     target="_blank"
     tabindex="-1"
-    class="group mt-4 mb-1.5 flex items-stretch border border-neutral-200 dark:border-neutral-800 rounded-lg overflow-hidden no-underline"
+    class="group my-3.5 flex items-stretch border border-neutral-200 dark:border-neutral-800 rounded-lg overflow-hidden no-underline"
   >
     <div
       v-if="linkImage"
@@ -54,11 +54,11 @@
         {{ data.title }}
       </div>
 
-      <div class="text-xs text-muted line-clamp-1 w-full">
+      <div class="text-xs text-dimmed/90 line-clamp-1 w-full">
         {{ data.description }}
       </div>
 
-      <div class="text-[10px] text-dimmed truncate font-mono">
+      <div class="text-xs text-dimmed/90 truncate font-mono">
         {{ displayUrl }}
       </div>
     </div>
@@ -93,6 +93,20 @@ const isGitHub = computed(() => {
 });
 
 const displayUrl = computed(() => {
-    return props.data.url.replace(/^https?:\/\//, '').replace(/\/$/, '');
+    try {
+      const urlObj = new URL(props.data.url);
+      const host = urlObj.hostname;
+      
+      // 如果是 github.com，只保留域名 (例如: github.com)
+      if (host === 'github.com') {
+        return host;
+      }
+
+      // 其他情况：移除协议和末尾斜杠 (例如: domain.com/path/to/resource)
+      return props.data.url.replace(/^https?:\/\//, '').replace(/\/$/, '');
+    } catch {
+      // 降级处理：如果 URL 格式非法，执行简单的字符串替换
+      return props.data.url.replace(/^https?:\/\//, '').replace(/\/$/, '');
+    }
 });
 </script>

@@ -124,6 +124,13 @@ export const useAuth = (isLoginMode?: Ref<boolean>) => {
 			});
 		} finally {
 			isLoggingOut.value = false;
+
+			toast.add({
+				title: '退出成功',
+				description: '您已成功退出账户',
+				icon: 'i-hugeicons:checkmark-circle-03',
+				color: 'warning',
+			});
 		}
 	};
 

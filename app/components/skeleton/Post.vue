@@ -19,7 +19,7 @@
       </div>
 
       <div class="relative">
-        <USkeleton class="h-64 w-full rounded-xl" />
+        <USkeleton class="h-64 w-full rounded-lg" />
       </div>
     </div>
 

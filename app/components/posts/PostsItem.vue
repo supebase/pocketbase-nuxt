@@ -6,7 +6,7 @@
   >
     <ULink
       :to="`/${item.id}`"
-      class="line-clamp-4 tracking-wide leading-6 hyphens-none"
+      class="line-clamp-4 font-sans tracking-normal leading-7 text-justify wrap-break-word"
       tabindex="-1"
     >
       {{ item.cleanContent }}
@@ -60,20 +60,14 @@ const { getLinkImage } = useAssets();
 
 interface Props {
     item: {
-		id: string;
-		title: string;
-		date: string;
-		cleanContent: string;
-		action: string;
-		allowComment: boolean;
-		published: boolean;
-		icon: string | null;
-		avatarId: string | null;
-		firstImage: string | null;
-		link_data: any;
-		link_image?: string;
+        id: string;
+        cleanContent: string;
+        allowComment: boolean;
+        firstImage: string | null;
+        link_data: any;
+        link_image?: string;
     };
-	delay: number;
+	  delay: number;
     canViewDrafts: boolean;
 }
 

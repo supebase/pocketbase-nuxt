@@ -114,25 +114,18 @@
       block
       to="/"
     />
-
-    <UAlert
-      v-if="error"
-      icon="i-hugeicons:alert-02"
-      color="error"
-      variant="soft"
-      :description="error"
-      class="mt-4"
-    />
   </div>
 </template>
 
 <script setup lang="ts">
-  const props = defineProps<{
+const props = defineProps<{
     isLoginMode: boolean;
-  }>();
+}>();
 
-  // 1. 引入 Auth 逻辑
-  const {
+const emit = defineEmits(['update:error']);
+
+// 1. 引入 Auth 逻辑
+const {
     email,
     password,
     passwordConfirm,
@@ -142,35 +135,57 @@
     color,
     handleAuth,
     fetchGeo,
-  } = useAuth(toRef(props, 'isLoginMode'));
+} = useAuth(toRef(props, 'isLoginMode'));
 
-  // 2. 密码可见性逻辑 (保持原始自定义组合函数)
-  const {
+// 2. 密码可见性逻辑 (保持原始自定义组合函数)
+const {
     isVisible: showPassword,
     toggleVisibility: togglePasswordVisibility,
-  } = usePasswordVisibility();
-  const {
+} = usePasswordVisibility();
+
+const {
     isVisible: showPasswordConfirm,
     toggleVisibility: togglePasswordConfirmVisibility,
-  } = usePasswordVisibility();
+} = usePasswordVisibility();
 
-  // 3. 这里的 formState 主要是给 UForm 的 state 绑定的
-  const formState = computed(() => ({
+// 3. 这里的 formState 主要是给 UForm 的 state 绑定的
+const formState = computed(() => ({
     email: email.value,
     password: password.value,
     passwordConfirm: passwordConfirm.value,
-  }));
+}));
 
-  const buttonLabel = computed(() => {
+const buttonLabel = computed(() => {
     if (loading.value)
       return props.isLoginMode ? '正在验证身份' : '正在创建并登录';
     return props.isLoginMode ? '登录账户' : '创建新账户';
-  });
+});
 
-  // 4. 初始化
-  onMounted(() => {
+watch(error, (newVal) => {
+    emit('update:error', newVal);
+}, { immediate: true });
+
+defineExpose({
+    clearError: () => { error.value = ''; }
+});
+
+// 4. 初始化
+onMounted(() => {
     if (!props.isLoginMode) {
       fetchGeo();
     }
-  });
+});
+
+const resetForm = () => {
+    email.value = '';
+    password.value = '';
+    passwordConfirm.value = '';
+
+    if (error) error.value = '';
+    emit('update:error', '');
+};
+
+onDeactivated(() => {
+    resetForm();
+});
 </script>

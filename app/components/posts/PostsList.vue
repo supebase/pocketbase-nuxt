@@ -2,7 +2,7 @@
   <div class="flex flex-col items-center justify-center select-none">
     <div
       v-if="status !== 'pending' || isRefreshing || !error"
-      class="flex items-center justify-center w-full gap-3"
+      class="flex items-center justify-between w-full gap-3"
     >
       <div
         class="flex items-center gap-1 text-base tracking-widest text-dimmed font-semibold"
@@ -10,7 +10,7 @@
         <ClientOnly>
           <CommonAnimateNumber :value="visibleTotalItems" /> 条内容
           <template #fallback>
-            <span>0 条内容</span>
+            <CommonAnimateNumber :value="0" /> 条内容
           </template>
         </ClientOnly>
       </div>
@@ -264,6 +264,13 @@ const manualRefresh = async () => {
         setTimeout(() => {
           isResetting.value = false;
         }, 100);
+      });
+
+      toast.add({
+        title: '刷新完成',
+        description: `共刷新了 ${visibleTotalItems.value} 条内容`,
+        icon: 'i-hugeicons:checkmark-circle-03',
+        color: 'success',
       });
     }
 };

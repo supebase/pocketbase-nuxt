@@ -21,11 +21,11 @@
           <USkeleton class="h-4 w-[40%]" />
         </div>
 
-        <USkeleton class="h-48 w-full rounded-xl" />
+        <USkeleton class="h-64 w-full rounded-lg" />
 
         <div class="flex gap-2">
-          <USkeleton class="h-6 w-16 rounded-md" />
-          <USkeleton class="h-6 w-16 rounded-md" />
+          <USkeleton class="h-6 w-16 rounded-lg" />
+          <USkeleton class="h-6 w-16 rounded-lg" />
         </div>
       </div>
     </div>

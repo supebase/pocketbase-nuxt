@@ -28,7 +28,7 @@ export const usePocketRealtime = (collections: string[]) => {
 
 			// 连接成功钩子
 			es.onopen = () => {
-				console.log('[SSE] 连接成功');
+				// console.log('[SSE] 连接成功');
 				status.value = 'online';
 				retryCount = 0; // 重置重试计数
 			};

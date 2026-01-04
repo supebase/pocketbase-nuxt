@@ -17,12 +17,18 @@
     <div class="mt-4 space-y-4">
       <UAlert
         v-if="currentTabConfig"
-        :title="currentTabConfig.description"
+        :title="authError || currentTabConfig?.description"
         variant="outline"
-        color="neutral"
+        :color="authError ? 'error' : 'neutral'"
+        :icon="authError ? 'i-hugeicons:alert-02' : 'i-hugeicons:information-circle'"
+        class="transition-all duration-500"
       />
 
-      <AuthForm :key="activeTab" :is-login-mode="activeTab === 'login'" />
+      <AuthForm 
+        :key="activeTab" 
+        :is-login-mode="activeTab === 'login'" 
+        @update:error="(val) => authError = val"
+      />
     </div>
   </UCard>
 </template>
@@ -33,6 +39,8 @@ import { TABS } from '~/constants';
 const route = useRoute();
 const router = useRouter();
 
+const authError = ref<string | null>(null);
+
 // 2. 响应式同步路由
 const activeTab = computed({
     get() {
@@ -41,6 +49,7 @@ const activeTab = computed({
       return TABS.some((t) => t.value === queryTab) ? queryTab : 'login';
     },
     set(val) {
+      authError.value = null;
       // 切换时更新 URL，使用 replace 避免污染浏览器后退历史
       router.replace({
         query: { ...route.query, tab: val },

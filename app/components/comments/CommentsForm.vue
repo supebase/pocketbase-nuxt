@@ -310,7 +310,6 @@ const handleSubmit = async () => {
         // 4. 通知列表进行乐观展示 (CommentList 的去重逻辑会处理后续到来的实时推送)
         emit('comment-created', optimisticComment);
 
-        // 5. 简约的 Toast (不再提示“刷新页面”)
         toast.add({
           title: '评论发表成功',
           description: '评论通常实时展示；若未显示，刷新页面。',

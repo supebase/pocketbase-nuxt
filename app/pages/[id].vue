@@ -47,7 +47,7 @@
             :key="postWithRelativeTime.updated"
             :body="ast.body"
             :data="ast.data"
-            class="prose prose-neutral prose-base dark:prose-invert prose-img:rounded-xl prose-img:ring-1 prose-img:ring-neutral-200 prose-img:dark:ring-neutral-800"
+            class="prose prose-neutral prose-base dark:prose-invert max-w-none font-sans text-justify prose-p:leading-7 wrap-break-word"
           />
         </div>
       </div>
