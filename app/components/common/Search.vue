@@ -7,8 +7,8 @@
     placeholder="输入关键词后开始搜索 ..."
     class="h-[50vh] select-none"
     @update:model-value="onSelect"
-    @compositionstart="handleCompositionStart"
-    @compositionend="handleCompositionEnd"
+    @compositionstart="isComposing = true"
+    @compositionend="onCompositionEnd"
     :ui="{
       input: '[&>input]:h-14',
       group: 'p-2',
@@ -83,145 +83,84 @@
 </template>
 
 <script setup lang="ts">
-import type { PostRecord, PostsListResponse } from '~/types/posts';
-import { useDebounceFn } from '@vueuse/core';
 import { MIN_SEARCH_LENGTH } from '~/constants';
 
 const emit = defineEmits(['close']);
 
-// --- 搜索核心逻辑 ---
-const searchQuery = ref('');
-const isLoading = ref(false);
-const isComposing = ref(false);
-
-// 1. 分页状态扩展
+// --- 逻辑接入 ---
 const {
-    allItems,
-    totalItems,
-    resetPagination,
-    hasMore,
-    isLoadingMore,
-    loadMore,
-} = usePagination<PostRecord>();
+	searchQuery,
+	isLoading,
+	isComposing,
+	allItems,
+	totalItems,
+	hasMore,
+	isLoadingMore,
+	resetPagination,
+	loadMore,
+	performSearch,
+	fetchMoreData,
+} = useSearchLogic();
 
-// 执行 API (初始搜索)
-const performSearch = async (query: string) => {
-    isLoading.value = true;
-
-    try {
-      const response = await $fetch<PostsListResponse>(
-        '/api/collections/posts',
-        {
-          query: { q: query, page: 1 },
-        },
-      );
-
-      if (searchQuery.value === query) {
-        resetPagination(response.data.posts || [], response.data.totalItems);
-      }
-    } catch (err) {
-      resetPagination([], 0);
-    } finally {
-      isLoading.value = false;
-    }
-};
-
-// 执行 API (加载更多)
-const fetchMoreData = async (page: number) => {
-    const response = await $fetch<PostsListResponse>('/api/collections/posts', {
-      query: { q: searchQuery.value, page },
-    });
-
-    return {
-      items: response.data.posts || [],
-      total: response.data.totalItems,
-    };
-};
-
-const debouncedSearch = useDebounceFn((val: string) => {
-    if (val.trim().length >= MIN_SEARCH_LENGTH) performSearch(val.trim());
-}, 400);
-
-watch(searchQuery, (newVal) => {
-    if (isComposing.value) return;
-
-    const trimmed = newVal.trim();
-
-    if (!trimmed || trimmed.length < MIN_SEARCH_LENGTH) {
-      resetPagination([], 0);
-      isLoading.value = false;
-      return;
-    }
-
-    isLoading.value = true;
-    debouncedSearch(trimmed);
-});
-
-// 处理输入法
-const handleCompositionStart = () => {
-    isComposing.value = true;
-};
-
-const handleCompositionEnd = () => {
-    isComposing.value = false;
-
-    if (searchQuery.value.trim().length >= MIN_SEARCH_LENGTH) {
-      performSearch(searchQuery.value.trim());
-    }
-};
-
-// 映射结果
+// --- 结果映射 ---
 const groups = computed(() => {
-    if (!searchQuery.value.trim() || allItems.value.length === 0) return [];
+	const trimmed = searchQuery.value.trim();
+	if (!trimmed || allItems.value.length === 0) return [];
 
-    // 生成基础文章列表
-    const items = allItems.value.map((post) => ({
-      id: post.id,
-      label: cleanMarkdown(post.content),
-      to: `/${post.id}`,
-    }));
+	// 生成基础文章列表
+	const items = allItems.value.map((post) => ({
+		id: post.id,
+		label: cleanMarkdown(post.content),
+		to: `/${post.id}`,
+	}));
 
-    // 如果还有更多，推入一个虚拟的加载按钮项
-    if (hasMore.value) {
-      items.push({
-        id: 'load-more-trigger',
-        label: isLoadingMore.value ? '正在加载...' : '显示更多结果',
-        to: '', // 不跳转
-      });
-    }
+	// 推入加载更多触发器
+	if (hasMore.value) {
+		items.push({
+			id: 'load-more-trigger',
+			label: isLoadingMore.value ? '正在加载...' : '显示更多结果',
+			to: '',
+		});
+	}
 
-    return [
-      {
-        id: 'posts',
-        label: `匹配到 ${totalItems.value} 条内容`,
-        items: items,
-        ignoreFilter: true,
-      },
-    ];
+	return [
+		{
+			id: 'posts',
+			label: `匹配到 ${totalItems.value} 条内容`,
+			items: items,
+			ignoreFilter: true, // 搜索已经在后端完成，无需前端再次过滤
+		},
+	];
 });
+
+// --- 事件处理 ---
+const onCompositionEnd = () => {
+	isComposing.value = false;
+	performSearch(searchQuery.value);
+};
 
 function onSelect(item: any) {
-    if (!item) return;
+	if (!item) return;
 
-    // 1. 处理加载更多
-    if (item.id === 'load-more-trigger') {
-      if (!isLoadingMore.value) {
-        loadMore(fetchMoreData);
-      }
-      return; // 直接返回，不再向下执行 navigateTo
-    }
+	// 1. 处理加载更多
+	if (item.id === 'load-more-trigger') {
+		if (!isLoadingMore.value) {
+			loadMore(fetchMoreData);
+		}
+		return;
+	}
 
-    // 2. 处理正常跳转 (item.to 存在的情况)
-    if (item.to) {
-      emit('close');
-      searchQuery.value = '';
-      resetPagination([], 0);
-      navigateTo(item.to);
-    }
+	// 2. 处理跳转
+	if (item.to) {
+		emit('close');
+		searchQuery.value = '';
+		resetPagination([], 0);
+		navigateTo(item.to);
+	}
 }
 
-// 组件卸载清理
+// 清理
 onUnmounted(() => {
-    resetPagination([], 0);
+	resetPagination([], 0);
 });
 </script>
