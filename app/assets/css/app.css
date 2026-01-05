@@ -51,15 +51,19 @@ body {
   z-index: 1;
 }
 
+/* 基础样式保持并优化 */
 .number-column {
   display: inline-block;
   height: 1.25em;
+  width: 0.6em; /* 必须有固定宽度 */
   overflow: hidden;
   position: relative;
+  transition: width 0.5s ease; /* 宽度变化也要平滑 */
 }
 
 .number-scroll {
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  /* 垂直滚动动画 */
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
   will-change: transform;
 }
 
@@ -71,9 +75,44 @@ body {
 }
 
 .comma {
-  padding: 0 0.1em;
+  display: inline-block;
+  width: 0.3em; /* 给逗号固定宽度 */
+  padding: 0 0.05em;
   height: 1.25em;
   line-height: 1.25em;
+  text-align: center;
+  transition: width 0.5s ease;
+}
+
+/* --- 新增：TransitionGroup 动画 --- */
+
+/* 1. 进入动画：新数字从右侧淡入并撑开空间 */
+.digit-enter-from {
+  opacity: 0;
+  width: 0;
+  transform: translateX(10px);
+}
+
+.digit-enter-to {
+  opacity: 1;
+  width: 0.6em; /* 对应 .number-cell 的宽度 */
+  transform: translateX(0);
+}
+
+/* 2. 离开动画：数字消失时平滑收缩（针对数值变小时） */
+.digit-leave-to {
+  opacity: 0;
+  width: 0;
+}
+
+.digit-enter-active,
+.digit-leave-active {
+  transition: all 0.5s ease;
+}
+
+/* 特殊处理逗号的进入宽度 */
+.digit-enter-to.comma {
+  width: 0.3em;
 }
 
 .header-fade-enter-active,

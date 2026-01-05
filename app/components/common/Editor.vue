@@ -38,51 +38,39 @@
               modelValue.action === 'partager' ? '转发并分享优质内容 ...' : '记录观点、动态与生活 ...'
             "
             size="xl"
-            :rows="8"
-            :maxrows="12"
+            :rows="12"
+            :maxrows="16"
+            :maxlength="maxLimit"
             :disabled="disabled"
             class="w-full"
           />
-          <USeparator class="py-6" />
 
-          <div
-            class="absolute -bottom-2 left-0"
-            :class="{ hidden: !isDesktop }"
-          >
-            <UCheckbox
-              :model-value="showPreview"
-              @update:model-value="togglePreview"
-              color="neutral"
-              label="开启实时预览（Markdown）"
-            />
-          </div>
-
-          <div class="absolute -bottom-2 right-0 pointer-events-none">
-            <span
-              class="text-xs tabular-nums select-none"
-              :class="
-                modelValue.content.length >= maxLimit
-                  ? 'text-red-600 font-bold'
-                  : 'text-dimmed'
-              "
-            >
-              {{ modelValue.content.length }} / {{ maxLimit }}
-            </span>
-          </div>
+          <USeparator class="pt-6">
+            <template #default>
+                <span
+                  class="text-xs tabular-nums select-none"
+                  :class="
+                    modelValue.content.length >= maxLimit
+                      ? 'text-red-600'
+                      : 'text-dimmed'
+                  "
+                >
+                  {{ modelValue.content.length }} / {{ maxLimit }}
+                </span>
+            </template>
+          </USeparator>
         </div>
 
-        <div
-          v-show="modelValue.action === 'partager'"
-          class="flex items-center gap-2.5"
-        >
+        <div class="flex items-center gap-2.5">
           <UInput
             v-model="modelValue.icon"
-            placeholder="图标，例如：i-simple-icons:nuxt"
+            placeholder="图标 i-simple-icons:nuxt"
             variant="subtle"
             color="neutral"
             :disabled="disabled"
             size="lg"
             class="w-full"
+            v-if="modelValue.action === 'partager'"
           >
             <template #trailing>
               <UButton
@@ -94,28 +82,40 @@
               />
             </template>
           </UInput>
-        </div>
 
-        <div class="flex flex-col gap-6">
           <UInput
             v-model="modelValue.link"
-            placeholder="卡片链接"
+            placeholder="卡片链接 - https://example.com"
             variant="subtle"
             color="neutral"
             :disabled="disabled"
             size="lg"
             class="w-full"
           />
-          <USwitch
-            v-model="modelValue.published"
-            :label="modelValue.published ? '立即对外正式发布' : '保存为草稿'"
-            color="neutral"
-          />
-          <USwitch
-            v-model="modelValue.allow_comment"
-            label="允许用户发表评论"
-            color="neutral"
-          />
+        </div>
+
+        <div class="flex items-center justify-between gap-6">
+          <div class="flex items-center gap-6">
+            <USwitch
+              v-model="modelValue.published"
+              :label="modelValue.published ? '正式发布' : '保存草稿'"
+              color="neutral"
+            />
+            <USwitch
+              v-model="modelValue.allow_comment"
+              :label="modelValue.allow_comment ? '允许评论' : '禁止评论'"
+              color="neutral"
+            /> 
+          </div>
+          
+          <div :class="{ hidden: !isDesktop }">
+            <UCheckbox
+              :model-value="showPreview"
+              @update:model-value="togglePreview"
+              color="neutral"
+              label="开启实时预览"
+            />
+          </div>
         </div>
 
         <USeparator />

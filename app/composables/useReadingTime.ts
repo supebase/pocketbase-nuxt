@@ -82,5 +82,5 @@ export const useReadingTime = (content: string, externalImagesCount: number = 0)
     // 总图片 = 正文内的图片 + 外部传入的（如封面图、图集等不属于正文的内容）
     const totalImages = markdownImagesCount + externalImagesCount;
 
-    return `约需 ${calculateReadingTime(safeContent, totalImages)} 分钟`;
+    return `${calculateReadingTime(safeContent, totalImages)} 分钟阅读`;
 };

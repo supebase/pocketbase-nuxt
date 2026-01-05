@@ -185,3 +185,22 @@ export async function deletePost(pb: TypedPocketBase, postId: string) {
 	await ensureOwnership(pb, 'posts', postId);
 	return await pb.collection('posts').delete(postId);
 }
+
+/**
+ * 增加文章浏览量 (原子操作)
+ * @param pb PocketBase 实例
+ * @param postId 文章 ID
+ */
+export async function incrementPostViews(pb: TypedPocketBase, postId: string) {
+    try {
+        // 使用 PocketBase 的原子操作语法 "views+": 1
+        // 注意：这要求 PB 的 API Rules 允许当前 pb 实例的身份进行 update 
+        // 或者你可以考虑在 server/utils 中导出一个 Admin 权限的 pb 专门做这件事
+        await pb.collection('posts').update(postId, {
+            "views+": 1
+        });
+    } catch (error) {
+        // 浏览量增加失败不应该打断用户阅读，记录错误即可
+        console.error(`无法更新 ${postId} 的浏览量:`, error);
+    }
+}

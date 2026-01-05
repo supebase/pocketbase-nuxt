@@ -6,7 +6,7 @@
   >
     <ULink
       :to="`/${item.id}`"
-      class="line-clamp-4 font-sans tracking-normal leading-7 text-justify wrap-break-word"
+      class="line-clamp-3 font-sans tracking-normal leading-7 text-justify wrap-break-word"
       tabindex="-1"
     >
       {{ item.cleanContent }}

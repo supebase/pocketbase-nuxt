@@ -29,6 +29,30 @@ export default defineApiHandler(async (event): Promise<SinglePostResponse> => {
 	// 传入 `pb` 实例和 `postId`，将具体的查询逻辑与 API 路由解耦。
 	const post = await getPostById(pb, postId);
 
+	const ip = getRequestIP(event, { xForwardedFor: true }) || 'unknown';
+	// 构造基于文章ID和IP的唯一标识符（去除特殊字符）
+	const viewKey = `pv_${postId}_${ip.replace(/[^a-zA-Z0-9]/g, '')}`;
+	// 检查是否存在阅读状态的 Cookie
+    const hasViewed = getCookie(event, viewKey);
+
+	if (!hasViewed && post) {
+        // A. 异步触发 Service 层的自增逻辑 (不使用 await 避免阻塞页面渲染速度)
+        incrementPostViews(pb, postId).catch(err => {
+            console.error('[Views] 自增失败:', err);
+        });
+
+        // B. 设置防止重复计数的 Cookie，有效期 24 小时
+        setCookie(event, viewKey, '1', {
+            maxAge: 60 * 60 * 24,
+            httpOnly: true,
+            sameSite: 'lax',
+            path: '/', // 确保全站路径可用
+        });
+
+        const currentViews = Number(post.views || 0);
+        (post as any).views = currentViews + 1;
+    }
+
 	return {
 		message: '获取内容详情成功',
 		data: post as any,

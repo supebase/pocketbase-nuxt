@@ -66,7 +66,7 @@
           }"
           icon="i-hugeicons:comment-block-02"
           color="neutral"
-          variant="soft"
+          variant="outline"
           title="本内容评论互动功能已关闭"
           class="mt-8 select-none"
         />
@@ -114,200 +114,112 @@
 </template>
 
 <script setup lang="ts">
-import type { SinglePostResponse } from '~/types/posts';
 import { useIntersectionObserver } from '@vueuse/core';
-import { parseMarkdown } from '@nuxtjs/mdc/runtime';
 
-// --- 1. 状态管理 ---
-const { updatedMarks, clearUpdateMark } = usePostUpdateTracker();
-const { loggedIn, user: currentUser } = useUserSession();
-
-const userId = computed(() => currentUser.value?.id);
-
-const { showHeaderBack } = useHeader();
-
+// --- 1. 基础状态与路由 ---
 const route = useRoute();
 const { id } = route.params as { id: string };
+const { loggedIn, user: currentUser } = useUserSession();
+const { showHeaderBack } = useHeader();
+const userId = computed(() => currentUser.value?.id);
 
+// --- 2. 引入拆分后的逻辑 ---
+const {
+	postWithRelativeTime,
+	status,
+	error,
+	refresh,
+	mdcReady,
+	ast,
+	toc,
+	isUpdateRefresh,
+	parseContent,
+	updatedMarks,
+	clearUpdateMark,
+} = await usePostLogic(id);
+
+// --- 3. 页面特有 UI 交互状态 ---
 const isListLoading = ref(false);
-const isUpdateRefresh = ref(false);
 const authorRow = ref<HTMLElement | null>(null);
 const commentListRef = ref();
 const commenters = ref<any[]>([]);
 
-// --- 2. 数据获取 ---
-const { data, status, refresh, error } =
-    await useLazyFetch<SinglePostResponse>(
-      () => `/api/collections/post/${id}`,
-      {
-        key: `post-detail-${id}`,
-        server: true,
-        query: { userId },
-        // watch 已经不再需要显式写 watch: [() => id]，因为第一个参数已经是响应式的了
-      },
-    );
-
-  // --- 3. 核心状态 ---
-  const mdcReady = ref(false);
-  const ast = ref<any>(null);
-  const toc = ref<any>(null);
-
-  // --- 4. 计算属性 ---
-  const postWithRelativeTime = computed(() => {
-    const postData = data.value?.data;
-
-    if (!postData) return null;
-
-    return {
-      ...postData,
-      relativeTime: useRelativeTime(postData.created),
-    };
-});
-
-// --- 5. 逻辑处理 ---
+// --- 4. 逻辑处理函数 (保留原样) ---
 const handleUpdateCommenters = (uniqueUsers: any[]) => {
-    commenters.value = uniqueUsers.filter(
-      (u) => u.id !== currentUser.value?.id,
-    );
+	commenters.value = uniqueUsers.filter(
+		(u) => u.id !== currentUser.value?.id,
+	);
 };
-
 const onCommentSuccess = (newComment: any) => {
-    if (commentListRef.value) {
-      commentListRef.value.handleCommentCreated(newComment);
-    }
+	if (commentListRef.value)
+		commentListRef.value.handleCommentCreated(newComment);
 };
 
-// 核心解析函数
-const parseContent = async (content: string) => {
-    if (!content) {
-      mdcReady.value = true;
-
-      return;
-    }
-
-    // 💡 逃生通道：3秒保底强制显示
-    const fallback = setTimeout(() => {
-      if (!mdcReady.value) {
-        console.warn('MDC Fallback triggered');
-        mdcReady.value = true;
-      }
-    }, 3000);
-
-    try {
-      const result = await parseMarkdown(content, {
-        toc: { depth: 4, searchDepth: 4 },
-      });
-
-      ast.value = result;
-      toc.value = result.toc;
-
-      if (import.meta.client) {
-        nextTick(() => {
-          setTimeout(() => {
-            mdcReady.value = true;
-            isUpdateRefresh.value = false;
-            clearTimeout(fallback); // 正常完成则清除保底
-          }, 100);
-        });
-      } else {
-        mdcReady.value = true;
-      }
-    } catch (e) {
-      console.error('MDC 渲染错误:', e);
-      mdcReady.value = true;
-
-      clearTimeout(fallback);
-    }
-};
-
-// --- 6. 核心监听逻辑 ---
-// 合并了之前的多个监听器，统一管理数据流
+// --- 5. 核心 Watch 监听 (保留原样) ---
 watch(
-    [() => postWithRelativeTime.value?.content, status],
-    async ([newContent, newStatus]) => {
-      // 1. 开始加载新内容时（非刷新模式），重置状态
-      if (newStatus === 'pending' && !isUpdateRefresh.value) {
-        mdcReady.value = false;
-        ast.value = null;
-
-        return;
-      }
-
-      // 2. 数据到达时，触发解析
-      if ((newStatus === 'success' || newStatus === 'idle') && newContent) {
-        // 避免重复解析相同内容
-        if (ast.value && mdcReady.value && !isUpdateRefresh.value) return;
-
-        await parseContent(newContent);
-      }
-    },
-    { immediate: true },
+	[() => postWithRelativeTime.value?.content, status],
+	async ([newContent, newStatus]) => {
+		if (newStatus === 'pending' && !isUpdateRefresh.value) {
+			mdcReady.value = false;
+			ast.value = null;
+			return;
+		}
+		if ((newStatus === 'success' || newStatus === 'idle') && newContent) {
+			if (ast.value && mdcReady.value && !isUpdateRefresh.value) return;
+			await parseContent(newContent);
+		}
+	},
+	{ immediate: true },
 );
 
 watch(loggedIn, (isLogged) => {
-    if (isLogged && commentListRef.value?.comments) {
-      handleUpdateCommenters(
-        commentListRef.value.getUniqueUsers(commentListRef.value.comments),
-      );
-    }
+	if (isLogged && commentListRef.value?.comments) {
+		handleUpdateCommenters(
+			commentListRef.value.getUniqueUsers(commentListRef.value.comments),
+		);
+	}
 });
 
 watch(
-    error,
-    (newErr) => {
-      if (newErr) {
-        // 无论是 404 (ID不存在) 还是 500 (后端崩溃)
-        // 都会直接触发全屏的 error.vue
-        throw createError({
-          ...newErr,
-          fatal: true,
-        });
-      }
-    },
-    { immediate: true },
-); // 建议加上 immediate，防止 SSR 期间的错误被漏掉
+	error,
+	(newErr) => {
+		if (newErr) throw createError({ ...newErr, fatal: true });
+	},
+	{ immediate: true },
+);
 
-// --- 7. 生命周期与交互 ---
+// --- 6. 生命周期 ---
 onMounted(() => {
-    // 水合保底：如果已有 AST 但没开启 UI，开启它
-    if (ast.value && !mdcReady.value) {
-      mdcReady.value = true;
-    }
+	if (ast.value && !mdcReady.value) mdcReady.value = true;
 });
 
 useIntersectionObserver(
-    authorRow,
-    (entries) => {
-      const entry = entries[0];
-
-      if (!entry) return;
-
-      const { isIntersecting, boundingClientRect } = entry;
-      if (isIntersecting) {
-        showHeaderBack.value = false;
-      } else if (boundingClientRect.top < 0 && mdcReady.value) {
-        showHeaderBack.value = true;
-      }
-    },
-    { threshold: 0, rootMargin: '-20px 0px 0px 0px' },
+	authorRow,
+	(entries) => {
+		const entry = entries[0];
+		if (!entry) return;
+		const { isIntersecting, boundingClientRect } = entry;
+		if (isIntersecting) showHeaderBack.value = false;
+		else if (boundingClientRect.top < 0 && mdcReady.value)
+			showHeaderBack.value = true;
+	},
+	{ threshold: 0, rootMargin: '-20px 0px 0px 0px' },
 );
 
 onActivated(async () => {
-    const currentId = id;
-
-    if (updatedMarks.value[currentId]) {
-      isUpdateRefresh.value = true;
-      mdcReady.value = false;
-
-      await refresh();
-      clearUpdateMark(currentId);
-    }
+	const currentId = id;
+	if (updatedMarks.value[currentId]) {
+		isUpdateRefresh.value = true;
+		mdcReady.value = false;
+		await refresh();
+		clearUpdateMark(currentId);
+	}
 });
 
 onBeforeRouteLeave(() => {
-    showHeaderBack.value = false;
+	showHeaderBack.value = false;
 });
 onUnmounted(() => {
-    showHeaderBack.value = false;
+	showHeaderBack.value = false;
 });
 </script>

@@ -12,7 +12,7 @@
       />
 
       <div class="flex items-center gap-3" v-else>
-        <UUser :name="user?.name" size="sm">
+        <UUser size="sm">
           <template #avatar>
             <div class="size-7 rounded-full overflow-hidden">
               <CommonGravatar :avatar-id="user?.avatar" :size="56" />
@@ -20,7 +20,7 @@
           </template>
         </UUser>
 
-        <USeparator orientation="vertical" class="h-6 ml-2" />
+        <USeparator orientation="vertical" class="h-6" />
 
         <UButton
           to="/new"

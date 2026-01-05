@@ -130,6 +130,7 @@ export type PostsRecord = {
 	link_data?: string
 	link_image?: string
 	markdown_images?: string[]
+	views?: number
 }
 
 export type UsersRecord = {

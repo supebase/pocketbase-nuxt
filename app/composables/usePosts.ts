@@ -47,6 +47,7 @@ export const usePosts = () => {
 				link_data: item.link_data,
 				link_image: item.link_image,
 				content: item.content,
+				views: item.views || 0,
 			}));
 	});
 
