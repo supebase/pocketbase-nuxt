@@ -158,10 +158,15 @@ const confirmDelete = async () => {
 const parsedContent = (text: string) => {
     if (!text) return [];
 
-    return text.split(MENTION_REGEX).map((part) => ({
-      text: part,
-      isMention: MENTION_REGEX.test(part),
-    }));
+    return text.split(MENTION_REGEX).filter(part => part !== '').map((part) => {
+
+    	const isMention = part.startsWith('@') && part.length > 1;
+
+      	return {
+          	text: part,
+          	isMention: isMention
+      	};
+    });
 };
 
 // 3. 实时监听与初始化

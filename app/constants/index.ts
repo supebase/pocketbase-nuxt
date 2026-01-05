@@ -1,7 +1,7 @@
 export const MAX_CACHE_SIZE = 500;
 export const MIN_SEARCH_LENGTH = 2;
 export const REFRESH_THRESHOLD = 30 * 1000; // 首页预览不需要太频繁，改为 30 秒
-export const MENTION_REGEX = /(@\S+)/g;
+export const MENTION_REGEX = /(@[^@\s]+)/g;
 export const CONTENT_MAX_LENGTH = 10000;
 export const COMMENT_MAX_LENGTH = 300;
 

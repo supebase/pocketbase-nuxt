@@ -1,31 +1,11 @@
 <template>
   <div class="flex flex-col items-center justify-center select-none">
-    <div
-      v-if="status !== 'pending' || isRefreshing || !error"
-      class="flex items-center justify-between w-full gap-3"
-    >
-      <div
-        class="flex items-center gap-1 text-base tracking-widest text-dimmed font-semibold"
-      >
-        <ClientOnly>
-          <CommonAnimateNumber :value="visibleTotalItems" /> 条内容
-          <template #fallback>
-            <CommonAnimateNumber :value="0" /> 条内容
-          </template>
-        </ClientOnly>
-      </div>
-      <UIcon
-        v-if="isRefreshing"
-        name="i-hugeicons:refresh"
-        class="size-4 text-dimmed cursor-not-allowed animate-spin"
-      />
-      <UIcon
-        v-else-if="allPosts.length > 0"
-        name="i-hugeicons:refresh"
-        class="size-4 text-dimmed cursor-pointer hover:text-primary transition-colors"
-        @click="manualRefresh"
-      />
-    </div>
+    <PostsHeader 
+      v-if="status !== 'pending' || isRefreshing || !error" 
+      :count="visibleTotalItems" 
+      :isRefreshing="isRefreshing" 
+      :length="allPosts.length"
+      @refresh="manualRefresh" />
 
     <UAlert
       v-if="error"

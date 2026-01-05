@@ -77,8 +77,11 @@
             </template>
           </UPopover>
 
+          <span v-if="isListLoading" 
+            class="text-xs animate-pulse text-muted">正在加载...
+          </span>
           <span
-            v-if="filteredSuggestions.length > 0"
+            v-else-if="filteredSuggestions.length > 0"
             class="text-sm text-primary"
           >
             可提及 {{ rawSuggestions.length }} 个用户
@@ -143,7 +146,7 @@
 
 <script setup lang="ts">
 import type { CommentRecord } from '~/types/comments';
-import { placeholders, COMMENT_MAX_LENGTH } from '~/constants';
+import { placeholders, COMMENT_MAX_LENGTH, MENTION_REGEX } from '~/constants';
 
 const { user: currentUser } = useUserSession();
 const toast = useToast();
@@ -178,12 +181,28 @@ const errors = reactive({ comment: '' });
 const isSubmitting = ref(false);
 const globalError = ref('');
 
+// --- 声明一个缓存变量 ---
+const textareaElement = ref<HTMLTextAreaElement | null>(null);
+
+// --- 封装一个获取函数（带缓存逻辑） ---
+const getRawTextarea = () => {
+    // 如果已经缓存过，且元素还在 DOM 中，直接返回
+    if (textareaElement.value && document.body.contains(textareaElement.value)) {
+        return textareaElement.value;
+    }
+
+    // 否则进行唯一一次查询并存入缓存
+    const el = textareaRef.value?.$el.querySelector('textarea') as HTMLTextAreaElement | null;
+    if (el) {
+        textareaElement.value = el;
+    }
+    return el;
+};
+
 // --- 核心辅助函数：在光标处插入内容并保持焦点 ---
 const insertTextAtCursor = (content: string) => {
-    // 获取底层的 textarea 元素
-    const textarea = textareaRef.value?.$el.querySelector(
-      'textarea',
-    ) as HTMLTextAreaElement | null;
+    // 使用带缓存的函数
+    const textarea = getRawTextarea();
 
     if (!textarea) return;
 
@@ -199,7 +218,6 @@ const insertTextAtCursor = (content: string) => {
     // Vue 更新 DOM 后的光标定位逻辑
     nextTick(() => {
       const newCursorPos = selectionStart + content.length;
-
       textarea.focus();
       textarea.setSelectionRange(newCursorPos, newCursorPos);
     });
@@ -214,16 +232,11 @@ const insertEmoji = (emoji: string) => {
     insertTextAtCursor(emoji);
 };
 
-const getTextareaDom = () => {
-    return textareaRef.value?.$el.querySelector(
-      'textarea',
-    ) as HTMLTextAreaElement | null;
-};
-
 // 2. 监听 Backspace 按键
 const handleKeyDown = (e: KeyboardEvent) => {
     if (e.key === 'Backspace') {
-      const textarea = getTextareaDom();
+      // 使用带缓存的函数
+      const textarea = getRawTextarea();
 
       if (!textarea) return;
 
@@ -234,9 +247,9 @@ const handleKeyDown = (e: KeyboardEvent) => {
         const text = form.comment;
         const textBeforeCursor = text.substring(0, selectionStart);
 
-        // 正则匹配：以 @ 开头，中间是字符，最后以空格结尾，且紧贴光标
+        // 正则匹配：匹配 @开头，中间是非空格字符，最后可能带一个空格，且紧贴光标
         // 这里的 regex 匹配的是： @ + 任意非空格字符 + 空格
-        const mentionMatch = textBeforeCursor.match(/@\S*$/);
+        const mentionMatch = textBeforeCursor.match(MENTION_REGEX);
 
         if (mentionMatch) {
           const matchString = mentionMatch[0];

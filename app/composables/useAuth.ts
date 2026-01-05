@@ -1,4 +1,4 @@
-export const useAuth = (isLoginMode?: Ref<boolean>) => {
+export const useAuth = (isLoginModeArg?: Ref<boolean>) => {
 	const { fetch: fetchSession } = useUserSession();
 	const { locationData, fetchGeo } = useGeoLocation();
 	const toast = useToast();
@@ -13,12 +13,12 @@ export const useAuth = (isLoginMode?: Ref<boolean>) => {
 
 	const error = ref('');
 
-	if (isLoginMode) {
-		watch(isLoginMode, () => {
-			error.value = '';
-			passwordConfirm.value = '';
-		});
-	}
+	const isLoginMode = isLoginModeArg || ref(true);
+
+	watch(isLoginMode, () => {
+        error.value = '';
+        passwordConfirm.value = '';
+    });
 
 	// --- 2. 密码强度计算 ---
 	const strength = computed(() => checkPasswordStrength(password.value));
@@ -27,10 +27,12 @@ export const useAuth = (isLoginMode?: Ref<boolean>) => {
 
 	// --- 3. 登录与注册逻辑 ---
 	const handleAuth = async () => {
-		if (!isLoginMode) return;
-
 		loading.value = true;
 		error.value = '';
+
+		if (!isLoginMode.value && !locationData.value?.location) {
+    		await fetchGeo(); // 如果注册时没拿到位置，尝试补抓一次
+		}
 
 		if (isEmptyString(email.value) || isEmptyString(password.value)) {
 			error.value = '请输入电子邮件和登录密码';
@@ -63,14 +65,14 @@ export const useAuth = (isLoginMode?: Ref<boolean>) => {
 		const endpoint = isLoginMode.value ? '/api/auth/login' : '/api/auth/register';
 
 		try {
-			const body = isLoginMode.value
-				? { email: email.value, password: password.value }
-				: {
-					email: email.value,
-					password: password.value,
-					passwordConfirm: passwordConfirm.value,
-					location: locationData.value.location,
-				};
+			const body = {
+                email: email.value,
+                password: password.value,
+                ...(isLoginMode.value ? {} : { 
+                    passwordConfirm: passwordConfirm.value,
+                    location: locationData.value?.location
+                })
+            };
 
 			await $fetch<any>(endpoint, { method: 'POST', body });
 			await fetchSession();
@@ -114,6 +116,14 @@ export const useAuth = (isLoginMode?: Ref<boolean>) => {
 		try {
 			await $fetch('/api/auth/logout', { method: 'POST' });
 			await fetchSession();
+
+			toast.add({
+				title: '退出成功',
+				description: '您已成功退出账户',
+				icon: 'i-hugeicons:checkmark-circle-03',
+				color: 'info',
+			});
+
 			await navigateTo('/auth', { replace: true });
 		} catch (err: any) {
 			toast.add({
@@ -124,13 +134,6 @@ export const useAuth = (isLoginMode?: Ref<boolean>) => {
 			});
 		} finally {
 			isLoggingOut.value = false;
-
-			toast.add({
-				title: '退出成功',
-				description: '您已成功退出账户',
-				icon: 'i-hugeicons:checkmark-circle-03',
-				color: 'warning',
-			});
 		}
 	};
 

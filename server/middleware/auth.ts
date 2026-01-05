@@ -11,48 +11,52 @@
 import { getPocketBase } from '../utils/pocketbase';
 
 const protectedRoutes = [
-  // 文章相关
-  { path: '/api/collections/posts', method: 'POST' }, // 创建文章
-  { path: '/api/collections/post/', method: 'PUT' }, // 更新文章 (路径以前缀匹配)
-  { path: '/api/collections/post/', method: 'DELETE' }, // 删除文章 (路径以前缀匹配)
-
-  // 评论相关
-  { path: '/api/collections/comments', method: 'POST' }, // 创建评论
-  { path: '/api/collections/comment/', method: 'DELETE' }, // 删除评论 (路径以前缀匹配)
-
-  // 点赞相关
-  { path: '/api/collections/likes', method: 'POST' }, // 创建/取消点赞
+	{ path: '/api/collections/posts', method: 'POST' },
+	{ path: '/api/collections/post', method: ['PUT', 'DELETE'], isPrefix: true },
+	{ path: '/api/collections/comments', method: 'POST' },
+	{ path: '/api/collections/comment', method: 'DELETE', isPrefix: true },
+	{ path: '/api/collections/likes', method: 'POST' },
 ];
 
 export default defineEventHandler(async (event) => {
-  const url = getRequestURL(event).pathname;
-  const method = event.method;
+	const url = getRequestURL(event).pathname.replace(/\/$/, '') || '/';
+	const method = event.method;
 
-  // 1. 无论是否是受保护路由，先尝试初始化用户信息
-  // 这样 event.context.user 就能在后续的 API 处理程序中使用了
-  const pb = getPocketBase(event);
-  event.context.pb = pb;
+	// 1. 无论是否是受保护路由，先尝试初始化用户信息
+	// 这样 event.context.user 就能在后续的 API 处理程序中使用了
+	const pb = getPocketBase(event);
+	event.context.pb = pb;
 
-  // 2. 身份解析
-  if (pb.authStore.isValid && pb.authStore.record) {
-    // 注入用户信息
-    event.context.user = pb.authStore.record;
-  }
+	// 2. 身份解析
+	if (pb.authStore.isValid && pb.authStore.record) {
+		// 注入用户信息
+		event.context.user = pb.authStore.record;
+	}
 
-  // 3. 路由保护逻辑
-  const isProtected = protectedRoutes.some((route) => {
-    const isMatch = route.path.endsWith('/') ? url.startsWith(route.path) : url === route.path;
-    return isMatch && method === route.method;
-  });
+	// 3. 路由保护逻辑
+	const isProtected = protectedRoutes.some((route) => {
+		// 处理方法匹配：支持单字符串或数组
+		const methodMatch = Array.isArray(route.method)
+			? route.method.includes(method)
+			: method === route.method;
 
-  if (!isProtected) return;
+		if (!methodMatch) return false;
 
-  // 3. 此时 event.context.user 已经被前面的代码尝试赋值了
-  if (!event.context.user) {
-    throw createError({
-      statusCode: 401,
-      message: '用户未登录或会话已过期，请重新登录。',
-      statusMessage: 'Unauthorized',
-    });
+		// 处理路径匹配
+		if (route.isPrefix) {
+			// 确保是真正的目录层级匹配，防止 /post-list 匹配到 /post/
+			return url === route.path || url.startsWith(`${route.path}/`);
+		}
+
+		// 精确匹配
+		return url === route.path;
+	});
+
+	if (isProtected && !event.context.user) {
+		throw createError({
+		statusCode: 401,
+		statusMessage: 'Unauthorized',
+		message: '此操作需要登录',
+		});
   }
 });
