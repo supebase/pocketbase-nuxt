@@ -8,8 +8,8 @@
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
-    "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --config .eslintrc.cjs",
-    "format": "prettier --write './*.{vue,js,jsx,cjs,mjs,ts,tsx,cts,mts,json,md}' --ignore-path .gitignore",
+    "lint": "eslint . --fix",
+    "format": "prettier --write .",
     "typecheck": "npx tsc --noEmit"
   },
   "dependencies": {
@@ -31,12 +31,8 @@
     "@tailwindcss/typography": "^0.5.19",
     "@types/node": "^25.0.3",
     "@types/sanitize-html": "^2.16.0",
-    "@typescript-eslint/eslint-plugin": "^8.50.0",
-    "@typescript-eslint/parser": "^8.50.0",
-    "@vue/eslint-config-prettier": "^10.2.0",
     "@vue/eslint-config-typescript": "^14.6.0",
     "eslint": "^9.39.2",
-    "eslint-define-config": "^2.1.0",
     "eslint-plugin-vue": "^10.6.2",
     "prettier": "^3.7.4",
     "sanitize-html": "^2.17.0"

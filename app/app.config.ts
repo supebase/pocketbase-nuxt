@@ -43,9 +43,9 @@ export default defineAppConfig({
 		},
 		radioGroup: {
 			slots: {
-				item: 'rounded-lg border has-data-[state=checked]:shadow-lg has-data-[state=checked]:shadow-primary/50 w-full cursor-pointer',
+				item: 'rounded-lg w-full cursor-pointer',
 				label: 'text-base',
-				description: 'text-muted/80',
+				description: 'text-muted/70',
 				fieldset: 'gap-3 justify-center',
 			},
 		},
