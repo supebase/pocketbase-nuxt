@@ -1,5 +1,5 @@
 <template>
-  <div class="eric">
+  <div :class="['logo-wrapper', { eric: isAnimating }]">
     <svg
       width="240"
       height="200"
@@ -31,3 +31,36 @@
     </svg>
   </div>
 </template>
+
+<script setup lang="ts">
+const { lastPlayedTime } = useHeader();
+const isAnimating = ref(false);
+const PLAY_INTERVAL = 120 * 1000; // 2 分钟频率
+
+const triggerAnimation = () => {
+  isAnimating.value = true;
+  lastPlayedTime.value = Date.now();
+
+  // 动画总长度 = 最大 delay (2s) + duration (5s) = 7s
+  setTimeout(() => {
+    isAnimating.value = false;
+  }, 7500);
+};
+
+onMounted(() => {
+  // 1. 挂载时立即尝试播放一次
+  const tryTrigger = () => {
+    const now = Date.now();
+    if (!isAnimating.value && now - lastPlayedTime.value > PLAY_INTERVAL) {
+      triggerAnimation();
+    }
+  };
+
+  tryTrigger();
+
+  // 2. 每隔几秒扫描一次，确保冷却结束能立即触发
+  const timer = setInterval(tryTrigger, 5000); // 5秒一扫
+
+  onUnmounted(() => clearInterval(timer));
+});
+</script>

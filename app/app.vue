@@ -7,10 +7,10 @@
           <div
             v-if="showHeaderBack"
             key="back"
-            class="flex items-center cursor-pointer"
+            class="header-back-wrapper flex items-center text-muted text-[15px] gap-0.5 cursor-pointer"
             @click="$router.back()"
           >
-            <UIcon name="i-hugeicons:arrow-turn-backward" class="size-7 text-dimmed" />
+            <UIcon name="i-hugeicons:arrow-left-01" class="size-7" /> 返回
           </div>
           <CommonLogo v-else key="logo" />
         </Transition>
@@ -32,40 +32,24 @@
 
 <script setup lang="ts">
 import { zh_cn } from '@nuxt/ui/locale';
+import { useDocumentVisibility } from '@vueuse/core';
 
 const appConfig = useAppConfig();
-const route = useRoute();
 const { showHeaderBack } = useHeader();
 const { loggedIn, fetch: fetchSession } = useUserSession();
 
-// --- 1. 路由与 Header 逻辑 ---
-watch(
-  () => route.path,
-  (newPath) => {
-    if (newPath === '/') {
-      showHeaderBack.value = false;
-    }
-  },
-);
+// --- 1. 身份状态清理 ---
+watch(loggedIn, (isLogged) => {
+  if (import.meta.client && !isLogged) {
+    document.cookie = 'pb_auth=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+  }
+});
 
-// --- 2. 身份状态全局守护 ---
-watch(
-  loggedIn,
-  (isLogged) => {
-    // 仅在客户端执行 Cookie 操作
-    if (import.meta.client && !isLogged) {
-      // 双重保险：确保清除 pb_auth Cookie
-      document.cookie = 'pb_auth=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
-      // 如果你有一些全局的实时状态，也可以在这里重置
-    }
-  },
-  { immediate: false },
-);
-
+// --- 2. 标签页可见性监听 ---
 if (import.meta.client) {
-  window.addEventListener('visibilitychange', () => {
-    // 当用户切换回这个标签页时，自动刷新一次 Session 状态
-    if (document.visibilityState === 'visible') {
+  const visibility = useDocumentVisibility();
+  watch(visibility, (state) => {
+    if (state === 'visible') {
       fetchSession();
     }
   });

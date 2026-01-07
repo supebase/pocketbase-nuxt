@@ -24,6 +24,10 @@
 <script setup lang="ts">
 import { CONTENT_MAX_LENGTH } from '~/constants';
 
+definePageMeta({
+  hideHeaderBack: false,
+});
+
 const getInitialForm = () => ({
   content: '',
   allow_comment: true,

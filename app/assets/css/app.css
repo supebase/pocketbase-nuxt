@@ -115,21 +115,35 @@ body {
   width: 0.3em;
 }
 
+/* 1. 基础配置 */
 .header-fade-enter-active,
 .header-fade-leave-active {
   transition:
-    opacity 0.2s ease,
-    transform 0.2s ease;
+    opacity 0.25s ease,
+    transform 0.25s ease;
 }
 
-.header-fade-enter-from {
-  opacity: 0;
-  transform: translateX(-10px);
-}
-
+/* 2. 初始/结束状态：强制透明度 */
+.header-fade-enter-from,
 .header-fade-leave-to {
   opacity: 0;
-  transform: translateX(10px);
+}
+
+/* --- 3. Logo 动画 (缩放) --- */
+/* 注意：这里类名是连在一起的，表示同一个元素同时拥有这两个类 */
+.header-fade-enter-from.logo-wrapper,
+.header-fade-leave-to.logo-wrapper {
+  transform: scale(0.8);
+}
+
+/* --- 4. 返回键动画 (左进左出) --- */
+/* 同理，类名连在一起 */
+.header-fade-enter-from.header-back-wrapper {
+  transform: translateX(-15px);
+}
+
+.header-fade-leave-to.header-back-wrapper {
+  transform: translateX(-15px);
 }
 
 /* 初始加载时的波浪入场 */
@@ -263,10 +277,16 @@ body {
   display: none !important;
 }
 
-.eric svg {
+.logo-wrapper path {
+  stroke-dasharray: none;
+  stroke-dashoffset: 0;
+  opacity: 1; /* 确保默认可见 */
+}
+
+.logo-wrapper svg {
   width: 32px;
   height: auto;
-  will-change: transform;
+  display: block;
 }
 
 /* 添加减少动画的媒体查询 */
@@ -281,8 +301,9 @@ body {
   }
 
   .eric path {
-    animation: none !important;
-    stroke-dasharray: unset !important;
+    stroke-dasharray: none;
+    stroke-dashoffset: 0;
+    opacity: 1;
   }
 }
 
@@ -298,6 +319,7 @@ body {
 
   100% {
     stroke-dashoffset: 0;
+    opacity: 1;
   }
 }
 

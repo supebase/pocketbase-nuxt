@@ -42,7 +42,7 @@
     <div
       class="flex-1 p-3 min-w-0 flex flex-col justify-center space-y-1 tracking-wide bg-white dark:bg-neutral-900"
     >
-      <div class="text-sm font-bold text-primary line-clamp-1 w-full">
+      <div class="text-sm font-bold line-clamp-1 w-full">
         {{ data.title }}
       </div>
 

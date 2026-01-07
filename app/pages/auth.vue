@@ -1,7 +1,7 @@
 <template>
   <UCard
     variant="subtle"
-    class="mx-auto max-w-md select-none bg-white/60 dark:bg-neutral-900/60 backdrop-blur"
+    class="mx-auto select-none bg-white/60 dark:bg-neutral-900/60 backdrop-blur"
   >
     <UTabs
       v-model="activeTab"
@@ -35,6 +35,10 @@
 
 <script setup lang="ts">
 import { TABS } from '~/constants';
+
+definePageMeta({
+  hideHeaderBack: false,
+});
 
 const route = useRoute();
 const router = useRouter();

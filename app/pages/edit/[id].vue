@@ -34,6 +34,10 @@
 import type { SinglePostResponse } from '~/types/posts';
 import { CONTENT_MAX_LENGTH } from '~/constants';
 
+definePageMeta({
+  hideHeaderBack: false,
+});
+
 const { markAsUpdated } = usePostUpdateTracker();
 const route = useRoute();
 const { id } = route.params as { id: string };

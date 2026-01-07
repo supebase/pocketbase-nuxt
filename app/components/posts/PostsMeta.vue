@@ -14,19 +14,11 @@
         </ClientOnly>
         <span class="mx-1.5">&bull;</span>
         {{ useReadingTime(props.postMeta.content) }}
-        <span class="mx-1.5">&bull;</span>
-        <div class="flex items-center gap-1.25">
-          <ClientOnly> 围观 <CommonAnimateNumber :value="props.postMeta.views" /> 次 </ClientOnly>
-        </div>
       </div>
     </div>
 
-    <div class="hidden xl:block">
-      <UIcon
-        name="i-hugeicons:arrow-turn-backward"
-        class="size-5.5 text-dimmed cursor-pointer hover:text-primary transition-colors"
-        @click="$router.back()"
-      />
+    <div class="flex items-center gap-1.25 text-dimmed text-sm">
+      <ClientOnly><CommonAnimateNumber :value="props.postMeta.views" /> 次拾阅 </ClientOnly>
     </div>
   </div>
 </template>

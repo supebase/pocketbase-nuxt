@@ -96,6 +96,10 @@
 <script setup lang="ts">
 import { useIntersectionObserver } from '@vueuse/core';
 
+definePageMeta({
+  hideHeaderBack: true,
+});
+
 const route = useRoute();
 const { id } = route.params as { id: string };
 const { loggedIn, user: currentUser } = useUserSession();
