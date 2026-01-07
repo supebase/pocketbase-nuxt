@@ -21,7 +21,7 @@
       </div>
     </div>
 
-    <div class="hidden sm:block">
+    <div class="hidden xl:block">
       <UIcon
         name="i-hugeicons:arrow-turn-backward"
         class="size-5.5 text-dimmed cursor-pointer hover:text-primary transition-colors"

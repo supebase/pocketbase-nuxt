@@ -1,8 +1,8 @@
 <template>
-  <aside class="hidden xl:block absolute top-0 right-full mr-16 w-72 h-full select-none">
+  <aside class="hidden xl:block absolute top-2 right-full mr-12 w-72 h-full select-none">
     <div class="sticky top-28 max-h-[calc(100vh-120px)] overflow-y-auto custom-scrollbar">
       <nav v-if="toc?.links?.length">
-        <ul class="space-y-1 border-r border-neutral-200 dark:border-neutral-800 pr-4">
+        <ul class="space-y-1 border-l border-neutral-200 dark:border-neutral-800 pl-4">
           <template v-for="link in toc.links" :key="link.id">
             <TOCItem :link="link" :active-id="activeId" @scroll="scrollToAnchor" />
           </template>
@@ -44,12 +44,12 @@ const TOCItem = defineComponent({
               emit('scroll', props.link.id);
             },
             class: [
-              'block text-sm leading-relaxed transition-all duration-300 py-1 px-2 rounded-md truncate text-right',
+              'block text-sm leading-relaxed transition-all duration-300 py-1 px-2 rounded-md truncate',
               // 根据深度动态增加缩进（右对齐时使用 pr）
-              props.link.depth === 3 ? 'pr-6' : '',
-              props.link.depth === 4 ? 'pr-13' : '',
+              props.link.depth === 3 ? 'pl-6' : '',
+              props.link.depth === 4 ? 'pl-13' : '',
               props.activeId === props.link.id
-                ? 'text-primary font-medium translate-x-[-8px]'
+                ? 'text-primary font-medium translate-x-[8px]'
                 : 'text-dimmed hover:text-primary',
             ],
           },
