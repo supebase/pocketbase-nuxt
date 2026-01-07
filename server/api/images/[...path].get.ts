@@ -1,45 +1,52 @@
-/**
- * 图片代理路由。
- * 现在它不再从本地磁盘读取，而是从 PocketBase 获取文件并流式传输。
- */
 export default defineEventHandler(async (event) => {
   const path = getRouterParam(event, 'path');
-
-  if (!path) {
-    throw createError({ statusCode: 400, statusMessage: '路径不能为空' });
-  }
+  if (!path) throw createError({ statusCode: 400, statusMessage: '路径不能为空' });
 
   const config = useRuntimeConfig();
-
-  // 拼接 PocketBase 标准的文件访问链接
   const targetUrl = `${config.pocketbaseBackend}/api/files/${path}`;
 
   try {
-    // 1. 发起内部请求获取图片
-    const response = await fetch(targetUrl);
+    // 透传浏览器的缓存验证头 (If-None-Match) 给 PocketBase
+    const requestHeaders: Record<string, string> = {};
+    const ifNoneMatch = getHeader(event, 'if-none-match');
+    if (ifNoneMatch) requestHeaders['if-none-match'] = ifNoneMatch;
+
+    const response = await fetch(targetUrl, { headers: requestHeaders });
+
+    // 💡 1. 处理 304 缓存命中
+    // 如果 PocketBase 返回 304，我们也直接给浏览器 304，节省所有流量
+    if (response.status === 304) {
+      setResponseStatus(event, 304);
+      return null;
+    }
 
     if (!response.ok) {
       throw createError({ statusCode: response.status, statusMessage: '图片不存在' });
     }
 
-    // 2. 设置缓存头（PocketBase 默认也会带，这里可以根据需要覆盖）
-    if (process.env.NODE_ENV === 'production') {
-      setResponseHeader(event, 'Cache-Control', 'public, max-age=604800, immutable');
-    }
-
-    // 3. 转发 Content-Type (image/png, image/jpeg 等)
+    // 💡 2. 透传关键的缓存校验头
+    const etag = response.headers.get('etag');
+    const lastModified = response.headers.get('last-modified');
     const contentType = response.headers.get('content-type');
-    if (contentType) {
-      setResponseHeader(event, 'Content-Type', contentType);
+
+    if (etag) setResponseHeader(event, 'ETag', etag);
+    if (lastModified) setResponseHeader(event, 'Last-Modified', lastModified);
+    if (contentType) setResponseHeader(event, 'Content-Type', contentType);
+
+    // 💡 3. 设置智能缓存策略
+    // 对于已经有 ETag 保护的资源，我们可以放心地设置长缓存
+    if (process.env.NODE_ENV === 'production') {
+      // 保持 7 天或设为更长。只要 ETag 在，过期了也就是一个 304 请求的事
+      setResponseHeader(
+        event,
+        'Cache-Control',
+        'public, max-age=604800, stale-while-revalidate=86400',
+      );
     }
 
-    // 4. 将图片流式返回
     return response.body;
   } catch (error) {
-    console.error('[ImageProxy] 获取图片失败:', error);
-    throw createError({
-      statusCode: 404,
-      statusMessage: '无法加载请求的图片',
-    });
+    console.error('[ImageProxy] 代理失败:', error);
+    throw createError({ statusCode: 404, statusMessage: '无法加载图片' });
   }
 });

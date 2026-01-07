@@ -20,7 +20,7 @@
         :title="authError || currentTabConfig?.description"
         variant="outline"
         :color="authError ? 'error' : 'neutral'"
-        :icon="authError ? 'i-hugeicons:alert-02' : 'i-hugeicons:information-circle'"
+        :icon="authError ? 'i-hugeicons:alert-circle' : 'i-hugeicons:information-circle'"
         class="transition-all duration-500"
       />
 

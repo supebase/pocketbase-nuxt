@@ -55,7 +55,12 @@ export const useSearchLogic = () => {
 
   // 监听输入变化
   watch(searchQuery, (newVal) => {
-    if (isComposing.value) return;
+    // 💡 关键 1: 如果正在输入法合成中，保持 isLoading 为 true
+    // 这样 UI 就会一直显示“正在搜索”或保持状态，而不是立刻显示“未找到”
+    if (isComposing.value) {
+      isLoading.value = true;
+      return;
+    }
 
     if (!newVal.trim() || newVal.trim().length < MIN_SEARCH_LENGTH) {
       resetPagination([], 0);

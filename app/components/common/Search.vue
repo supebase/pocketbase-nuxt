@@ -46,24 +46,19 @@
 
     <template #empty>
       <div class="flex flex-col items-center justify-center py-12">
-        <p v-if="!searchQuery" class="text-sm text-dimmed">
-          请输入至少 {{ MIN_SEARCH_LENGTH }} 个字符
-        </p>
-
-        <p
-          v-else-if="searchQuery.length < MIN_SEARCH_LENGTH"
-          class="text-sm text-dimmed animate-pulse"
-        >
-          请继续输入 ...
-        </p>
-
-        <div v-else-if="isLoading" class="flex items-center text-sm text-dimmed">
+        <div v-if="isLoading || isComposing" class="flex items-center text-dimmed animate-pulse">
           正在搜索中 ...
         </div>
 
-        <p v-else-if="!allItems.length" class="text-sm text-dimmed">
-          未找到与 "{{ searchQuery }}" 相关的数据
-        </p>
+        <template v-else>
+          <p v-if="!searchQuery" class="text-dimmed">请输入至少 {{ MIN_SEARCH_LENGTH }} 个字符</p>
+          <p v-else-if="searchQuery.length < MIN_SEARCH_LENGTH" class="text-dimmed">
+            请继续输入 ...
+          </p>
+          <p v-else-if="!allItems.length" class="text-dimmed">
+            未找到与 "{{ searchQuery }}" 相关的数据
+          </p>
+        </template>
       </div>
     </template>
 
@@ -102,6 +97,18 @@ const {
 // --- 结果映射 ---
 const groups = computed(() => {
   const trimmed = searchQuery.value.trim();
+
+  if (isComposing.value || (isLoading.value && allItems.value.length === 0)) {
+    return [
+      {
+        id: 'searching',
+        label: '正在搜索中 ...',
+        items: [],
+        ignoreFilter: true,
+      },
+    ];
+  }
+
   if (!trimmed || allItems.value.length === 0) return [];
 
   // 生成基础文章列表

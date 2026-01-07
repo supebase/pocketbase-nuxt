@@ -1,9 +1,3 @@
-/**
- * @file 文章相关的服务层 (Posts Service)
- * @description 负责封装与 PocketBase 数据库 `posts` 集合相关的所有数据操作（CRUD）。
- *              该文件遵循“依赖注入”的设计模式，所有函数都接收一个 PocketBase 实例作为参数，
- *              以确保操作的上下文（特别是用户认证状态）由调用方（API 路由）决定。
- */
 import { ensureOwnership } from '~~/server/utils/validate-owner';
 import type { PostsResponse as PBPostsResponse, TypedPocketBase } from '~/types/pocketbase-types';
 import type { PostExpand } from '~/types/posts';
@@ -11,12 +5,7 @@ import { processMarkdownImages } from '~~/server/utils/markdown';
 import { sanitizePostContent } from '~~/server/utils/sanitize';
 
 /**
- * 获取文章列表（支持搜索和分页）。
- * @param pb 由 API 路由层传入的、与当前请求上下文绑定的 PocketBase 实例。
- * @param page 要获取的页码，默认为 1。
- * @param perPage 每页的项目数量，默认为 10。
- * @param query 可选的搜索关键词，用于过滤文章标题或内容。
- * @returns 返回一个分页后的文章列表。
+ * 获取文章列表
  */
 export async function getPostsList(
   pb: TypedPocketBase,
@@ -24,20 +13,15 @@ export async function getPostsList(
   perPage: number = 10,
   query?: string,
 ) {
-  // 1. 基础权限过滤：所有人可见已发布的
-  // 或者 (未发布 且 作者是自己)
   let filterString = '(published = true';
   const currentUser = pb.authStore.record;
 
   if (currentUser) {
-    // 如果用户已登录，增加“可见自己草稿”的逻辑
     filterString += ` || (published = false && user = "${currentUser.id}")`;
   }
   filterString += ')';
 
-  // 2. 关键词搜索逻辑
   if (query) {
-    // 使用 pb.filter 防止注入，并将搜索逻辑与权限逻辑用 && 连接
     const searchQuery = pb.filter('content ~ {:q}', { q: query });
     filterString = `(${filterString} && ${searchQuery})`;
   }
@@ -52,15 +36,10 @@ export async function getPostsList(
 }
 
 /**
- * 根据 ID 获取单篇文章的详情。
- * @param pb 与当前请求上下文绑定的 PocketBase 实例。
- * @param postId 要获取的文章的唯一 ID。
- * @returns 返回找到的文章记录。
+ * 根据 ID 获取单篇文章详情
  */
 export async function getPostById(pb: TypedPocketBase, postId: string) {
   const currentUser = pb.authStore.record;
-
-  // 构建安全过滤规则
   let filter = `id = "${postId}" && (published = true`;
 
   if (currentUser) {
@@ -69,12 +48,10 @@ export async function getPostById(pb: TypedPocketBase, postId: string) {
   filter += ')';
 
   try {
-    // 💡 使用 getFirstListItem 配合 filter，可以在数据库层面直接完成安全校验
     return await pb.collection('posts').getFirstListItem<PBPostsResponse<PostExpand>>(filter, {
       expand: 'user',
     });
   } catch (error: any) {
-    // 如果找不到满足条件的记录（可能是 ID 不存在，也可能是权限不足），PocketBase 会抛出 404
     throw createError({
       statusCode: 404,
       message: '文章不存在或您没有权限查看',
@@ -84,7 +61,7 @@ export async function getPostById(pb: TypedPocketBase, postId: string) {
 
 /**
  * 内部核心方法：同步 Markdown 图片到本地
- * (保持逻辑不变，但确保它能处理异常)
+ * 增加了“图片过大”的提示逻辑
  */
 async function syncPostImages(
   pb: TypedPocketBase,
@@ -92,104 +69,86 @@ async function syncPostImages(
   content: string,
   existingImages: string[] = [],
 ) {
-  const { successResults } = await processMarkdownImages(content);
+  const { successResults, skippedCount } = await processMarkdownImages(content);
 
-  // 如果没有图片需要处理，直接返回清洗后的内容
+  // 如果没有新图片下载成功，仅进行清洗并返回（可能包含提示更新）
   if (successResults.length === 0) {
-    return sanitizePostContent(content);
+    let finalContent = content;
+    if (skippedCount > 0 && !content.includes('部分远程图片因体积过大')) {
+      finalContent += `\n\n> ⚠️ **提示**: 部分远程图片因体积过大未同步到本地，已保留原始链接。`;
+    }
+    return sanitizePostContent(finalContent);
   }
 
   const formData = new FormData();
-  // 保留旧图片
   existingImages.forEach((name) => formData.append('markdown_images', name));
 
-  // 追加新下载的图片
   successResults.forEach((item, i) => {
     formData.append('markdown_images', item.blob, `img_${Date.now()}_${i}.png`);
   });
 
-  // 更新 PB 记录的文件字段
   const record = await pb.collection('posts').update(postId, formData);
 
   let finalContent = content;
   const allImages = record.markdown_images;
   const startIndex = allImages.length - successResults.length;
 
-  // 将原始 URL 替换为本地代理 URL
   successResults.forEach((item, i) => {
     const fileName = allImages[startIndex + i];
     const proxyUrl = `/api/images/posts/${postId}/${fileName}`;
     finalContent = finalContent.split(item.url).join(proxyUrl);
   });
 
+  // 处理跳过提示
+  if (skippedCount > 0 && !finalContent.includes('部分远程图片因体积过大')) {
+    finalContent += `\n\n> ⚠️ **提示**: 部分远程图片因体积过大未同步到本地，已保留原始链接。`;
+  }
+
   return sanitizePostContent(finalContent);
 }
 
 /**
- * 创建一篇新文章 (增强一致性版)
- * 逻辑：强制初始状态为草稿 (published = false)，确保图片同步成功后再根据需要上线。
- * @param pb 与当前请求上下文绑定的 PocketBase 实例（必须是已认证用户的实例）。
- * @param data 要创建的文章数据。`Create<'posts'>` 类型确保了传入的数据符合数据库 `posts` 集合的字段要求。
- * @returns 返回新创建的文章记录。
+ * 创建新文章
  */
 export async function createPost(pb: TypedPocketBase, initialData: FormData, rawContent: string) {
-  // 1. 获取用户意愿：记录调用方原本是否想直接发布
   const originalPublishedStatus = initialData.get('published') === 'true';
-
-  // 2. 强制初始状态为草稿，确保处理期间前端列表不可见（根据你的权限过滤逻辑）
   initialData.set('published', 'false');
   initialData.append('content', rawContent);
 
-  // 3. 创建记录
   const post = await pb.collection('posts').create(initialData);
 
   try {
-    // 4. 处理图片同步和清洗
-    // 如果失败，会抛出异常，此时记录已存在且为 published = false
     const cleanContent = await syncPostImages(pb, post.id, rawContent);
-
-    // 5. 第二次更新：填入清洗后的内容，并恢复用户原始的发布状态
     return await pb.collection('posts').update(post.id, {
       content: cleanContent,
-      published: originalPublishedStatus, // 此时才真正根据用户意愿发布
+      published: originalPublishedStatus,
     });
   } catch (error: any) {
-    // 这里不删除记录，而是将错误向上抛出
-    // 结果：数据库里留下了一篇 content 为原始 Markdown 的草稿
-    console.error(`[PostService] 图片同步失败，文章已保留为草稿: ${post.id}`, error);
-
-    // 抛出一个带有特定信息的错误，方便前端给用户更具体的提示
+    console.error(`处理失败: ${post.id}`, error);
     throw createError({
-      statusCode: 202, // Accepted 但未完全处理
-      message: '文章已保存至草稿，但部分远程图片下载失败，请手动编辑检查。',
+      statusCode: 202,
+      message: '内容已保存，但图片同步过程遇到问题，请手动检查。',
       data: { postId: post.id },
     });
   }
 }
 
 /**
- * 更新一篇已有的文章。
- * @param pb 与当前请求上下文绑定的 PocketBase 实例（必须是已认证用户的实例）。
- * @param postId 要更新的文章的 ID。
- * @param data 要更新的文章数据。`Update<'posts'>` 类型使得所有字段都是可选的，允许部分更新。
- * @returns 返回更新后的文章记录。
+ * 更新文章
  */
 export async function updatePost(pb: TypedPocketBase, postId: string, body: any) {
+  // 此时 ensureOwnership 已具备强大的类型检查
   const existing = await ensureOwnership(pb, 'posts', postId);
 
-  // 如果内容被修改，执行复杂的图片同步逻辑
   if (body.content !== undefined && body.content !== existing.content) {
     const cleanContent = await syncPostImages(pb, postId, body.content, existing.markdown_images);
     body.content = cleanContent;
   }
-  // 处理其他可能的 FormData 字段更新（如 link_data 等由调用方传入）
   return await pb.collection('posts').update(postId, body);
 }
 
 /**
- * 根据 ID 删除一篇文章。
- * @param pb 与当前请求上下文绑定的 PocketBase 实例（必须是已认证用户的实例）。
- * @param postId 要删除的文章的 ID。
+ * 删除文章
  */
 export async function deletePost(pb: TypedPocketBase, postId: string) {
   await ensureOwnership(pb, 'posts', postId);
@@ -197,20 +156,12 @@ export async function deletePost(pb: TypedPocketBase, postId: string) {
 }
 
 /**
- * 增加文章浏览量 (原子操作)
- * @param pb PocketBase 实例
- * @param postId 文章 ID
+ * 增加浏览量
  */
 export async function incrementPostViews(pb: TypedPocketBase, postId: string) {
   try {
-    // 使用 PocketBase 的原子操作语法 "views+": 1
-    // 注意：这要求 PB 的 API Rules 允许当前 pb 实例的身份进行 update
-    // 或者你可以考虑在 server/utils 中导出一个 Admin 权限的 pb 专门做这件事
-    await pb.collection('posts').update(postId, {
-      'views+': 1,
-    });
+    await pb.collection('posts').update(postId, { 'views+': 1 });
   } catch (error) {
-    // 浏览量增加失败不应该打断用户阅读，记录错误即可
-    console.error(`无法更新 ${postId} 的浏览量:`, error);
+    console.error(`无法更新浏览量:`, error);
   }
 }

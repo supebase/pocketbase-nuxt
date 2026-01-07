@@ -23,7 +23,7 @@
         >
           <UIcon name="i-hugeicons:refresh" class="size-6 mb-2 animate-spin text-muted" />
           <span class="text-sm font-medium text-muted tracking-widest text-center">
-            {{ isUpdateRefresh ? '同步内容中...' : '加载内容中...' }}
+            {{ isUpdateRefresh ? '正在同步内容改动' : '沉浸式梳理内容' }}
           </span>
         </div>
 
@@ -52,6 +52,10 @@
       >
         <UAlert
           v-if="!postWithRelativeTime.allow_comment"
+          :ui="{
+            root: 'items-center justify-center text-dimmed',
+            wrapper: 'flex-none',
+          }"
           icon="i-hugeicons:comment-block-02"
           color="neutral"
           variant="outline"
@@ -63,7 +67,8 @@
           v-if="!loggedIn && postWithRelativeTime.allow_comment"
           size="lg"
           icon="i-hugeicons:chat-lock-01"
-          title="登录后参与讨论"
+          title="参与评论需要登录"
+          description="登录后即可在评论区发布你的观点与见解"
           :actions="[{ label: '立即登录', color: 'neutral', to: '/auth' }]"
           class="mt-8 select-none"
         />
@@ -133,20 +138,37 @@ const onCommentSuccess = (newComment: any) => {
   if (commentListRef.value) commentListRef.value.handleCommentCreated(newComment);
 };
 
+watch(loggedIn, () => {
+  isUpdateRefresh.value = true;
+  refresh();
+});
+
 // 监听内容变化进行 MDC 解析
 watch(
-  [() => postWithRelativeTime.value?.content, status],
-  async ([newContent, newStatus]) => {
-    if (newStatus === 'pending' && !isUpdateRefresh.value) {
-      mdcReady.value = false;
-      return;
-    }
-    if ((newStatus === 'success' || newStatus === 'idle') && newContent) {
+  () => postWithRelativeTime.value?.content,
+  async (newContent) => {
+    if (newContent) {
       await parseContent(newContent);
     }
   },
   { immediate: true },
 );
+
+watch(status, async (newStatus) => {
+  if (newStatus === 'pending') {
+    // 只有在非静默更新且真正没有 AST 数据时才展示 loading 遮罩
+    if (!isUpdateRefresh.value && !ast.value) {
+      mdcReady.value = false;
+    }
+  }
+
+  // 💡 关键：当状态变为成功时，如果 mdcReady 还是关着的，强制开启解析
+  if (newStatus === 'success' && postWithRelativeTime.value?.content) {
+    if (!mdcReady.value) {
+      await parseContent(postWithRelativeTime.value.content);
+    }
+  }
+});
 
 // 错误处理
 watch(

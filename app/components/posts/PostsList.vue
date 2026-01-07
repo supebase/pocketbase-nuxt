@@ -43,7 +43,6 @@
         <template v-else>
           <CommonMotionTimeline
             :items="displayItems"
-            :key="refreshCounter"
             :loading-more="isLoadingMore"
             line-offset="15px"
             :trigger-ratio="0.55"
@@ -52,7 +51,7 @@
             <template #indicator="{ item }">
               <div
                 v-if="item.icon"
-                class="flex items-center justify-center size-8 rounded-full bg-white dark:bg-neutral-900 ring-3 ring-white dark:ring-neutral-900 shadow-sm overflow-hidden"
+                class="flex items-center justify-center size-8 rounded-full bg-white dark:bg-neutral-900 overflow-hidden"
               >
                 <UIcon :name="item.icon" class="size-6 text-primary" />
               </div>
@@ -99,6 +98,7 @@
                 :item="item"
                 :delay="(index % 10) * 0.08"
                 :can-view-drafts="canViewDrafts ?? false"
+                :trigger-animation="animationTrigger"
               />
             </template>
           </CommonMotionTimeline>
@@ -167,12 +167,10 @@ const {
   transformPosts,
 } = usePosts();
 
-// 2. 认证与刷新逻辑
 const { loggedIn } = useUserSession();
 const { isRefreshing, refreshPostsAndComments } = useRefresh();
 const toast = useToast();
 
-// 3. SSR 初始加载 (保持原始 Key)
 const {
   data: fetchResult,
   status,
@@ -184,7 +182,6 @@ const {
   watch: [loggedIn],
 });
 
-// 4. 数据同步
 watch(
   fetchResult,
   (res) => {
@@ -195,26 +192,30 @@ watch(
   { immediate: true },
 );
 
-// 5. 交互状态
 const refreshCounter = ref(0);
 const isDeleteModalOpen = ref(false);
 const isDeleting = ref(false);
 const pendingDeleteItem = ref<any>(null);
+const animationTrigger = ref(0);
 
 const visibleTotalItems = computed(() =>
   canViewDrafts.value ? totalItems.value : allPosts.value.filter((p) => p.published).length,
 );
 
-// 6. 初始化
 onMounted(() => setupRealtime());
 
-// 7. 方法封装
+// 💡 关键：手动刷新逻辑
 const manualRefresh = async () => {
   isResetting.value = true;
+
+  // 💡 同步重置 Timeline 的持久化进度
+  const persistedProgress = useState<number>('timeline-progress-15px');
+  persistedProgress.value = 0;
 
   try {
     await refreshPostsAndComments(refresh, allPosts, currentPage);
     refreshCounter.value++;
+    animationTrigger.value++;
   } finally {
     nextTick(() => {
       setTimeout(() => {
@@ -250,16 +251,12 @@ const handleRequestDelete = (item: any) => {
 
 const confirmDelete = async () => {
   if (!pendingDeleteItem.value) return;
-
   isDeleting.value = true;
-
   try {
     await $fetch(`/api/collections/post/${pendingDeleteItem.value.id}`, {
       method: 'DELETE',
     });
-
     isDeleteModalOpen.value = false;
-
     toast.add({
       title: '删除成功',
       icon: 'i-hugeicons:checkmark-circle-03',
@@ -274,7 +271,6 @@ const confirmDelete = async () => {
     });
   } finally {
     isDeleting.value = false;
-
     setTimeout(() => {
       pendingDeleteItem.value = null;
     }, 200);

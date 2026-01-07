@@ -1,9 +1,10 @@
 export const MAX_CACHE_SIZE = 500;
 export const MIN_SEARCH_LENGTH = 2;
-export const REFRESH_THRESHOLD = 30 * 1000; // 首页预览不需要太频繁，改为 30 秒
+export const REFRESH_THRESHOLD = 5 * 60 * 1000; // 首页预览不需要太频繁，改为 5 分钟
 export const MENTION_REGEX = /(@[^@\s]+)/g;
 export const CONTENT_MAX_LENGTH = 10000;
 export const COMMENT_MAX_LENGTH = 300;
+export const MD_IMAGE_MAX_SIZE = 1 * 1024 * 1024; // 限制最大 1MB
 
 export const timeMap: Record<string, string> = {
   '1 天': '昨天',

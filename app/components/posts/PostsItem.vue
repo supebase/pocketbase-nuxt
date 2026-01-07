@@ -1,8 +1,12 @@
 <template>
-  <div :key="item.id" class="record-item-animate" :style="{ '--delay': `${delay}s` }">
+  <div
+    :key="item.id"
+    :class="[isFirstTimeRender ? 'record-item-animate' : '']"
+    :style="{ '--delay': `${delay}s` }"
+  >
     <ULink
       :to="`/${item.id}`"
-      class="line-clamp-3 font-sans tracking-normal leading-7 text-justify wrap-break-word"
+      class="line-clamp-3 font-sans tracking-normal leading-7 wrap-break-word"
       tabindex="-1"
     >
       {{ item.cleanContent }}
@@ -54,8 +58,32 @@ interface Props {
   };
   delay: number;
   canViewDrafts: boolean;
+  triggerAnimation?: number;
 }
 
 const props = defineProps<Props>();
 const isLoaded = ref(false);
+const isFirstTimeRender = ref(true);
+
+watch(
+  () => props.triggerAnimation,
+  (newVal) => {
+    // 💡 只有当信号真正发生变化（大于0）时才重置动画
+    if (newVal && newVal > 0) {
+      isFirstTimeRender.value = true;
+      setTimeout(() => {
+        isFirstTimeRender.value = false;
+      }, 1000);
+    }
+  },
+);
+
+onMounted(() => {
+  nextTick(() => {
+    // 动画播放完后关闭标记
+    setTimeout(() => {
+      isFirstTimeRender.value = false;
+    }, 1000);
+  });
+});
 </script>

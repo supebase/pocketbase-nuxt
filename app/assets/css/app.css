@@ -148,9 +148,18 @@ body {
 
 /* 初始加载时的波浪入场 */
 .record-item-animate {
-  animation: slide-up-fade 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
-  animation-delay: var(--delay);
-  will-change: transform, opacity;
+  animation: slide-up 0.6s ease-out var(--delay) backwards;
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* 新评论发表时的快速弹出 */

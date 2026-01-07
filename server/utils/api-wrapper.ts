@@ -1,30 +1,41 @@
 import type { EventHandler, EventHandlerRequest } from 'h3';
 import { handlePocketBaseError } from './error-handler';
 
-/**
- * API 高阶包装器
- * 修复了泛型 D 的异步推导问题
- */
 export const defineApiHandler = <T extends EventHandlerRequest, D>(
   handler: EventHandler<T, D>,
 ): EventHandler<T, D> => {
-  // 使用 @ts-ignore 或者明确指定返回类型为异步
-  // 实际上 defineEventHandler 接受返回 Promise 的函数
   return defineEventHandler(async (event) => {
     try {
-      // 这里 await 确保了无论原 handler 是同步还是异步，都能捕获错误
-      const response = await handler(event);
+      // --- 🔐 增加 CSRF 安全校验 ---
+      if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(event.method)) {
+        const origin = getHeader(event, 'origin');
+        const host = getHeader(event, 'host');
 
+        // 仅在生产环境下强制校验，避免影响本地开发
+        if (process.env.NODE_ENV === 'production' && origin && host) {
+          try {
+            const originHost = new URL(origin).host;
+            if (originHost !== host) {
+              throw createError({
+                statusCode: 403,
+                message: '安全校验失败：跨站请求被拦截 (CSRF Protection)',
+              });
+            }
+          } catch (e) {
+            // 如果 Origin URL 格式非法
+            throw createError({ statusCode: 403, message: '非法的请求来源' });
+          }
+        }
+      }
+      // ----------------------------
+
+      const response = await handler(event);
       return response;
     } catch (error: any) {
-      // 1. 如果是已经通过 createError 抛出的标准错误，且不是 PocketBase 的原始错误，则继续抛出
       if (error.statusCode && !error.originalError && !error.data?.isPocketBase) {
         throw error;
       }
-
-      // 2. 统一交给 PocketBase 错误处理器
-      // 注意：handlePocketBaseError 应该返回一个标准的对象或抛出 createError
       return handlePocketBaseError(error, '服务器响应异常');
     }
-  }) as EventHandler<T, D>; // 强制断言以匹配 h3 的签名
+  }) as EventHandler<T, D>;
 };

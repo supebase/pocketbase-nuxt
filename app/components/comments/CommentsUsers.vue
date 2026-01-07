@@ -96,11 +96,16 @@ const {
 // 3. 接入全局单例实时监听 (新增)
 const { listen } = usePocketRealtime(['comments']);
 
+let debounceTimer: NodeJS.Timeout;
+
 onMounted(() => {
   listen(({ collection, action, record }) => {
     // 只有当是当前文章的评论变动，且组件已经渲染（在视口内）时才刷新
     if (collection === 'comments' && record.post === props.postId && isRendered.value) {
-      refresh();
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        refresh();
+      }, 500); // 500ms 内的多次变动仅刷新一次
     }
   });
 });
