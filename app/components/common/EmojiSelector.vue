@@ -1,8 +1,5 @@
 <template>
-  <UPopover
-    :ui="{ content: 'ring-0 shadow-none bg-transparent' }"
-    v-model:open="isPickerVisible"
-  >
+  <UPopover :ui="{ content: 'ring-0 shadow-none bg-transparent' }" v-model:open="isPickerVisible">
     <div class="mt-1.5">
       <UIcon
         name="i-hugeicons:smile"
@@ -36,34 +33,34 @@ const theme = computed(() => (colorMode.value === 'dark' ? 'dark' : 'light'));
 const isPickerVisible = ref(false);
 
 const openPicker = () => {
-    isPickerVisible.value = true;
+  isPickerVisible.value = true;
 
-    nextTick(() => {
-      // 延迟一点时间，确保组件渲染完毕后移除焦点
-      setTimeout(() => {
-        (document.activeElement as HTMLElement)?.blur();
-      }, 0);
-    });
+  nextTick(() => {
+    // 延迟一点时间，确保组件渲染完毕后移除焦点
+    setTimeout(() => {
+      (document.activeElement as HTMLElement)?.blur();
+    }, 0);
+  });
 };
 
 const disabledGroups = ref([
-    'animals_nature',
-    'food_drink',
-    'activities',
-    'travel_places',
-    'objects',
-    'symbols',
-    'flags',
+  'animals_nature',
+  'food_drink',
+  'activities',
+  'travel_places',
+  'objects',
+  'symbols',
+  'flags',
 ]);
 
 const emit = defineEmits(['emoji']);
 
 const handleEmojiSelect = (emoji: { i: string }) => {
-    if (typeof emoji.i === 'string') {
-      emit('emoji', emoji.i);
-      isPickerVisible.value = false;
-    } else {
-      console.error('Invalid emoji:', emoji);
-    }
+  if (typeof emoji.i === 'string') {
+    emit('emoji', emoji.i);
+    isPickerVisible.value = false;
+  } else {
+    console.error('Invalid emoji:', emoji);
+  }
 };
 </script>

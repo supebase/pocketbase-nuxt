@@ -26,11 +26,11 @@ const isOpen = ref(false);
 
 // 快捷键支持
 defineShortcuts({
-    meta_k: {
-      usingInput: true,
-      handler: () => {
-        isOpen.value = !isOpen.value;
-      },
+  meta_k: {
+    usingInput: true,
+    handler: () => {
+      isOpen.value = !isOpen.value;
     },
+  },
 });
 </script>

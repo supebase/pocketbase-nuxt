@@ -1,11 +1,12 @@
 <template>
   <div class="flex flex-col items-center justify-center select-none">
-    <PostsHeader 
-      v-if="status !== 'pending' || isRefreshing || !error" 
-      :count="visibleTotalItems" 
-      :isRefreshing="isRefreshing" 
+    <PostsHeader
+      v-if="status !== 'pending' || isRefreshing || !error"
+      :count="visibleTotalItems"
+      :isRefreshing="isRefreshing"
       :length="allPosts.length"
-      @refresh="manualRefresh" />
+      @refresh="manualRefresh"
+    />
 
     <UAlert
       v-if="error"
@@ -18,9 +19,7 @@
 
     <div v-else class="mt-8 space-y-4 w-full">
       <ClientOnly>
-        <template
-          v-if="allPosts.length === 0 && status !== 'pending' && !isRefreshing"
-        >
+        <template v-if="allPosts.length === 0 && status !== 'pending' && !isRefreshing">
           <div
             class="flex flex-col items-center justify-center space-y-4 min-h-[calc(100vh-14rem)] pt-16"
           >
@@ -63,12 +62,7 @@
             <template #title="{ item }">
               <div class="flex items-center gap-3">
                 <div class="text-base">{{ item.title }}</div>
-                <div
-                  v-if="!item.published && canViewDrafts"
-                  class="text-warning"
-                >
-                  待发布稿
-                </div>
+                <div v-if="!item.published && canViewDrafts" class="text-warning">待发布稿</div>
                 <UBadge
                   v-else-if="item.action === 'dit'"
                   label="DIRE"
@@ -115,9 +109,7 @@
             @confirm="confirmDelete"
           >
             <div v-if="pendingDeleteItem" class="flex flex-col gap-2">
-              <div class="text-sm text-primary font-semibold tracking-wider">
-                即将消失的数据
-              </div>
+              <div class="text-sm text-primary font-semibold tracking-wider">即将消失的数据</div>
               <div class="text-sm text-muted line-clamp-2">
                 {{ pendingDeleteItem.cleanContent }}
               </div>
@@ -125,10 +117,7 @@
           </ModalDelete>
         </template>
 
-        <div
-          v-if="allPosts.length > 0"
-          class="flex flex-col items-center justify-center mt-8 mb-4"
-        >
+        <div v-if="allPosts.length > 0" class="flex flex-col items-center justify-center mt-8 mb-4">
           <Transition name="fade" mode="out-in">
             <div v-if="hasMore" key="load-button">
               <UButton
@@ -142,19 +131,11 @@
               </UButton>
             </div>
             <div v-else key="no-more" class="w-full">
-              <USeparator
-                label="已经到底了"
-                type="dashed"
-                class="text-dimmed opacity-60"
-              />
+              <USeparator label="已经到底了" type="dashed" class="text-dimmed opacity-60" />
             </div>
           </Transition>
 
-          <SkeletonPosts
-            v-if="isLoadingMore"
-            :count="1"
-            class="opacity-60 mt-4 w-full"
-          />
+          <SkeletonPosts v-if="isLoadingMore" :count="1" class="opacity-60 mt-4 w-full" />
         </div>
 
         <template #fallback>
@@ -171,18 +152,18 @@
 import type { PostWithUser, PostsListResponse } from '~/types/posts';
 
 const {
-    allPosts,
-    displayItems,
-    totalItems,
-    currentPage,
-    isLoadingMore,
-    hasMore,
-    isResetting,
-    canViewDrafts,
-    setupRealtime,
-    loadMore,
-    resetPagination,
-    transformPosts,
+  allPosts,
+  displayItems,
+  totalItems,
+  currentPage,
+  isLoadingMore,
+  hasMore,
+  isResetting,
+  canViewDrafts,
+  setupRealtime,
+  loadMore,
+  resetPagination,
+  transformPosts,
 } = usePosts();
 
 // 2. 认证与刷新逻辑
@@ -192,29 +173,25 @@ const toast = useToast();
 
 // 3. SSR 初始加载 (保持原始 Key)
 const {
-    data: fetchResult,
-    status,
-    error,
-    refresh,
+  data: fetchResult,
+  status,
+  error,
+  refresh,
 } = await useLazyFetch<PostsListResponse>('/api/collections/posts', {
-    key: 'posts-list-data',
-    server: true,
-    watch: [loggedIn],
+  key: 'posts-list-data',
+  server: true,
+  watch: [loggedIn],
 });
 
 // 4. 数据同步
 watch(
-    fetchResult,
-    (res) => {
-      if (res?.data && res.data.page === 1) {
-        resetPagination(
-          res.data.posts as PostWithUser[],
-          res.data.totalItems,
-          transformPosts,
-        );
-      }
-    },
-    { immediate: true },
+  fetchResult,
+  (res) => {
+    if (res?.data && res.data.page === 1) {
+      resetPagination(res.data.posts as PostWithUser[], res.data.totalItems, transformPosts);
+    }
+  },
+  { immediate: true },
 );
 
 // 5. 交互状态
@@ -224,9 +201,7 @@ const isDeleting = ref(false);
 const pendingDeleteItem = ref<any>(null);
 
 const visibleTotalItems = computed(() =>
-    canViewDrafts.value
-      ? totalItems.value
-      : allPosts.value.filter((p) => p.published).length,
+  canViewDrafts.value ? totalItems.value : allPosts.value.filter((p) => p.published).length,
 );
 
 // 6. 初始化
@@ -234,74 +209,74 @@ onMounted(() => setupRealtime());
 
 // 7. 方法封装
 const manualRefresh = async () => {
-    isResetting.value = true;
+  isResetting.value = true;
 
-    try {
-      await refreshPostsAndComments(refresh, allPosts, currentPage);
-      refreshCounter.value++;
-    } finally {
-      nextTick(() => {
-        setTimeout(() => {
-          isResetting.value = false;
-        }, 100);
-      });
+  try {
+    await refreshPostsAndComments(refresh, allPosts, currentPage);
+    refreshCounter.value++;
+  } finally {
+    nextTick(() => {
+      setTimeout(() => {
+        isResetting.value = false;
+      }, 100);
+    });
 
-      toast.add({
-        title: '刷新完成',
-        description: `共刷新了 ${visibleTotalItems.value} 条内容`,
-        icon: 'i-hugeicons:checkmark-circle-03',
-        color: 'success',
-      });
-    }
+    toast.add({
+      title: '刷新完成',
+      description: `共刷新了 ${visibleTotalItems.value} 条内容`,
+      icon: 'i-hugeicons:checkmark-circle-03',
+      color: 'success',
+    });
+  }
 };
 
 const handleLoadMore = () =>
-    loadMore(async () => {
-      const res = await $fetch<PostsListResponse>('/api/collections/posts', {
-        query: { page: currentPage.value },
-      });
+  loadMore(async () => {
+    const res = await $fetch<PostsListResponse>('/api/collections/posts', {
+      query: { page: currentPage.value },
+    });
 
-      return {
-        items: res.data.posts as PostWithUser[],
-        total: res.data.totalItems,
-      };
-    }, transformPosts);
+    return {
+      items: res.data.posts as PostWithUser[],
+      total: res.data.totalItems,
+    };
+  }, transformPosts);
 
-  const handleRequestDelete = (item: any) => {
-    pendingDeleteItem.value = item;
-    isDeleteModalOpen.value = true;
+const handleRequestDelete = (item: any) => {
+  pendingDeleteItem.value = item;
+  isDeleteModalOpen.value = true;
 };
 
 const confirmDelete = async () => {
-    if (!pendingDeleteItem.value) return;
+  if (!pendingDeleteItem.value) return;
 
-    isDeleting.value = true;
+  isDeleting.value = true;
 
-    try {
-      await $fetch(`/api/collections/post/${pendingDeleteItem.value.id}`, {
-        method: 'DELETE',
-      });
+  try {
+    await $fetch(`/api/collections/post/${pendingDeleteItem.value.id}`, {
+      method: 'DELETE',
+    });
 
-      isDeleteModalOpen.value = false;
+    isDeleteModalOpen.value = false;
 
-      toast.add({
-        title: '删除成功',
-        icon: 'i-hugeicons:checkmark-circle-03',
-        color: 'success',
-      });
-    } catch (err: any) {
-      toast.add({
-        title: '删除失败',
-        description: err.data?.message,
-        icon: 'i-hugeicons:alert-02',
-        color: 'error',
-      });
-    } finally {
-      isDeleting.value = false;
+    toast.add({
+      title: '删除成功',
+      icon: 'i-hugeicons:checkmark-circle-03',
+      color: 'success',
+    });
+  } catch (err: any) {
+    toast.add({
+      title: '删除失败',
+      description: err.data?.message,
+      icon: 'i-hugeicons:alert-02',
+      color: 'error',
+    });
+  } finally {
+    isDeleting.value = false;
 
-      setTimeout(() => {
-        pendingDeleteItem.value = null;
-      }, 200);
-    }
+    setTimeout(() => {
+      pendingDeleteItem.value = null;
+    }, 200);
+  }
 };
 </script>

@@ -11,5 +11,5 @@
 </template>
 
 <script setup lang="ts">
-  const { handleLogout, isLoggingOut } = useAuth();
+const { handleLogout, isLoggingOut } = useAuth();
 </script>

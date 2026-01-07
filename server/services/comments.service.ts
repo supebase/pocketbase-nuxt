@@ -5,7 +5,11 @@
  *              为每条评论附加点赞数和当前用户的点赞状态。
  */
 import { ensureOwnership } from '~~/server/utils/validate-owner';
-import type { CommentsResponse as PBCommentsResponse, Create, TypedPocketBase } from '~/types/pocketbase-types';
+import type {
+  CommentsResponse as PBCommentsResponse,
+  Create,
+  TypedPocketBase,
+} from '~/types/pocketbase-types';
 import type { CommentRecord, CommentExpand } from '~/types/comments';
 
 /**
@@ -17,44 +21,52 @@ import type { CommentRecord, CommentExpand } from '~/types/comments';
  * @param userId 可选的当前登录用户 ID。如果提供，将一并查询该用户是否对每条评论点了赞。
  * @returns 返回一个分页对象，其中的 `items` 数组是包含了点赞信息的 `CommentRecord` 列表。
  */
-export async function getCommentsList(pb: TypedPocketBase, page: number = 1, perPage: number = 10, filter?: string, userId?: string) {
-	// 构建 PocketBase 查询参数对象。
-	const queryOptions: any = {
-		sort: '-created',
-		expand: 'user',
-	};
+export async function getCommentsList(
+  pb: TypedPocketBase,
+  page: number = 1,
+  perPage: number = 10,
+  filter?: string,
+  userId?: string,
+) {
+  // 构建 PocketBase 查询参数对象。
+  const queryOptions: any = {
+    sort: '-created',
+    expand: 'user',
+  };
 
-	if (filter) {
-		queryOptions.filter = filter;
-	}
+  if (filter) {
+    queryOptions.filter = filter;
+  }
 
-	// 步骤 1: 使用传入的 PocketBase 实例从 'comments' 集合获取基础的评论分页数据。
-	// `expand:'user'` 会让 PocketBase 在返回的数据中包含一个 `expand` 字段，里面是关联的 `users` 记录。
-	const result = await pb.collection('comments').getList<PBCommentsResponse<CommentExpand>>(page, perPage, queryOptions);
+  // 步骤 1: 使用传入的 PocketBase 实例从 'comments' 集合获取基础的评论分页数据。
+  // `expand:'user'` 会让 PocketBase 在返回的数据中包含一个 `expand` 字段，里面是关联的 `users` 记录。
+  const result = await pb
+    .collection('comments')
+    .getList<PBCommentsResponse<CommentExpand>>(page, perPage, queryOptions);
 
-	// 步骤 2: 如果查询结果不为空，则进一步获取这些评论的点赞信息。
-	const commentIds = result.items.map((comment) => comment.id);
-	const likesMap = await getCommentsLikesMap(pb, commentIds, userId);
+  // 步骤 2: 如果查询结果不为空，则进一步获取这些评论的点赞信息。
+  const commentIds = result.items.map((comment) => comment.id);
+  const likesMap = await getCommentsLikesMap(pb, commentIds, userId);
 
-	// 💡 使用一个新的变量承载处理后的结果，避免原地修改带来的类型冲突
-	const processedItems: CommentRecord[] = result.items.map((comment) => {
-		const likeInfo = likesMap[comment.id];
-		return {
-			...comment,
-			likes: likeInfo?.likes || 0,
-			isLiked: userId ? !!likeInfo?.isLiked : false,
-			initialized: true,
-		} as CommentRecord;
-	});
+  // 💡 使用一个新的变量承载处理后的结果，避免原地修改带来的类型冲突
+  const processedItems: CommentRecord[] = result.items.map((comment) => {
+    const likeInfo = likesMap[comment.id];
+    return {
+      ...comment,
+      likes: likeInfo?.likes || 0,
+      isLiked: userId ? !!likeInfo?.isLiked : false,
+      initialized: true,
+    } as CommentRecord;
+  });
 
-	// 返回一个新的对象，保持原始的分页元数据
-	return {
-		items: processedItems,
-		totalItems: result.totalItems,
-		page: result.page,
-		perPage: result.perPage,
-		totalPages: result.totalPages,
-	};
+  // 返回一个新的对象，保持原始的分页元数据
+  return {
+    items: processedItems,
+    totalItems: result.totalItems,
+    page: result.page,
+    perPage: result.perPage,
+    totalPages: result.totalPages,
+  };
 }
 
 /**
@@ -64,9 +76,9 @@ export async function getCommentsList(pb: TypedPocketBase, page: number = 1, per
  * @returns 返回包含用户信息（通过 expand）的单条评论数据。
  */
 export async function getCommentById(pb: TypedPocketBase, commentId: string) {
-	return await pb.collection('comments').getOne<PBCommentsResponse<CommentExpand>>(commentId, {
-		expand: 'user',
-	});
+  return await pb.collection('comments').getOne<PBCommentsResponse<CommentExpand>>(commentId, {
+    expand: 'user',
+  });
 }
 
 /**
@@ -77,11 +89,11 @@ export async function getCommentById(pb: TypedPocketBase, commentId: string) {
  * @returns 返回创建成功后的评论记录，并关联了创建者的用户信息。
  */
 export async function createComment(pb: TypedPocketBase, data: Create<'comments'>) {
-	// 💡 由于传入的 `pb` 实例已经包含了用户的认证 Token，
-	// PocketBase 后端会自动将这条新评论的 `user` 字段设置为当前登录的用户。
-	return await pb.collection('comments').create<PBCommentsResponse<CommentExpand>>(data, {
-		expand: 'user',
-	});
+  // 💡 由于传入的 `pb` 实例已经包含了用户的认证 Token，
+  // PocketBase 后端会自动将这条新评论的 `user` 字段设置为当前登录的用户。
+  return await pb.collection('comments').create<PBCommentsResponse<CommentExpand>>(data, {
+    expand: 'user',
+  });
 }
 
 /**
@@ -91,6 +103,6 @@ export async function createComment(pb: TypedPocketBase, data: Create<'comments'
  * @returns Promise<boolean> 删除成功时 PocketBase SDK 返回 true。
  */
 export async function deleteComment(pb: TypedPocketBase, commentId: string) {
-	await ensureOwnership(pb, 'comments', commentId);
-	return await pb.collection('comments').delete(commentId);
+  await ensureOwnership(pb, 'comments', commentId);
+  return await pb.collection('comments').delete(commentId);
 }

@@ -3,14 +3,14 @@
  * @returns 密码显示状态和切换函数
  */
 export function usePasswordVisibility() {
-	const isVisible = ref(false);
+  const isVisible = ref(false);
 
-	const toggleVisibility = () => {
-		isVisible.value = !isVisible.value;
-	};
+  const toggleVisibility = () => {
+    isVisible.value = !isVisible.value;
+  };
 
-	return {
-		isVisible,
-		toggleVisibility,
-	};
+  return {
+    isVisible,
+    toggleVisibility,
+  };
 }

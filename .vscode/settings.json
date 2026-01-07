@@ -1,0 +1,20 @@
+{
+  // 核心：指定格式化程序
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.formatOnSave": true,
+
+  // 核心：强制编辑器视觉缩进与代码一致
+  "editor.tabSize": 2,
+  "editor.insertSpaces": true,
+
+  // 核心：在编辑器内显示 100 字符限制线（视觉辅助）
+  "editor.rulers": [100],
+
+  // 针对特定语言的设置
+  "[vue]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  }
+}

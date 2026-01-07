@@ -48,11 +48,7 @@
             :class="req.met ? 'text-primary' : 'text-dimmed'"
           >
             <UIcon
-              :name="
-                req.met
-                  ? 'i-hugeicons:checkmark-circle-03'
-                  : 'i-hugeicons:circle'
-              "
+              :name="req.met ? 'i-hugeicons:checkmark-circle-03' : 'i-hugeicons:circle'"
               class="size-4 shrink-0"
             />
             <span class="text-xs text-dimmed tabular-nums">
@@ -81,9 +77,7 @@
             color="neutral"
             variant="link"
             class="cursor-pointer"
-            :icon="
-              showPasswordConfirm ? 'i-hugeicons:view' : 'i-hugeicons:view-off'
-            "
+            :icon="showPasswordConfirm ? 'i-hugeicons:view' : 'i-hugeicons:view-off'"
             :aria-label="showPasswordConfirm ? '隐藏密码' : '显示密码'"
             :aria-pressed="showPasswordConfirm"
             aria-controls="passwordConfirm"
@@ -105,87 +99,71 @@
 
     <USeparator type="dashed" label="或者" class="my-5" />
 
-    <UButton
-      type="button"
-      variant="soft"
-      label="返回首页"
-      color="neutral"
-      size="xl"
-      block
-      to="/"
-    />
+    <UButton type="button" variant="soft" label="返回首页" color="neutral" size="xl" block to="/" />
   </div>
 </template>
 
 <script setup lang="ts">
 const props = defineProps<{
-    isLoginMode: boolean;
+  isLoginMode: boolean;
 }>();
 
 const emit = defineEmits(['update:error']);
 
 // 1. 引入 Auth 逻辑
-const {
-    email,
-    password,
-    passwordConfirm,
-    loading,
-    error,
-    strength,
-    color,
-    handleAuth,
-    fetchGeo,
-} = useAuth(toRef(props, 'isLoginMode'));
+const { email, password, passwordConfirm, loading, error, strength, color, handleAuth, fetchGeo } =
+  useAuth(toRef(props, 'isLoginMode'));
 
 // 2. 密码可见性逻辑 (保持原始自定义组合函数)
-const {
-    isVisible: showPassword,
-    toggleVisibility: togglePasswordVisibility,
-} = usePasswordVisibility();
+const { isVisible: showPassword, toggleVisibility: togglePasswordVisibility } =
+  usePasswordVisibility();
 
-const {
-    isVisible: showPasswordConfirm,
-    toggleVisibility: togglePasswordConfirmVisibility,
-} = usePasswordVisibility();
+const { isVisible: showPasswordConfirm, toggleVisibility: togglePasswordConfirmVisibility } =
+  usePasswordVisibility();
 
 // 3. 这里的 formState 主要是给 UForm 的 state 绑定的
 const formState = computed(() => ({
-    email: email.value,
-    password: password.value,
-    passwordConfirm: passwordConfirm.value,
+  email: email.value,
+  password: password.value,
+  passwordConfirm: passwordConfirm.value,
 }));
 
 const buttonLabel = computed(() => {
-    if (loading.value)
-      return props.isLoginMode ? '正在验证身份' : '正在创建并登录';
-    return props.isLoginMode ? '登录账户' : '创建新账户';
+  if (loading.value) return props.isLoginMode ? '正在验证身份' : '正在创建并登录';
+  return props.isLoginMode ? '登录账户' : '创建新账户';
 });
 
-watch(error, (newVal) => {
+watch(
+  error,
+  (newVal) => {
     emit('update:error', newVal);
-}, { immediate: true });
+  },
+  { immediate: true },
+);
 
 defineExpose({
-    clearError: () => { error.value = ''; }
+  clearError: () => {
+    error.value = '';
+  },
 });
 
 // 4. 初始化
 onMounted(() => {
-    if (!props.isLoginMode) {
-      fetchGeo();
-    }
+  if (!props.isLoginMode) {
+    fetchGeo();
+  }
 });
 
 const resetForm = () => {
-    email.value = '';
-    password.value = '';
-    passwordConfirm.value = '';
+  email.value = '';
+  password.value = '';
+  passwordConfirm.value = '';
 
-    if (error) error.value = '';
-    emit('update:error', '');
+  if (error) error.value = '';
+  emit('update:error', '');
 };
 
 onDeactivated(() => {
-    resetForm();
+  resetForm();
 });
 </script>

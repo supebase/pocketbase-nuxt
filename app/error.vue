@@ -11,9 +11,7 @@
         {{ error?.message || '服务器开小差了，请稍后再试' }}
       </p>
 
-      <UButton variant="solid" color="neutral" size="lg" @click="handleError">
-        返回首页
-      </UButton>
+      <UButton variant="solid" color="neutral" size="lg" @click="handleError"> 返回首页 </UButton>
     </div>
   </main>
 </template>
@@ -22,7 +20,7 @@
 import type { NuxtError } from '#app';
 
 const props = defineProps<{
-	error: NuxtError;
+  error: NuxtError;
 }>();
 
 /**
@@ -30,6 +28,6 @@ const props = defineProps<{
  * clearError 是 Nuxt 内置函数，用于重置应用状态
  */
 const handleError = () => {
-	clearError({ redirect: '/' });
+  clearError({ redirect: '/' });
 };
 </script>

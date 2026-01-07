@@ -1,39 +1,34 @@
-import { defineFlatConfig } from 'eslint-define-config'; // 如果你想用原生，直接导出一个数组即可
-import vueParser from 'vue-eslint-parser';
-import tsParser from '@typescript-eslint/parser';
+import withNuxt from './.nuxt/eslint.config.mjs';
 import pluginVue from 'eslint-plugin-vue';
-import configPrettier from '@vue/eslint-config-prettier';
-import tsEslint from 'typescript-eslint';
+import vueTsConfig from '@vue/eslint-config-typescript';
+import skipFormatting from 'eslint-config-prettier';
 
-export default tsEslint.config(
-  // 1. 忽略文件
+export default withNuxt(
+  // 1. 基础忽略文件
   {
-    ignores: ['.nuxt', 'dist', 'node_modules', '.output'],
-  },
-  
-  // 2. 基础配置与 Vue 支持
-  ...pluginVue.configs['flat/recommended'],
-  
-  // 3. TypeScript 支持
-  {
-    files: ['**/*.ts', '**/*.tsx', '**/*.vue'],
-    languageOptions: {
-      parser: vueParser,
-      parserOptions: {
-        parser: tsParser,
-        ecmaVersion: 'latest',
-        sourceType: 'module',
-      },
-    },
+    ignores: ['dist', '.output', '.nuxt', 'node_modules', 'public'],
   },
 
-  // 4. Prettier 冲突解决 (放在最后)
-  configPrettier,
+  // 2. 引入 Vue 和 TS 规则（withNuxt 内部通常已包含部分规则，这里做加强）
+  ...pluginVue.configs['flat/essential'],
+  ...vueTsConfig,
 
-  // 5. 自定义规则
+  // 3. 自定义规则配置
   {
+    files: ['**/*.ts', '**/*.vue', '**/*.mts'],
     rules: {
+      'max-len': ['error', {
+        code: 100,
+        tabWidth: 2,
+        ignoreUrls: true,
+        ignoreStrings: true,
+        ignoreTemplateLiterals: true
+      }],
       'vue/multi-word-component-names': 'off',
+      'vue/html-indent': ['error', 2],
+
+      // 这里的配置会覆盖上面 pluginVue 带来的冲突
+      ...skipFormatting.rules,
     },
   }
 );

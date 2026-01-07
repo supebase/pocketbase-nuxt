@@ -7,20 +7,20 @@ import { EventSource } from 'eventsource';
  * 内部私有函数：创建并配置 PocketBase 基础实例
  */
 function createBaseInstance() {
-	const config = useRuntimeConfig();
+  const config = useRuntimeConfig();
 
-	// 1. 处理 Node.js 环境下的 EventSource 补丁（用于 SSE/实时订阅支持）
-	if (typeof global !== 'undefined' && !global.EventSource) {
-		(global as any).EventSource = EventSource;
-	}
+  // 1. 处理 Node.js 环境下的 EventSource 补丁（用于 SSE/实时订阅支持）
+  if (typeof global !== 'undefined' && !global.EventSource) {
+    (global as any).EventSource = EventSource;
+  }
 
-	// 2. 初始化实例
-	const pb = new PocketBase(config.pocketbaseBackend) as TypedPocketBase;
+  // 2. 初始化实例
+  const pb = new PocketBase(config.pocketbaseBackend) as TypedPocketBase;
 
-	// 3. 禁用自动取消，防止服务端请求因并发干扰而中断
-	pb.autoCancellation(false);
+  // 3. 禁用自动取消，防止服务端请求因并发干扰而中断
+  pb.autoCancellation(false);
 
-	return pb;
+  return pb;
 }
 
 /**
@@ -29,13 +29,13 @@ function createBaseInstance() {
  * @param event Nitro 请求事件，用于提取 Cookie 维持登录态
  */
 export function getPocketBase(event?: H3Event) {
-	const pb = createBaseInstance();
+  const pb = createBaseInstance();
 
-	if (event) {
-		const cookieHeader = getHeader(event, 'cookie') || '';
-		// 从 Cookie 中恢复 pb_auth 状态
-		pb.authStore.loadFromCookie(cookieHeader, 'pb_auth');
-	}
+  if (event) {
+    const cookieHeader = getHeader(event, 'cookie') || '';
+    // 从 Cookie 中恢复 pb_auth 状态
+    pb.authStore.loadFromCookie(cookieHeader, 'pb_auth');
+  }
 
-	return pb;
+  return pb;
 }

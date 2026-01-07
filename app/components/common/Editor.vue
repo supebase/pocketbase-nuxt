@@ -35,7 +35,9 @@
             color="neutral"
             variant="none"
             :placeholder="
-              modelValue.action === 'partager' ? '转发并分享优质内容 ...' : '记录观点、动态与生活 ...'
+              modelValue.action === 'partager'
+                ? '转发并分享优质内容 ...'
+                : '记录观点、动态与生活 ...'
             "
             size="xl"
             :rows="12"
@@ -47,16 +49,12 @@
 
           <USeparator class="pt-6">
             <template #default>
-                <span
-                  class="text-xs tabular-nums select-none"
-                  :class="
-                    modelValue.content.length >= maxLimit
-                      ? 'text-red-600'
-                      : 'text-dimmed'
-                  "
-                >
-                  {{ modelValue.content.length }} / {{ maxLimit }}
-                </span>
+              <span
+                class="text-xs tabular-nums select-none"
+                :class="modelValue.content.length >= maxLimit ? 'text-red-600' : 'text-dimmed'"
+              >
+                {{ modelValue.content.length }} / {{ maxLimit }}
+              </span>
             </template>
           </USeparator>
         </div>
@@ -105,9 +103,9 @@
               v-model="modelValue.allow_comment"
               :label="modelValue.allow_comment ? '允许评论' : '禁止评论'"
               color="neutral"
-            /> 
+            />
           </div>
-          
+
           <div :class="{ hidden: !isDesktop }">
             <UCheckbox
               :model-value="showPreview"
@@ -135,10 +133,7 @@
         class="lg:w-1/2 w-full bg-white/60 dark:bg-neutral-900/60 backdrop-blur border border-neutral-200/90 dark:border-neutral-800/70 rounded-lg p-4 overflow-y-auto max-h-[85vh] sticky top-4 scroll-auto"
       >
         <Transition name="fade-content" appear>
-          <div
-            v-if="showPreviewContent"
-            class="prose dark:prose-invert max-w-none"
-          >
+          <div v-if="showPreviewContent" class="prose dark:prose-invert max-w-none">
             <MDC :value="debouncedContent || '*等待输入内容 ...*'" />
           </div>
         </Transition>
@@ -151,24 +146,24 @@
 import { actionItems } from '~/constants';
 
 const props = defineProps<{
-    modelValue: any;
-    maxLimit: number;
-    disabled?: boolean;
+  modelValue: any;
+  maxLimit: number;
+  disabled?: boolean;
 }>();
 
 defineEmits(['submit']);
 
 const {
-    showPreview,
-    showPreviewContent,
-    debouncedContent,
-    isDesktop,
-    activeElement,
-    editorRef,
-    previewContainer,
-    togglePreview,
-    onPreviewScroll,
-    setupContentWatch,
+  showPreview,
+  showPreviewContent,
+  debouncedContent,
+  isDesktop,
+  activeElement,
+  editorRef,
+  previewContainer,
+  togglePreview,
+  onPreviewScroll,
+  setupContentWatch,
 } = useEditorLogic();
 
 // 核心逻辑绑定
@@ -177,6 +172,6 @@ setupContentWatch(() => props.modelValue.content);
 
 <style scoped>
 :deep(.prose img) {
-    aspect-ratio: attr(width) / attr(height) !important;
+  aspect-ratio: attr(width) / attr(height) !important;
 }
 </style>

@@ -9,10 +9,7 @@
     </div>
 
     <div v-else-if="postWithRelativeTime" key="content">
-      <div
-        ref="authorRow"
-        class="flex flex-col items-center justify-center gap-3 select-none"
-      >
+      <div ref="authorRow" class="flex flex-col items-center justify-center gap-3 select-none">
         <PostsMeta
           :post-meta="postWithRelativeTime"
           :avatar-id="postWithRelativeTime.expand?.user?.avatar"
@@ -24,10 +21,7 @@
           v-if="!mdcReady"
           class="absolute inset-0 h-40 flex flex-col items-center justify-center z-10 select-none pointer-events-none"
         >
-          <UIcon
-            name="i-hugeicons:refresh"
-            class="size-6 mb-2 animate-spin text-muted"
-          />
+          <UIcon name="i-hugeicons:refresh" class="size-6 mb-2 animate-spin text-muted" />
           <span class="text-sm font-medium text-muted tracking-widest">
             {{ isUpdateRefresh ? '正在同步内容改动' : '沉浸式梳理内容' }}
           </span>
@@ -36,9 +30,7 @@
         <div
           :class="[
             'transition-all duration-500 ease-out',
-            mdcReady
-              ? 'opacity-100 translate-y-0'
-              : 'opacity-0 translate-y-4 pointer-events-none',
+            mdcReady ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none',
           ]"
         >
           <PostsToc :toc="toc" />
@@ -47,7 +39,7 @@
             :key="postWithRelativeTime.updated"
             :body="ast.body"
             :data="ast.data"
-            class="prose prose-neutral prose-base dark:prose-invert max-w-none font-sans prose-p:text-justify prose-p:leading-7 prose-pre:font-mono wrap-break-word"
+            class="prose prose-neutral prose-base dark:prose-invert max-w-none font-sans prose-p:text-justify prose-p:leading-7 wrap-break-word"
           />
         </div>
       </div>
@@ -85,7 +77,7 @@
               to: '/auth',
             },
           ]"
-          class="mt-8 select-none"
+          class="mt-8 select-none tracking-wide"
         />
 
         <ClientOnly>
@@ -125,17 +117,17 @@ const userId = computed(() => currentUser.value?.id);
 
 // --- 2. 引入拆分后的逻辑 ---
 const {
-	postWithRelativeTime,
-	status,
-	error,
-	refresh,
-	mdcReady,
-	ast,
-	toc,
-	isUpdateRefresh,
-	parseContent,
-	updatedMarks,
-	clearUpdateMark,
+  postWithRelativeTime,
+  status,
+  error,
+  refresh,
+  mdcReady,
+  ast,
+  toc,
+  isUpdateRefresh,
+  parseContent,
+  updatedMarks,
+  clearUpdateMark,
 } = await usePostLogic(id);
 
 // --- 3. 页面特有 UI 交互状态 ---
@@ -146,80 +138,74 @@ const commenters = ref<any[]>([]);
 
 // --- 4. 逻辑处理函数 (保留原样) ---
 const handleUpdateCommenters = (uniqueUsers: any[]) => {
-	commenters.value = uniqueUsers.filter(
-		(u) => u.id !== currentUser.value?.id,
-	);
+  commenters.value = uniqueUsers.filter((u) => u.id !== currentUser.value?.id);
 };
 const onCommentSuccess = (newComment: any) => {
-	if (commentListRef.value)
-		commentListRef.value.handleCommentCreated(newComment);
+  if (commentListRef.value) commentListRef.value.handleCommentCreated(newComment);
 };
 
 // --- 5. 核心 Watch 监听 (保留原样) ---
 watch(
-	[() => postWithRelativeTime.value?.content, status],
-	async ([newContent, newStatus]) => {
-		if (newStatus === 'pending' && !isUpdateRefresh.value) {
-			mdcReady.value = false;
-			ast.value = null;
-			return;
-		}
-		if ((newStatus === 'success' || newStatus === 'idle') && newContent) {
-			if (ast.value && mdcReady.value && !isUpdateRefresh.value) return;
-			await parseContent(newContent);
-		}
-	},
-	{ immediate: true },
+  [() => postWithRelativeTime.value?.content, status],
+  async ([newContent, newStatus]) => {
+    if (newStatus === 'pending' && !isUpdateRefresh.value) {
+      mdcReady.value = false;
+      ast.value = null;
+      return;
+    }
+    if ((newStatus === 'success' || newStatus === 'idle') && newContent) {
+      if (ast.value && mdcReady.value && !isUpdateRefresh.value) return;
+      await parseContent(newContent);
+    }
+  },
+  { immediate: true },
 );
 
 watch(loggedIn, (isLogged) => {
-	if (isLogged && commentListRef.value?.comments) {
-		handleUpdateCommenters(
-			commentListRef.value.getUniqueUsers(commentListRef.value.comments),
-		);
-	}
+  if (isLogged && commentListRef.value?.comments) {
+    handleUpdateCommenters(commentListRef.value.getUniqueUsers(commentListRef.value.comments));
+  }
 });
 
 watch(
-	error,
-	(newErr) => {
-		if (newErr) throw createError({ ...newErr, fatal: true });
-	},
-	{ immediate: true },
+  error,
+  (newErr) => {
+    if (newErr) throw createError({ ...newErr, fatal: true });
+  },
+  { immediate: true },
 );
 
 // --- 6. 生命周期 ---
 onMounted(() => {
-	if (ast.value && !mdcReady.value) mdcReady.value = true;
+  if (ast.value && !mdcReady.value) mdcReady.value = true;
 });
 
 useIntersectionObserver(
-	authorRow,
-	(entries) => {
-		const entry = entries[0];
-		if (!entry) return;
-		const { isIntersecting, boundingClientRect } = entry;
-		if (isIntersecting) showHeaderBack.value = false;
-		else if (boundingClientRect.top < 0 && mdcReady.value)
-			showHeaderBack.value = true;
-	},
-	{ threshold: 0, rootMargin: '-20px 0px 0px 0px' },
+  authorRow,
+  (entries) => {
+    const entry = entries[0];
+    if (!entry) return;
+    const { isIntersecting, boundingClientRect } = entry;
+    if (isIntersecting) showHeaderBack.value = false;
+    else if (boundingClientRect.top < 0 && mdcReady.value) showHeaderBack.value = true;
+  },
+  { threshold: 0, rootMargin: '-20px 0px 0px 0px' },
 );
 
 onActivated(async () => {
-	const currentId = id;
-	if (updatedMarks.value[currentId]) {
-		isUpdateRefresh.value = true;
-		mdcReady.value = false;
-		await refresh();
-		clearUpdateMark(currentId);
-	}
+  const currentId = id;
+  if (updatedMarks.value[currentId]) {
+    isUpdateRefresh.value = true;
+    mdcReady.value = false;
+    await refresh();
+    clearUpdateMark(currentId);
+  }
 });
 
 onBeforeRouteLeave(() => {
-	showHeaderBack.value = false;
+  showHeaderBack.value = false;
 });
 onUnmounted(() => {
-	showHeaderBack.value = false;
+  showHeaderBack.value = false;
 });
 </script>

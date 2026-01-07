@@ -1,15 +1,9 @@
 <template>
-  <div
-    class="flex items-center justify-between w-full px-1.5"
-  >
-    <div
-      class="flex items-center gap-1 text-base tracking-widest text-dimmed font-semibold"
-    >
+  <div class="flex items-center justify-between w-full px-1.5">
+    <div class="flex items-center gap-1 text-base tracking-widest text-dimmed font-semibold">
       <ClientOnly>
         <CommonAnimateNumber :value="count" /> 条内容
-        <template #fallback>
-          <CommonAnimateNumber :value="0" /> 条内容
-        </template>
+        <template #fallback> <CommonAnimateNumber :value="0" /> 条内容 </template>
       </ClientOnly>
     </div>
     <UIcon
@@ -28,21 +22,21 @@
 
 <script setup lang="ts">
 defineProps({
-    count: {
-        type: Number,
-        default: 0,
-    },
-    isRefreshing: {
-        type: Boolean,
-        default: false,
-    },
-    length: {
-        type: Number,
-        default: 0,
-    },
+  count: {
+    type: Number,
+    default: 0,
+  },
+  isRefreshing: {
+    type: Boolean,
+    default: false,
+  },
+  length: {
+    type: Number,
+    default: 0,
+  },
 });
 
 const emit = defineEmits<{
-    (e: 'refresh'): void;
+  (e: 'refresh'): void;
 }>();
 </script>

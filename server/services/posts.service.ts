@@ -18,32 +18,37 @@ import { sanitizePostContent } from '~~/server/utils/sanitize';
  * @param query 可选的搜索关键词，用于过滤文章标题或内容。
  * @returns 返回一个分页后的文章列表。
  */
-export async function getPostsList(pb: TypedPocketBase, page: number = 1, perPage: number = 10, query?: string) {
-	// 1. 基础权限过滤：所有人可见已发布的
-	// 或者 (未发布 且 作者是自己)
-	let filterString = '(published = true';
-	const currentUser = pb.authStore.record;
+export async function getPostsList(
+  pb: TypedPocketBase,
+  page: number = 1,
+  perPage: number = 10,
+  query?: string,
+) {
+  // 1. 基础权限过滤：所有人可见已发布的
+  // 或者 (未发布 且 作者是自己)
+  let filterString = '(published = true';
+  const currentUser = pb.authStore.record;
 
-	if (currentUser) {
-		// 如果用户已登录，增加“可见自己草稿”的逻辑
-		filterString += ` || (published = false && user = "${currentUser.id}")`;
-	}
-	filterString += ')';
+  if (currentUser) {
+    // 如果用户已登录，增加“可见自己草稿”的逻辑
+    filterString += ` || (published = false && user = "${currentUser.id}")`;
+  }
+  filterString += ')';
 
-	// 2. 关键词搜索逻辑
-	if (query) {
-		// 使用 pb.filter 防止注入，并将搜索逻辑与权限逻辑用 && 连接
-		const searchQuery = pb.filter('content ~ {:q}', { q: query });
-		filterString = `(${filterString} && ${searchQuery})`;
-	}
+  // 2. 关键词搜索逻辑
+  if (query) {
+    // 使用 pb.filter 防止注入，并将搜索逻辑与权限逻辑用 && 连接
+    const searchQuery = pb.filter('content ~ {:q}', { q: query });
+    filterString = `(${filterString} && ${searchQuery})`;
+  }
 
-	const options: any = {
-		sort: '-created',
-		expand: 'user',
-		filter: filterString,
-	};
+  const options: any = {
+    sort: '-created',
+    expand: 'user',
+    filter: filterString,
+  };
 
-	return await pb.collection('posts').getList<PBPostsResponse<PostExpand>>(page, perPage, options);
+  return await pb.collection('posts').getList<PBPostsResponse<PostExpand>>(page, perPage, options);
 }
 
 /**
@@ -53,66 +58,71 @@ export async function getPostsList(pb: TypedPocketBase, page: number = 1, perPag
  * @returns 返回找到的文章记录。
  */
 export async function getPostById(pb: TypedPocketBase, postId: string) {
-	const currentUser = pb.authStore.record;
+  const currentUser = pb.authStore.record;
 
-	// 构建安全过滤规则
-	let filter = `id = "${postId}" && (published = true`;
+  // 构建安全过滤规则
+  let filter = `id = "${postId}" && (published = true`;
 
-	if (currentUser) {
-		filter += ` || user = "${currentUser.id}"`;
-	}
-	filter += ')';
+  if (currentUser) {
+    filter += ` || user = "${currentUser.id}"`;
+  }
+  filter += ')';
 
-	try {
-		// 💡 使用 getFirstListItem 配合 filter，可以在数据库层面直接完成安全校验
-		return await pb.collection('posts').getFirstListItem<PBPostsResponse<PostExpand>>(filter, {
-			expand: 'user',
-		});
-	} catch (error: any) {
-		// 如果找不到满足条件的记录（可能是 ID 不存在，也可能是权限不足），PocketBase 会抛出 404
-		throw createError({
-			statusCode: 404,
-			message: '文章不存在或您没有权限查看',
-		});
-	}
+  try {
+    // 💡 使用 getFirstListItem 配合 filter，可以在数据库层面直接完成安全校验
+    return await pb.collection('posts').getFirstListItem<PBPostsResponse<PostExpand>>(filter, {
+      expand: 'user',
+    });
+  } catch (error: any) {
+    // 如果找不到满足条件的记录（可能是 ID 不存在，也可能是权限不足），PocketBase 会抛出 404
+    throw createError({
+      statusCode: 404,
+      message: '文章不存在或您没有权限查看',
+    });
+  }
 }
 
 /**
  * 内部核心方法：同步 Markdown 图片到本地
  * (保持逻辑不变，但确保它能处理异常)
  */
-async function syncPostImages(pb: TypedPocketBase, postId: string, content: string, existingImages: string[] = []) {
-	const { successResults } = await processMarkdownImages(content);
+async function syncPostImages(
+  pb: TypedPocketBase,
+  postId: string,
+  content: string,
+  existingImages: string[] = [],
+) {
+  const { successResults } = await processMarkdownImages(content);
 
-	// 如果没有图片需要处理，直接返回清洗后的内容
-	if (successResults.length === 0) {
-		return sanitizePostContent(content);
-	}
+  // 如果没有图片需要处理，直接返回清洗后的内容
+  if (successResults.length === 0) {
+    return sanitizePostContent(content);
+  }
 
-	const formData = new FormData();
-	// 保留旧图片
-	existingImages.forEach(name => formData.append('markdown_images', name));
+  const formData = new FormData();
+  // 保留旧图片
+  existingImages.forEach((name) => formData.append('markdown_images', name));
 
-	// 追加新下载的图片
-	successResults.forEach((item, i) => {
-		formData.append('markdown_images', item.blob, `img_${Date.now()}_${i}.png`);
-	});
+  // 追加新下载的图片
+  successResults.forEach((item, i) => {
+    formData.append('markdown_images', item.blob, `img_${Date.now()}_${i}.png`);
+  });
 
-	// 更新 PB 记录的文件字段
-	const record = await pb.collection('posts').update(postId, formData);
+  // 更新 PB 记录的文件字段
+  const record = await pb.collection('posts').update(postId, formData);
 
-	let finalContent = content;
-	const allImages = record.markdown_images;
-	const startIndex = allImages.length - successResults.length;
+  let finalContent = content;
+  const allImages = record.markdown_images;
+  const startIndex = allImages.length - successResults.length;
 
-	// 将原始 URL 替换为本地代理 URL
-	successResults.forEach((item, i) => {
-		const fileName = allImages[startIndex + i];
-		const proxyUrl = `/api/images/posts/${postId}/${fileName}`;
-		finalContent = finalContent.split(item.url).join(proxyUrl);
-	});
+  // 将原始 URL 替换为本地代理 URL
+  successResults.forEach((item, i) => {
+    const fileName = allImages[startIndex + i];
+    const proxyUrl = `/api/images/posts/${postId}/${fileName}`;
+    finalContent = finalContent.split(item.url).join(proxyUrl);
+  });
 
-	return sanitizePostContent(finalContent);
+  return sanitizePostContent(finalContent);
 }
 
 /**
@@ -123,38 +133,38 @@ async function syncPostImages(pb: TypedPocketBase, postId: string, content: stri
  * @returns 返回新创建的文章记录。
  */
 export async function createPost(pb: TypedPocketBase, initialData: FormData, rawContent: string) {
-	// 1. 获取用户意愿：记录调用方原本是否想直接发布
-	const originalPublishedStatus = initialData.get('published') === 'true';
+  // 1. 获取用户意愿：记录调用方原本是否想直接发布
+  const originalPublishedStatus = initialData.get('published') === 'true';
 
-	// 2. 强制初始状态为草稿，确保处理期间前端列表不可见（根据你的权限过滤逻辑）
-	initialData.set('published', 'false');
-	initialData.append('content', rawContent);
+  // 2. 强制初始状态为草稿，确保处理期间前端列表不可见（根据你的权限过滤逻辑）
+  initialData.set('published', 'false');
+  initialData.append('content', rawContent);
 
-	// 3. 创建记录
-	const post = await pb.collection('posts').create(initialData);
+  // 3. 创建记录
+  const post = await pb.collection('posts').create(initialData);
 
-	try {
-		// 4. 处理图片同步和清洗
-		// 如果失败，会抛出异常，此时记录已存在且为 published = false
-		const cleanContent = await syncPostImages(pb, post.id, rawContent);
+  try {
+    // 4. 处理图片同步和清洗
+    // 如果失败，会抛出异常，此时记录已存在且为 published = false
+    const cleanContent = await syncPostImages(pb, post.id, rawContent);
 
-		// 5. 第二次更新：填入清洗后的内容，并恢复用户原始的发布状态
-		return await pb.collection('posts').update(post.id, {
-			content: cleanContent,
-			published: originalPublishedStatus // 此时才真正根据用户意愿发布
-		});
-	} catch (error: any) {
-		// 这里不删除记录，而是将错误向上抛出
-		// 结果：数据库里留下了一篇 content 为原始 Markdown 的草稿
-		console.error(`[PostService] 图片同步失败，文章已保留为草稿: ${post.id}`, error);
+    // 5. 第二次更新：填入清洗后的内容，并恢复用户原始的发布状态
+    return await pb.collection('posts').update(post.id, {
+      content: cleanContent,
+      published: originalPublishedStatus, // 此时才真正根据用户意愿发布
+    });
+  } catch (error: any) {
+    // 这里不删除记录，而是将错误向上抛出
+    // 结果：数据库里留下了一篇 content 为原始 Markdown 的草稿
+    console.error(`[PostService] 图片同步失败，文章已保留为草稿: ${post.id}`, error);
 
-		// 抛出一个带有特定信息的错误，方便前端给用户更具体的提示
-		throw createError({
-			statusCode: 202, // Accepted 但未完全处理
-			message: '文章已保存至草稿，但部分远程图片下载失败，请手动编辑检查。',
-			data: { postId: post.id }
-		});
-	}
+    // 抛出一个带有特定信息的错误，方便前端给用户更具体的提示
+    throw createError({
+      statusCode: 202, // Accepted 但未完全处理
+      message: '文章已保存至草稿，但部分远程图片下载失败，请手动编辑检查。',
+      data: { postId: post.id },
+    });
+  }
 }
 
 /**
@@ -165,15 +175,15 @@ export async function createPost(pb: TypedPocketBase, initialData: FormData, raw
  * @returns 返回更新后的文章记录。
  */
 export async function updatePost(pb: TypedPocketBase, postId: string, body: any) {
-	const existing = await ensureOwnership(pb, 'posts', postId);
+  const existing = await ensureOwnership(pb, 'posts', postId);
 
-	// 如果内容被修改，执行复杂的图片同步逻辑
-	if (body.content !== undefined && body.content !== existing.content) {
-		const cleanContent = await syncPostImages(pb, postId, body.content, existing.markdown_images);
-		body.content = cleanContent;
-	}
-	// 处理其他可能的 FormData 字段更新（如 link_data 等由调用方传入）
-	return await pb.collection('posts').update(postId, body);
+  // 如果内容被修改，执行复杂的图片同步逻辑
+  if (body.content !== undefined && body.content !== existing.content) {
+    const cleanContent = await syncPostImages(pb, postId, body.content, existing.markdown_images);
+    body.content = cleanContent;
+  }
+  // 处理其他可能的 FormData 字段更新（如 link_data 等由调用方传入）
+  return await pb.collection('posts').update(postId, body);
 }
 
 /**
@@ -182,8 +192,8 @@ export async function updatePost(pb: TypedPocketBase, postId: string, body: any)
  * @param postId 要删除的文章的 ID。
  */
 export async function deletePost(pb: TypedPocketBase, postId: string) {
-	await ensureOwnership(pb, 'posts', postId);
-	return await pb.collection('posts').delete(postId);
+  await ensureOwnership(pb, 'posts', postId);
+  return await pb.collection('posts').delete(postId);
 }
 
 /**
@@ -192,15 +202,15 @@ export async function deletePost(pb: TypedPocketBase, postId: string) {
  * @param postId 文章 ID
  */
 export async function incrementPostViews(pb: TypedPocketBase, postId: string) {
-    try {
-        // 使用 PocketBase 的原子操作语法 "views+": 1
-        // 注意：这要求 PB 的 API Rules 允许当前 pb 实例的身份进行 update 
-        // 或者你可以考虑在 server/utils 中导出一个 Admin 权限的 pb 专门做这件事
-        await pb.collection('posts').update(postId, {
-            "views+": 1
-        });
-    } catch (error) {
-        // 浏览量增加失败不应该打断用户阅读，记录错误即可
-        console.error(`无法更新 ${postId} 的浏览量:`, error);
-    }
+  try {
+    // 使用 PocketBase 的原子操作语法 "views+": 1
+    // 注意：这要求 PB 的 API Rules 允许当前 pb 实例的身份进行 update
+    // 或者你可以考虑在 server/utils 中导出一个 Admin 权限的 pb 专门做这件事
+    await pb.collection('posts').update(postId, {
+      'views+': 1,
+    });
+  } catch (error) {
+    // 浏览量增加失败不应该打断用户阅读，记录错误即可
+    console.error(`无法更新 ${postId} 的浏览量:`, error);
+  }
 }

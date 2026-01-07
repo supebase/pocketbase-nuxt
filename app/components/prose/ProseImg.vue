@@ -16,14 +16,8 @@
         v-bind="$attrs"
       />
 
-      <div
-        v-if="!isLoaded"
-        class="absolute inset-0 flex items-center justify-center"
-      >
-        <UIcon
-          name="i-hugeicons:refresh"
-          class="size-5 text-muted animate-spin"
-        />
+      <div v-if="!isLoaded" class="absolute inset-0 flex items-center justify-center">
+        <UIcon name="i-hugeicons:refresh" class="size-5 text-muted animate-spin" />
       </div>
     </div>
 
@@ -53,41 +47,39 @@
 </template>
 
 <script setup lang="ts">
-import { withTrailingSlash, withLeadingSlash, joinURL } from 'ufo'
-import { useRuntimeConfig, computed, ref, onMounted, onUnmounted } from '#imports'
+import { withTrailingSlash, withLeadingSlash, joinURL } from 'ufo';
+import { useRuntimeConfig, computed, ref, onMounted, onUnmounted } from '#imports';
 
 defineOptions({
-	inheritAttrs: false
-})
+  inheritAttrs: false,
+});
 
 const props = defineProps({
-	src: {
-		type: String,
-		default: '',
-	},
-})
+  src: {
+    type: String,
+    default: '',
+  },
+});
 
-const isLoaded = ref(false)
-const isExpanded = ref(false)
+const isLoaded = ref(false);
+const isExpanded = ref(false);
 
 // 处理 ESC 键关闭
 const handleKeydown = (e: KeyboardEvent) => {
-	if (e.key === 'Escape') isExpanded.value = false
-}
+  if (e.key === 'Escape') isExpanded.value = false;
+};
 
-onMounted(() => window.addEventListener('keydown', handleKeydown))
-onUnmounted(() => window.removeEventListener('keydown', handleKeydown))
+onMounted(() => window.addEventListener('keydown', handleKeydown));
+onUnmounted(() => window.removeEventListener('keydown', handleKeydown));
 
 const refinedSrc = computed(() => {
-	if (props.src?.startsWith('/') && !props.src.startsWith('//')) {
-		const _base = withLeadingSlash(
-			withTrailingSlash(useRuntimeConfig().app.baseURL),
-		)
+  if (props.src?.startsWith('/') && !props.src.startsWith('//')) {
+    const _base = withLeadingSlash(withTrailingSlash(useRuntimeConfig().app.baseURL));
 
-		if (_base !== '/' && !props.src.startsWith(_base)) {
-			return joinURL(_base, props.src);
-		}
-	}
-	return props.src;
-})
+    if (_base !== '/' && !props.src.startsWith(_base)) {
+      return joinURL(_base, props.src);
+    }
+  }
+  return props.src;
+});
 </script>

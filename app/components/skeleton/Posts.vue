@@ -3,10 +3,7 @@
     <div v-for="i in count" :key="i" class="relative flex gap-4 mb-6">
       <div class="flex flex-col items-center">
         <USkeleton class="size-8 rounded-full shrink-0" />
-        <div
-          v-if="i !== count"
-          class="w-0.5 grow bg-neutral-100 dark:bg-neutral-800 my-2"
-        ></div>
+        <div v-if="i !== count" class="w-0.5 grow bg-neutral-100 dark:bg-neutral-800 my-2"></div>
       </div>
 
       <div class="flex-1 space-y-4 pb-4">
@@ -33,10 +30,10 @@
 </template>
 
 <script setup lang="ts">
-  defineProps({
-    count: {
-      type: Number,
-      default: 1,
-    },
-  });
+defineProps({
+  count: {
+    type: Number,
+    default: 1,
+  },
+});
 </script>

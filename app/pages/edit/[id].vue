@@ -10,20 +10,12 @@
         v-if="isLoading"
         class="z-10 absolute inset-0 flex items-center justify-center bg-white/80 dark:bg-neutral-900/80 backdrop-blur rounded-lg"
       >
-        <UIcon
-          name="i-hugeicons:loading-02"
-          class="animate-spin size-6.5 text-primary"
-        />
+        <UIcon name="i-hugeicons:loading-02" class="animate-spin size-6.5 text-primary" />
       </div>
     </template>
 
     <template #actions>
-      <UButton
-        type="button"
-        color="warning"
-        variant="soft"
-        @click="$router.back()"
-      >
+      <UButton type="button" color="warning" variant="soft" @click="$router.back()">
         取消编辑
       </UButton>
       <UButton
@@ -47,12 +39,12 @@ const route = useRoute();
 const { id } = route.params as { id: string };
 
 const form = ref({
-    content: '',
-    allow_comment: true,
-    published: true,
-    icon: '',
-    action: 'dit',
-    link: '',
+  content: '',
+  allow_comment: true,
+  published: true,
+  icon: '',
+  action: 'dit',
+  link: '',
 });
 
 const maxLimit = CONTENT_MAX_LENGTH;
@@ -60,33 +52,31 @@ const isLoading = ref(false);
 const isSubmitting = ref(false);
 
 const loadPostData = async () => {
-    if (!id) return;
-    isLoading.value = true;
-    try {
-      const response = await $fetch<SinglePostResponse>(
-        `/api/collections/post/${id}`,
-      );
-      if (response?.data) {
-        form.value = { ...response.data };
-      }
-    } finally {
-      isLoading.value = false;
+  if (!id) return;
+  isLoading.value = true;
+  try {
+    const response = await $fetch<SinglePostResponse>(`/api/collections/post/${id}`);
+    if (response?.data) {
+      form.value = { ...response.data };
     }
+  } finally {
+    isLoading.value = false;
+  }
 };
 
 const handleSubmit = async () => {
-    isSubmitting.value = true;
-    try {
-      await $fetch(`/api/collections/post/${id}`, {
-        method: 'PUT',
-        body: form.value,
-      });
-      await refreshNuxtData('posts-list-data');
-      markAsUpdated(id);
-      await navigateTo('/');
-    } finally {
-      isSubmitting.value = false;
-    }
+  isSubmitting.value = true;
+  try {
+    await $fetch(`/api/collections/post/${id}`, {
+      method: 'PUT',
+      body: form.value,
+    });
+    await refreshNuxtData('posts-list-data');
+    markAsUpdated(id);
+    await navigateTo('/');
+  } finally {
+    isSubmitting.value = false;
+  }
 };
 
 onMounted(loadPostData);

@@ -199,11 +199,7 @@ body {
 
   /* 2. 动画核心代码 */
   display: inline;
-  background-image: linear-gradient(
-    to right,
-    var(--ui-primary),
-    var(--ui-primary)
-  );
+  background-image: linear-gradient(to right, var(--ui-primary), var(--ui-primary));
   background-size: 0% 2px;
   background-repeat: no-repeat;
   background-position: left 100%; /* 确保在文字最下方 */

@@ -1,12 +1,12 @@
 <template>
-    <div></div>
+  <div></div>
 </template>
 
 <script setup lang="ts">
 defineProps({
-    src: {
-        type: String,
-        default: '',
-    },
-})
+  src: {
+    type: String,
+    default: '',
+  },
+});
 </script>

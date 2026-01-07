@@ -1,9 +1,5 @@
 <template>
-  <div
-    :key="item.id"
-    class="record-item-animate"
-    :style="{ '--delay': `${delay}s` }"
-  >
+  <div :key="item.id" class="record-item-animate" :style="{ '--delay': `${delay}s` }">
     <ULink
       :to="`/${item.id}`"
       class="line-clamp-3 font-sans tracking-normal leading-7 text-justify wrap-break-word"
@@ -12,12 +8,7 @@
       {{ item.cleanContent }}
     </ULink>
 
-    <ULink
-      v-if="item.firstImage"
-      :to="`/${item.id}`"
-      class="group"
-      tabindex="-1"
-    >
+    <ULink v-if="item.firstImage" :to="`/${item.id}`" class="group" tabindex="-1">
       <div
         class="my-3 rounded-lg overflow-hidden border border-neutral-200 dark:border-neutral-800"
       >
@@ -33,14 +24,8 @@
             ]"
           />
 
-          <div
-            v-if="!isLoaded"
-            class="absolute inset-0 flex items-center justify-center"
-          >
-            <UIcon
-              name="i-hugeicons:refresh"
-              class="size-5 text-muted/30 animate-spin"
-            />
+          <div v-if="!isLoaded" class="absolute inset-0 flex items-center justify-center">
+            <UIcon name="i-hugeicons:refresh" class="size-5 text-muted/30 animate-spin" />
           </div>
         </div>
       </div>
@@ -59,16 +44,16 @@
 const { getLinkImage } = useAssets();
 
 interface Props {
-    item: {
-        id: string;
-        cleanContent: string;
-        allowComment: boolean;
-        firstImage: string | null;
-        link_data: any;
-        link_image?: string;
-    };
-	  delay: number;
-    canViewDrafts: boolean;
+  item: {
+    id: string;
+    cleanContent: string;
+    allowComment: boolean;
+    firstImage: string | null;
+    link_data: any;
+    link_image?: string;
+  };
+  delay: number;
+  canViewDrafts: boolean;
 }
 
 const props = defineProps<Props>();

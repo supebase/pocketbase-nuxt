@@ -57,10 +57,7 @@
           请继续输入 ...
         </p>
 
-        <div
-          v-else-if="isLoading"
-          class="flex items-center text-sm text-dimmed"
-        >
+        <div v-else-if="isLoading" class="flex items-center text-sm text-dimmed">
           正在搜索中 ...
         </div>
 
@@ -89,78 +86,78 @@ const emit = defineEmits(['close']);
 
 // --- 逻辑接入 ---
 const {
-	searchQuery,
-	isLoading,
-	isComposing,
-	allItems,
-	totalItems,
-	hasMore,
-	isLoadingMore,
-	resetPagination,
-	loadMore,
-	performSearch,
-	fetchMoreData,
+  searchQuery,
+  isLoading,
+  isComposing,
+  allItems,
+  totalItems,
+  hasMore,
+  isLoadingMore,
+  resetPagination,
+  loadMore,
+  performSearch,
+  fetchMoreData,
 } = useSearchLogic();
 
 // --- 结果映射 ---
 const groups = computed(() => {
-	const trimmed = searchQuery.value.trim();
-	if (!trimmed || allItems.value.length === 0) return [];
+  const trimmed = searchQuery.value.trim();
+  if (!trimmed || allItems.value.length === 0) return [];
 
-	// 生成基础文章列表
-	const items = allItems.value.map((post) => ({
-		id: post.id,
-		label: cleanMarkdown(post.content),
-		to: `/${post.id}`,
-	}));
+  // 生成基础文章列表
+  const items = allItems.value.map((post) => ({
+    id: post.id,
+    label: cleanMarkdown(post.content),
+    to: `/${post.id}`,
+  }));
 
-	// 推入加载更多触发器
-	if (hasMore.value) {
-		items.push({
-			id: 'load-more-trigger',
-			label: isLoadingMore.value ? '正在加载...' : '显示更多结果',
-			to: '',
-		});
-	}
+  // 推入加载更多触发器
+  if (hasMore.value) {
+    items.push({
+      id: 'load-more-trigger',
+      label: isLoadingMore.value ? '正在加载...' : '显示更多结果',
+      to: '',
+    });
+  }
 
-	return [
-		{
-			id: 'posts',
-			label: `匹配到 ${totalItems.value} 条内容`,
-			items: items,
-			ignoreFilter: true, // 搜索已经在后端完成，无需前端再次过滤
-		},
-	];
+  return [
+    {
+      id: 'posts',
+      label: `匹配到 ${totalItems.value} 条内容`,
+      items: items,
+      ignoreFilter: true, // 搜索已经在后端完成，无需前端再次过滤
+    },
+  ];
 });
 
 // --- 事件处理 ---
 const onCompositionEnd = () => {
-	isComposing.value = false;
-	performSearch(searchQuery.value);
+  isComposing.value = false;
+  performSearch(searchQuery.value);
 };
 
 function onSelect(item: any) {
-	if (!item) return;
+  if (!item) return;
 
-	// 1. 处理加载更多
-	if (item.id === 'load-more-trigger') {
-		if (!isLoadingMore.value) {
-			loadMore(fetchMoreData);
-		}
-		return;
-	}
+  // 1. 处理加载更多
+  if (item.id === 'load-more-trigger') {
+    if (!isLoadingMore.value) {
+      loadMore(fetchMoreData);
+    }
+    return;
+  }
 
-	// 2. 处理跳转
-	if (item.to) {
-		emit('close');
-		searchQuery.value = '';
-		resetPagination([], 0);
-		navigateTo(item.to);
-	}
+  // 2. 处理跳转
+  if (item.to) {
+    emit('close');
+    searchQuery.value = '';
+    resetPagination([], 0);
+    navigateTo(item.to);
+  }
 }
 
 // 清理
 onUnmounted(() => {
-	resetPagination([], 0);
+  resetPagination([], 0);
 });
 </script>

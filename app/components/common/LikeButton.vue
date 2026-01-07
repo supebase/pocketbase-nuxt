@@ -4,11 +4,7 @@
     :class="isLoading ? 'cursor-wait' : 'cursor-pointer'"
     @click.stop="handleLike"
   >
-    <UIcon
-      v-if="isLoading"
-      name="i-hugeicons:refresh"
-      class="size-5 text-primary animate-spin"
-    />
+    <UIcon v-if="isLoading" name="i-hugeicons:refresh" class="size-5 text-primary animate-spin" />
 
     <UIcon
       v-else
@@ -20,10 +16,7 @@
       ]"
     />
 
-    <CommonAnimateNumber
-      :value="likesCount"
-      class="tabular-nums text-dimmed font-medium"
-    />
+    <CommonAnimateNumber :value="likesCount" class="tabular-nums text-dimmed font-medium" />
   </div>
 </template>
 
@@ -31,13 +24,13 @@
 import type { ToggleLikeResponse } from '~/types/likes';
 
 const props = defineProps<{
-    commentId: string;
-    initialLikes?: number;
-    isLiked?: boolean;
+  commentId: string;
+  initialLikes?: number;
+  isLiked?: boolean;
 }>();
 
 const emit = defineEmits<{
-    (e: 'likeChange', liked: boolean, likes: number, commentId: string): void;
+  (e: 'likeChange', liked: boolean, likes: number, commentId: string): void;
 }>();
 
 const { loggedIn } = useUserSession();
@@ -48,49 +41,41 @@ const isLoading = ref(false);
 const isManualClick = ref(false);
 
 const handleLike = async () => {
-    if (!loggedIn.value) return navigateTo('/auth', { replace: true });
-    if (isLoading.value) return;
+  if (!loggedIn.value) return navigateTo('/auth', { replace: true });
+  if (isLoading.value) return;
 
-    isManualClick.value = true;
-    isLoading.value = true;
+  isManualClick.value = true;
+  isLoading.value = true;
 
-    const previousLiked = liked.value;
+  const previousLiked = liked.value;
 
-    liked.value = !previousLiked;
+  liked.value = !previousLiked;
 
-    try {
-      const response = await $fetch<ToggleLikeResponse>(
-        '/api/collections/likes',
-        {
-          method: 'POST',
-          body: { comment: props.commentId },
-        },
-      );
+  try {
+    const response = await $fetch<ToggleLikeResponse>('/api/collections/likes', {
+      method: 'POST',
+      body: { comment: props.commentId },
+    });
 
-      liked.value = response.data.liked;
+    liked.value = response.data.liked;
 
-      emit(
-        'likeChange',
-        response.data.liked,
-        response.data.likes,
-        props.commentId,
-      );
-    } catch (error: any) {
-      liked.value = previousLiked;
-      console.error('操作失败:', error.data?.message || '网络异常');
-    } finally {
-      isLoading.value = false;
+    emit('likeChange', response.data.liked, response.data.likes, props.commentId);
+  } catch (error: any) {
+    liked.value = previousLiked;
+    console.error('操作失败:', error.data?.message || '网络异常');
+  } finally {
+    isLoading.value = false;
 
-      setTimeout(() => {
-        isManualClick.value = false;
-      }, 1000);
-    }
+    setTimeout(() => {
+      isManualClick.value = false;
+    }, 1000);
+  }
 };
 
 watch(
-    () => props.isLiked,
-    (newVal) => {
-      if (newVal !== undefined) liked.value = newVal;
-    },
+  () => props.isLiked,
+  (newVal) => {
+    if (newVal !== undefined) liked.value = newVal;
+  },
 );
 </script>

@@ -11,12 +11,7 @@
 
     <template #footer="{ close }">
       <div class="flex items-center gap-3">
-        <UButton
-          label="取消"
-          color="neutral"
-          class="cursor-pointer"
-          @click="close"
-        />
+        <UButton label="取消" color="neutral" class="cursor-pointer" @click="close" />
         <UButton
           label="确认删除"
           color="error"
@@ -33,13 +28,13 @@
 const open = defineModel<boolean>('open', { default: false });
 
 defineProps<{
-    loading?: boolean;
+  loading?: boolean;
 }>();
 
 const emit = defineEmits(['confirm']);
 
 const handleConfirm = () => {
-    emit('confirm');
-    open.value = false;
+  emit('confirm');
+  open.value = false;
 };
 </script>
