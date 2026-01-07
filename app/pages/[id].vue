@@ -143,6 +143,17 @@ watch(loggedIn, () => {
   refresh();
 });
 
+watch(
+  () => (route.params as any).id as string,
+  (newId, oldId) => {
+    if (newId && newId !== oldId) {
+      if (!isUpdateRefresh.value) {
+        mdcReady.value = false;
+      }
+    }
+  },
+);
+
 // 监听内容变化进行 MDC 解析
 watch(
   () => postWithRelativeTime.value?.content,
@@ -156,15 +167,15 @@ watch(
 
 watch(status, async (newStatus) => {
   if (newStatus === 'pending') {
-    // 只有在非静默更新且真正没有 AST 数据时才展示 loading 遮罩
-    if (!isUpdateRefresh.value && !ast.value) {
+    // 只有在非静默更新时才展示 loading 遮罩
+    if (!isUpdateRefresh.value) {
       mdcReady.value = false;
     }
   }
 
-  // 💡 关键：当状态变为成功时，如果 mdcReady 还是关着的，强制开启解析
   if (newStatus === 'success' && postWithRelativeTime.value?.content) {
-    if (!mdcReady.value) {
+    // 💡 状态成功后，强制触发解析以确保解锁
+    if (!mdcReady.value || ast.value?.body?.value !== postWithRelativeTime.value.content) {
       await parseContent(postWithRelativeTime.value.content);
     }
   }
@@ -194,8 +205,11 @@ useIntersectionObserver(
 
 // KeepAlive 激活时检查是否有更新标记
 onActivated(async () => {
-  const currentId = Array.isArray(id) ? id[0] : id;
-  if (updatedMarks.value[currentId]) {
+  // 💡 直接从 route 获取，避免解构带来的闭包旧值问题
+  const params = route.params as { id: string };
+  const currentId = params.id;
+
+  if (currentId && updatedMarks.value[currentId]) {
     isUpdateRefresh.value = true;
     await refresh();
     clearUpdateMark(currentId);

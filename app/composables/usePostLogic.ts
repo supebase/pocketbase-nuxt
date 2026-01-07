@@ -28,8 +28,15 @@ export const usePostLogic = (id: string | string[]) => {
       return;
     }
 
+    // 💡 [新增逻辑] 判断是否需要显示遮罩
+    // 如果是由于 ID 切换导致的解析，且此时 mdcReady 还是 true，说明需要重置
+    if (!isUpdateRefresh.value && ast.value?.body?.value !== content) {
+      mdcReady.value = false;
+    }
+
     try {
-      if (ast.value && ast.value.body.value === content) {
+      // 性能优化：内容完全一致则跳过解析
+      if (ast.value && ast.value.body?.value === content) {
         mdcReady.value = true;
         return;
       }
@@ -37,12 +44,12 @@ export const usePostLogic = (id: string | string[]) => {
       const result = await parseMarkdown(content, {
         toc: { depth: 4, searchDepth: 4 },
       });
-      // 存储结果
       ast.value = result;
       toc.value = result.toc;
     } catch (e) {
       console.error('MDC 渲染错误:', e);
     } finally {
+      // 💡 [确保状态] 解析完成或失败，都要解锁并关闭“同步”标记
       mdcReady.value = true;
       isUpdateRefresh.value = false;
     }
