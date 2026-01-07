@@ -1,359 +1,54 @@
 # PocketBase-Nuxt
 
-一个基于 Nuxt.js 和 PocketBase 的现代化 Web 应用程序，提供完整的用户认证、内容管理和社交功能。
+## 1. 概述
 
-## 🌟 功能特性
+PocketBase-Nuxt 是一个全栈 Web 应用程序，它结合了现代 Nuxt.js 4 框架与 PocketBase 后端即服务（BaaS），提供了一个功能丰富的具有实时能力的社交内容平台。该项目展示了身份验证、内容管理、实时同步和响应式 UI 开发的生产就绪模式。
 
-### 认证系统
-- ✅ 用户注册与登录
-- ✅ 密码重置
-- ✅ 邮箱验证
-- ✅ JWT 令牌认证
+## 2. 架构概览
 
-### 内容管理
-- ✅ 帖子创建与编辑
-- ✅ 评论系统
-- ✅ 点赞功能
-- ✅ 内容审核
+该应用程序遵循清晰的关注点分离原则，采用了面向服务的架构。前端利用 Nuxt.js 进行服务端渲染和客户端注水，而 PocketBase 提供后端数据库、身份验证和实时订阅服务。
 
-### 社交功能
-- ✅ 用户个人资料
-- ✅ 评论互动
-- ✅ 点赞系统
-- ✅ 实时通知
+## 3. 核心功能
 
-### 技术特性
-- ✅ 响应式设计
-- ✅ 深色模式支持
-- ✅ 图片优化
-- ✅ 高性能构建
-- ✅ 安全的 API 设计
+### 3.1 身份验证系统
 
-## 📦 技术栈
+该应用程序使用存储在安全 Cookie 中的 JWT 令牌实现了全面的身份验证流程。身份验证系统支持用户注册、登录、登载和电子邮件验证，并包含地理位置跟踪。会话管理通过 nuxt-auth-utils 处理，支持可配置的密码保护和会话持续时间（默认 7 天）。
 
-| 技术 | 版本 | 用途 |
-|------|------|------|
-| Nuxt.js | ^4.2.2 | 前端框架 |
-| PocketBase | ^0.26.5 | 后端服务 |
-| Vue.js | ^3.5.26 | UI 框架 |
-| TypeScript | - | 类型系统 |
-| Tailwind CSS | - | 样式框架 |
-| Nuxt UI | ^4.3.0 | UI 组件库 |
+### 3.2 内容管理
 
-## 🚀 快速开始
+该平台为支持 Markdown 的帖子提供完整的 CRUD 操作。帖子可以包含嵌入图片、代码块和外部链接的丰富内容。系统会自动处理远程图片，将其下载到本地服务器，并更新引用。内容的可见性通过已发布/未发布状态进行控制，草稿访问仅限于经过验证的作者。
 
-### 环境要求
+### 3.3 实时更新
 
-- Node.js ^18.0.0
-- pnpm ^8.0.0
-- PocketBase ^0.26.5
-
-### 安装步骤
-
-1. **克隆项目**
-
-```bash
-git clone <repository-url>
-cd pocketbase-nuxt
-```
-
-2. **安装依赖**
-
-```bash
-pnpm install
-```
-
-3. **配置环境变量**
-
-创建 `.env` 文件，添加以下环境变量：
-
-```env
-# PocketBase 配置
-POCKETBASE_URL=http://localhost:8090
-
-# 会话配置
-NUXT_SESSION_PASSWORD=your-secure-session-password
-```
-
-4. **启动开发服务器**
-
-```bash
-pnpm dev
-```
-
-5. **访问应用**
-
-打开浏览器访问 `http://localhost:3000`
-
-## 📋 项目结构
+强大的服务器发送事件（SSE）实现支持跨所有客户端的实时同步。该系统使用指数退避策略（1s, 2s, 4s, 8s, 16s, 最大 30s）维持持久连接并自动重连。心跳包（每 20 秒）保持连接活跃，并检测断开连接以便立即清理。
 
 ```
-pocketbase-nuxt/
-├── app/                    # 应用代码
-│   ├── components/         # Vue 组件
-│   ├── composables/        # 组合式函数
-│   ├── layouts/           # 布局组件
-│   ├── middleware/         # 路由中间件
-│   ├── pages/              # 页面组件
-│   ├── types/              # TypeScript 类型定义
-│   └── utils/              # 工具函数
-├── public/                 # 静态资源
-├── server/                 # 服务器代码
-│   ├── api/                # API 端点
-│   ├── services/           # 业务逻辑
-│   └── utils/              # 服务器工具函数
-├── .env.example            # 环境变量示例
-├── nuxt.config.ts          # Nuxt 配置
-├── package.json            # 项目依赖
-└── tsconfig.json           # TypeScript 配置
+实时订阅系统使用统一的清理机制，处理多种场景：客户端发起的断开连接、服务器连接丢失和应用程序关闭，确保没有内存泄漏或孤立连接。
 ```
 
-## 🔧 配置说明
+## 4. 关键架构决策
 
-### 环境变量
+### 4.1 类型化 PocketBase 集成
 
-| 变量名 | 描述 | 必填 | 默认值 |
-|--------|------|------|--------|
-| POCKETBASE_URL | PocketBase 服务器 URL | ✅ | - |
-| NUXT_SESSION_PASSWORD | 会话加密密码 | ✅ | - |
+该项目使用从 PocketBase 集合自动生成的 TypeScript 类型，为所有数据库操作提供编译时类型安全。TypedPocketBase 实例确保集合名称、字段名称和数据结构在构建时得到验证，从而消除了运行时错误的常见来源。
 
-### 安全配置
+### 4.2 服务层模式
 
-项目已配置以下安全措施：
+业务逻辑封装在接收 PocketBase 实例作为参数的服务层函数中。这种依赖注入模式确保身份验证上下文（用户凭据）由 API 路由控制，而服务则纯粹专注于数据操作。这种分离提高了可测试性和可复用性。
 
-- CORS 保护
-- CSRF 防护
-- 输入验证
-- XSS 防护
-- 内容安全策略 (CSP)
+### 4.3 Composables 状态管理
 
-## 📝 API 文档
-
-### 认证 API
-
-#### 注册
+前端状态管理依赖于 Vue 3 组合式 API，通过领域特定的 composables 实现。每个 composable 管理自己的响应式状态，公开数据获取、变更和实时同步的方法。与 Options API 相比，这种方法提供了更好的代码组织和更轻松的跨组件状态共享。
 
 ```
-POST /api/auth/register
+分页系统实现了带有实时更新的无限滚动，来自其他用户的新帖子会自动插入，同时保持当前的滚动位置，创造无缝的浏览体验。
 ```
 
-**请求体**：
-```json
-{
-  "email": "user@example.com",
-  "password": "password123",
-  "passwordConfirm": "password123"
-}
-```
-
-#### 登录
-
-```
-POST /api/auth/login
-```
-
-**请求体**：
-```json
-{
-  "email": "user@example.com",
-  "password": "password123"
-}
-```
-
-### 内容 API
-
-#### 获取帖子列表
-
-```
-GET /api/collections/posts
-```
-
-#### 创建帖子
-
-```
-POST /api/collections/posts
-```
-
-**请求体**：
-```json
-{
-  "content": "帖子内容",
-  "allow_comment": true,
-  "icon": "📝",
-  "action": "create"
-}
-```
-
-## 📦 部署指南
-
-### 开发环境
-
-```bash
-pnpm dev
-```
-
-### 生产构建
-
-```bash
-pnpm build
-```
-
-### 预览生产构建
-
-```bash
-pnpm preview
-```
-
-### Docker 部署
-
-```dockerfile
-FROM node:18-alpine
-
-WORKDIR /app
-
-COPY package.json pnpm-lock.yaml ./
-
-RUN npm install -g pnpm
-RUN pnpm install --frozen-lockfile
-
-COPY . .
-
-RUN pnpm build
-
-EXPOSE 3000
-
-CMD ["pnpm", "preview"]
-```
-
-## 🔒 安全最佳实践
-
-1. **环境变量管理**
-   - 所有敏感配置通过环境变量管理
-   - 避免在代码中硬编码密钥
-
-2. **输入验证**
-   - 所有 API 端点都有严格的输入验证
-   - 使用 `sanitize-html` 清理用户输入
-
-3. **认证与授权**
-   - 使用 JWT 令牌进行认证
-   - 所有敏感操作都需要身份验证
-   - 实现了基于角色的访问控制
-
-4. **数据安全**
-   - 密码使用 bcrypt 加密存储
-   - 敏感数据传输使用 HTTPS
-
-## 📊 性能优化
-
-- **图片优化**：使用 `@nuxt/image` 进行图片压缩和格式转换
-- **代码分割**：启用了自动代码分割，减少初始加载时间
-- **缓存策略**：实现了合理的缓存策略，提高页面加载速度
-- **懒加载**：组件和资源按需加载，减少初始加载时间
-
-## 📱 兼容性
-
-### 浏览器支持
-
-| 浏览器 | 版本 |
-|--------|------|
-| Chrome | 最新 2 个版本 |
-| Firefox | 最新 2 个版本 |
-| Safari | 最新 2 个版本 |
-| Edge | 最新 2 个版本 |
-
-### 设备支持
-
-- 桌面端：Windows、macOS、Linux
-- 移动端：iOS、Android
-- 响应式设计，支持各种屏幕尺寸
-
-## 📋 开发流程
-
-### 代码质量
-
-```bash
-# 运行 ESLint 检查
-pnpm lint
-
-# 运行 Prettier 格式化
-pnpm format
-
-# 运行 TypeScript 类型检查
-pnpm typecheck
-```
-
-### 构建测试
-
-```bash
-# 构建生产版本
-pnpm build
-
-# 预览生产构建
-pnpm preview
-```
-
-## 🔧 错误处理与日志
-
-### 错误处理
-
-项目使用了统一的错误处理机制，包括：
-
-- 全局错误拦截
-- 友好的错误提示
-- 错误日志记录
-
-### 日志系统
-
-- 生产环境日志记录到文件
-- 支持不同级别的日志（debug、info、warn、error）
-- 日志轮转机制
-
-## 📁 数据备份与恢复
-
-### 备份策略
-
-```bash
-# 备份 PocketBase 数据
-pb backup
-
-# 恢复 PocketBase 数据
-pb restore backup.zip
-```
-
-### 自动化备份
-
-```bash
-# 每天凌晨 2 点备份
-0 2 * * * /path/to/pb backup --output /path/to/backups/$(date +%Y-%m-%d).zip
-```
-
-## 🤝 贡献指南
-
-1. Fork 项目
-2. 创建功能分支 (`git checkout -b feature/AmazingFeature`)
-3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
-4. 推送到分支 (`git push origin feature/AmazingFeature`)
-5. 打开 Pull Request
-
-## 📄 许可证
-
-MIT License - 查看 [LICENSE](LICENSE) 文件了解详情
-
-## 📞 联系方式
-
-- 项目维护者：[Your Name]
-- 项目链接：[GitHub Repository]
-- 问题反馈：[GitHub Issues]
-
-## 📋 待办事项
-
-- [ ] 添加单元测试
-- [ ] 添加集成测试
-- [ ] 实现实时通知功能
-- [ ] 添加用户角色管理
-- [ ] 实现内容审核流程
-
----
-
-**感谢使用 PocketBase-Nuxt！** 🚀
+## 5. 性能优化
+
+- 构建优化：以 ESNext 为目标的 ESBuild，Lightning CSS 压缩，以及生产环境禁用 source maps
+- Payload 提取：在悬停链接时启用路由预取
+- 异步上下文：在异步操作中处理稳定的全局状态
+- 图标优化：基于 CDN 的图标加载，仅扫描客户端使用的图标
+- 资源压缩：公共资源的 Brotli 和 Gzip 压缩
+- 路由 Keep-alive：在内存中最多保留 10 个路由实例以加快导航速度
