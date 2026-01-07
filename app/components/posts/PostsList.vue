@@ -161,6 +161,7 @@ const {
   isResetting,
   canViewDrafts,
   setupRealtime,
+  close,
   loadMore,
   resetPagination,
   transformPosts,
@@ -279,4 +280,8 @@ const confirmDelete = async () => {
     }, 200);
   }
 };
+
+onUnmounted(() => {
+  close();
+});
 </script>

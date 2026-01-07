@@ -36,7 +36,7 @@
       :data="item.link_data"
       :link-image="getLinkImage(item, item.link_image)"
     />
-    <CommentsUsers :post-id="item.id" :allow-comment="item.allowComment" />
+    <CommentsUsers :post-id="item.id" :allow-comment="item.allow_comment" />
   </div>
 </template>
 
@@ -47,7 +47,7 @@ interface Props {
   item: {
     id: string;
     cleanContent: string;
-    allowComment: boolean;
+    allow_comment: boolean;
     firstImage: string | null;
     link_data: any;
     link_image?: string;

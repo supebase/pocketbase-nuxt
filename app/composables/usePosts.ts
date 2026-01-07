@@ -2,7 +2,7 @@ import type { PostWithUser } from '~/types/posts';
 
 export const usePosts = () => {
   const { loggedIn, user } = useUserSession();
-  const { listen } = usePocketRealtime(['posts']);
+  const { listen, close } = usePocketRealtime(['posts']);
 
   const {
     allItems: allPosts,
@@ -39,7 +39,7 @@ export const usePosts = () => {
         date: useRelativeTime(item.created),
         cleanContent: item.cleanContent,
         action: item.action,
-        allowComment: item.allow_comment,
+        allow_comment: item.allow_comment,
         published: item.published,
         icon: item.icon,
         avatarId: item.expand?.user?.avatar,
@@ -52,6 +52,8 @@ export const usePosts = () => {
   });
 
   const setupRealtime = () => {
+    if (import.meta.server) return;
+
     listen(({ collection, action, record }) => {
       if (collection !== 'posts') return;
 
@@ -98,6 +100,12 @@ export const usePosts = () => {
     });
   };
 
+  if (import.meta.client) {
+    onUnmounted(() => {
+      close(); // 确保组件销毁时，列表页的连接也断开
+    });
+  }
+
   return {
     allPosts,
     displayItems,
@@ -108,6 +116,7 @@ export const usePosts = () => {
     isResetting,
     canViewDrafts,
     setupRealtime,
+    close,
     loadMore,
     resetPagination,
     transformPosts,

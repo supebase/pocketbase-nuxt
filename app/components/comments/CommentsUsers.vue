@@ -63,7 +63,7 @@ const target = ref(null);
 const isRendered = ref(false);
 const lastFetchTime = ref(0);
 
-// 1. 视口监听：进入视口才标记为可渲染
+// 1. 视口监听：逻辑不变
 useIntersectionObserver(
   target,
   ([entry]) => {
@@ -74,18 +74,17 @@ useIntersectionObserver(
   { threshold: 0.1 },
 );
 
-// 2. 数据获取
+// 2. 数据获取：逻辑不变
 const {
   data: commentsResponse,
   status,
   refresh,
 } = await useLazyFetch<CommentsListResponse>(`/api/collections/comments`, {
   key: `comments-preview-${props.postId}`,
-  // 💡 只有当 isRendered 变为 true 时才发起请求
   immediate: false,
   watch: [isRendered],
   query: {
-    post: props.postId, // 💡 对齐后端 API 参数
+    post: props.postId,
     page: 1,
     perPage: 5,
   },
@@ -94,7 +93,19 @@ const {
   },
 });
 
-// 3. 智能刷新逻辑
+// 3. 接入全局单例实时监听 (新增)
+const { listen } = usePocketRealtime(['comments']);
+
+onMounted(() => {
+  listen(({ collection, action, record }) => {
+    // 只有当是当前文章的评论变动，且组件已经渲染（在视口内）时才刷新
+    if (collection === 'comments' && record.post === props.postId && isRendered.value) {
+      refresh();
+    }
+  });
+});
+
+// 4. 智能刷新逻辑：保留原始逻辑，作为 SSE 之外的兜底（比如从详情页返回时）
 const smartRefresh = () => {
   if (!isRendered.value || status.value === 'pending') return;
   if (Date.now() - lastFetchTime.value > REFRESH_THRESHOLD) {
@@ -103,12 +114,10 @@ const smartRefresh = () => {
 };
 
 onActivated(() => {
-  // 从详情页返回时，如果已经在视口内，尝试刷新过期数据
   if (isRendered.value) smartRefresh();
 });
 
-// 4. 数据转化
-// 使用 Set 对用户 ID 去重，预览位展示的是“有哪些人参与”，而不是“最新的三条评论”
+// 5. 数据转化：保持不变
 const usersToShow = computed(() => {
   const comments = commentsResponse.value?.data?.comments || [];
   const seenUsers = new Set();
@@ -124,6 +133,5 @@ const usersToShow = computed(() => {
 });
 
 const totalCount = computed(() => commentsResponse.value?.data?.totalItems || 0);
-
 const remainingCount = computed(() => Math.max(0, totalCount.value - usersToShow.value.length));
 </script>

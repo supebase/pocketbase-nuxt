@@ -1,39 +1,41 @@
 import { parseMarkdown } from '@nuxtjs/mdc/runtime';
 import type { SinglePostResponse } from '~/types/posts';
 
-export const usePostLogic = async (id: string) => {
+export const usePostLogic = (id: string | string[]) => {
   const { updatedMarks, clearUpdateMark } = usePostUpdateTracker();
   const { user: currentUser } = useUserSession();
-  const { listen } = usePocketRealtime(['posts']);
 
-  // --- 🔑 关键点 1：在 await 之前注册生命周期 ---
+  // 1. 获取 realtime 工具
+  const { listen, close } = usePocketRealtime(['posts']);
+
+  // 2. 实时监听逻辑
   if (import.meta.client) {
     onMounted(() => {
       listen(({ collection, action, record }) => {
-        // 此时 data 已经在闭包中，等到异步请求完成后，这里就能正常工作
+        // 确保只监听当前文章的更新
         if (collection === 'posts' && record.id === id && action === 'update') {
-          if (data.value && data.value.data) {
-            data.value = {
-              ...data.value,
-              data: { ...data.value.data, views: record.views },
-            };
+          if (data.value?.data) {
+            data.value.data.views = record.views;
           }
         }
       });
     });
+
+    onUnmounted(() => {
+      close();
+    });
   }
 
-  // --- 🔑 关键点 2：第一个 await 放在钩子注册之后 ---
-  const { data, status, refresh, error } = await useLazyFetch<SinglePostResponse>(
+  // 3. 数据抓取 (关闭 server 端抓取，完全由客户端负责)
+  const { data, status, refresh, error } = useLazyFetch<SinglePostResponse>(
     () => `/api/collections/post/${id}`,
     {
       key: `post-detail-${id}`,
-      server: true,
+      server: false, // 不需要 SEO 时，设为 false 性能更好
       query: { userId: computed(() => currentUser.value?.id) },
     },
   );
 
-  // --- 后续逻辑保持不变 ---
   const mdcReady = ref(false);
   const ast = ref<any>(null);
   const toc = ref<any>(null);
@@ -53,28 +55,18 @@ export const usePostLogic = async (id: string) => {
       mdcReady.value = true;
       return;
     }
-    const fallback = setTimeout(() => {
-      if (!mdcReady.value) mdcReady.value = true;
-    }, 3000);
+    if (!isUpdateRefresh.value) mdcReady.value = false;
+
     try {
       const result = await parseMarkdown(content, { toc: { depth: 4, searchDepth: 4 } });
       ast.value = result;
       toc.value = result.toc;
-      if (import.meta.client) {
-        nextTick(() => {
-          setTimeout(() => {
-            mdcReady.value = true;
-            isUpdateRefresh.value = false;
-            clearTimeout(fallback);
-          }, 1000); // 稍微给点延迟
-        });
-      } else {
-        mdcReady.value = true;
-      }
+      await nextTick();
     } catch (e) {
       console.error('MDC 渲染错误:', e);
+    } finally {
       mdcReady.value = true;
-      clearTimeout(fallback);
+      isUpdateRefresh.value = false;
     }
   };
 

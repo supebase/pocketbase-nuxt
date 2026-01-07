@@ -105,7 +105,7 @@ const {
   getUniqueUsers,
 } = useComments(props.postId);
 
-const { listen } = usePocketRealtime(['comments', 'likes']);
+const { listen, close } = usePocketRealtime(['comments', 'likes']);
 const isModalOpen = ref(false);
 const isDeleting = ref(false);
 const selectedComment = ref<CommentRecord | null>(null);
@@ -149,36 +149,42 @@ const parsedContent = (text: string) => {
 };
 
 // 3. 实时监听与初始化
-onMounted(async () => {
-  await fetchComments();
-
-  listen(({ collection, action, record }) => {
-    // 评论逻辑
-    if (collection === 'comments' && record.post === props.postId) {
-      syncSingleComment(record as CommentRecord, action as any);
-    }
-    // 点赞逻辑
-    if (collection === 'likes') {
-      const targetCommentId = record.comment;
-      const target = comments.value.find((c) => c.id === targetCommentId);
-
-      if (target) {
-        // 1. 防御性处理：确保数字有效
-        if (typeof target.likes !== 'number') target.likes = 0;
-
-        const newLikes = action === 'create' ? target.likes + 1 : Math.max(0, target.likes - 1);
-
-        // 2. 核心修正点：使用 ?? false 确保传入的是 boolean 而非 undefined
-        handleLikeChange(
-          target.isLiked ?? false, // 如果是 undefined，则默认为 false
-          newLikes,
-          targetCommentId,
-          true,
-        );
+if (import.meta.client) {
+  onMounted(async () => {
+    listen(({ collection, action, record }) => {
+      // 评论逻辑
+      if (collection === 'comments' && record.post === props.postId) {
+        syncSingleComment(record as CommentRecord, action as any);
       }
-    }
+      // 点赞逻辑
+      if (collection === 'likes') {
+        const targetCommentId = record.comment;
+        const target = comments.value.find((c) => c.id === targetCommentId);
+
+        if (target) {
+          // 1. 防御性处理：确保数字有效
+          if (typeof target.likes !== 'number') target.likes = 0;
+
+          const newLikes = action === 'create' ? target.likes + 1 : Math.max(0, target.likes - 1);
+
+          // 2. 核心修正点：使用 ?? false 确保传入的是 boolean 而非 undefined
+          handleLikeChange(
+            target.isLiked ?? false, // 如果是 undefined，则默认为 false
+            newLikes,
+            targetCommentId,
+            true,
+          );
+        }
+      }
+    });
+
+    await fetchComments();
   });
-});
+  // 显式清理连接
+  onUnmounted(() => {
+    close();
+  });
+}
 
 // 4. 向上层同步
 watch(comments, () => emit('update-commenters', getUniqueUsers()), {
