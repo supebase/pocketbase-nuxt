@@ -7,7 +7,7 @@ import { MD_IMAGE_MAX_SIZE } from '~/constants/index';
 export const processMarkdownImages = async (content: string) => {
   // 设置并发限制：例如最多同时下载 3 张图片
   const limit = pLimit(3);
-  const imageRegex = /!\[.*?\]\((https?:\/\/.*?)\)/g;
+  const imageRegex = /!\[.*?\]\((https?:\/\/(?!.*\/api\/)[^)]+)\)/gi;
   const matches = [...content.matchAll(imageRegex)];
 
   const seen = new Set<string>();

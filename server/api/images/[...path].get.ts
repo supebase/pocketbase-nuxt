@@ -1,6 +1,6 @@
 export default defineEventHandler(async (event) => {
   const path = getRouterParam(event, 'path');
-  if (!path) throw createError({ statusCode: 400, statusMessage: '路径不能为空' });
+  if (!path) throw createError({ statusCode: 400, message: '路径不能为空' });
 
   const config = useRuntimeConfig();
   const targetUrl = `${config.pocketbaseBackend}/api/files/${path}`;
@@ -21,7 +21,7 @@ export default defineEventHandler(async (event) => {
     }
 
     if (!response.ok) {
-      throw createError({ statusCode: response.status, statusMessage: '图片不存在' });
+      throw createError({ statusCode: response.status, message: '图片不存在' });
     }
 
     // 💡 2. 透传关键的缓存校验头
@@ -47,6 +47,6 @@ export default defineEventHandler(async (event) => {
     return response.body;
   } catch (error) {
     console.error('[ImageProxy] 代理失败:', error);
-    throw createError({ statusCode: 404, statusMessage: '无法加载图片' });
+    throw createError({ statusCode: 404, message: '无法加载图片' });
   }
 });

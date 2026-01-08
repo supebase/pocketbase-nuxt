@@ -60,10 +60,10 @@ export async function getPostById(pb: TypedPocketBase, postId: string) {
 }
 
 /**
- * 内部核心方法：同步 Markdown 图片到本地
- * 增加了“图片过大”的提示逻辑
+ * 核心逻辑：同步 Markdown 中的远程图片到 PocketBase
+ * @returns 返回处理后的 content
  */
-async function syncPostImages(
+async function performImageSync(
   pb: TypedPocketBase,
   postId: string,
   content: string,
@@ -71,26 +71,33 @@ async function syncPostImages(
 ) {
   const { successResults, skippedCount } = await processMarkdownImages(content);
 
-  // 如果没有新图片下载成功，仅进行清洗并返回（可能包含提示更新）
+  // 1. 如果没有新图片下载成功，仅处理清洗逻辑
   if (successResults.length === 0) {
     let finalContent = content;
     if (skippedCount > 0 && !content.includes('部分远程图片因体积过大')) {
-      finalContent += `\n\n> ⚠️ **提示**: 部分远程图片因体积过大未同步到本地，已保留原始链接。`;
+      finalContent += `\n\n> ⚠️ **提示**: 部分远程图片因体积过大未同步到本地。`;
     }
     return sanitizePostContent(finalContent);
   }
 
+  // 2. 构造 FormData 用于更新文件字段
   const formData = new FormData();
+
+  // 必须逐个 append 旧文件名，否则 PocketBase 会删除未提及的文件
   existingImages.forEach((name) => formData.append('markdown_images', name));
 
+  // 添加新下载的 Blob
   successResults.forEach((item, i) => {
     formData.append('markdown_images', item.blob, `img_${Date.now()}_${i}.png`);
   });
 
+  // 3. 提交文件更新
   const record = await pb.collection('posts').update(postId, formData);
 
+  // 4. 替换 Markdown 中的原始 URL 为本地代理 URL
   let finalContent = content;
   const allImages = record.markdown_images;
+  // PocketBase 默认将新文件追加到数组末尾
   const startIndex = allImages.length - successResults.length;
 
   successResults.forEach((item, i) => {
@@ -99,9 +106,8 @@ async function syncPostImages(
     finalContent = finalContent.split(item.url).join(proxyUrl);
   });
 
-  // 处理跳过提示
   if (skippedCount > 0 && !finalContent.includes('部分远程图片因体积过大')) {
-    finalContent += `\n\n> ⚠️ **提示**: 部分远程图片因体积过大未同步到本地，已保留原始链接。`;
+    finalContent += `\n\n> ⚠️ **提示**: 部分远程图片因体积过大未同步到本地。`;
   }
 
   return sanitizePostContent(finalContent);
@@ -112,22 +118,25 @@ async function syncPostImages(
  */
 export async function createPost(pb: TypedPocketBase, initialData: FormData, rawContent: string) {
   const originalPublishedStatus = initialData.get('published') === 'true';
+
+  // 先以草稿状态创建，避免图片未处理完就发布
   initialData.set('published', 'false');
-  initialData.append('content', rawContent);
+  initialData.set('content', 'Processing images...');
 
   const post = await pb.collection('posts').create(initialData);
 
   try {
-    const cleanContent = await syncPostImages(pb, post.id, rawContent);
+    const cleanContent = await performImageSync(pb, post.id, rawContent, []);
     return await pb.collection('posts').update(post.id, {
       content: cleanContent,
       published: originalPublishedStatus,
     });
   } catch (error: any) {
-    console.error(`处理失败: ${post.id}`, error);
+    console.error(`[CreatePost] 图片同步失败: ${post.id}`, error);
+    // 即使失败也返回文章 ID，让用户知道内容已存在
     throw createError({
       statusCode: 202,
-      message: '内容已保存，但图片同步过程遇到问题，请手动检查。',
+      message: '内容已保存，但图片同步失败。',
       data: { postId: post.id },
     });
   }
@@ -137,13 +146,26 @@ export async function createPost(pb: TypedPocketBase, initialData: FormData, raw
  * 更新文章
  */
 export async function updatePost(pb: TypedPocketBase, postId: string, body: any) {
-  // 此时 ensureOwnership 已具备强大的类型检查
+  // 验证所有权
   const existing = await ensureOwnership(pb, 'posts', postId);
 
+  // 只有当内容发生变化时才触发图片处理流程
   if (body.content !== undefined && body.content !== existing.content) {
-    const cleanContent = await syncPostImages(pb, postId, body.content, existing.markdown_images);
+    // 处理图片并获取最终的 HTML/Markdown 内容
+    const cleanContent = await performImageSync(
+      pb,
+      postId,
+      body.content,
+      existing.markdown_images || [],
+    );
     body.content = cleanContent;
   }
+
+  // 关键：从 body 中删除 markdown_images 字段
+  // 因为 performImageSync 内部已经通过 FormData 更新过该字段了
+  // 如果这里不删除，随后的 JSON 更新可能会覆盖掉刚才上传的文件列表
+  delete body.markdown_images;
+
   return await pb.collection('posts').update(postId, body);
 }
 
