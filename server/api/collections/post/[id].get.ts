@@ -3,6 +3,7 @@
  * @description 获取单篇内容（文章）详情的 API 端点。
  */
 import { defineApiHandler } from '~~/server/utils/api-wrapper';
+import { parseMarkdown } from '@nuxtjs/mdc/runtime';
 import type { SinglePostResponse } from '~/types/posts';
 
 /**
@@ -28,6 +29,19 @@ export default defineApiHandler(async (event): Promise<SinglePostResponse> => {
   // 步骤 4: 调用服务层的 `getPostById` 函数来执行实际的数据库查询。
   // 传入 `pb` 实例和 `postId`，将具体的查询逻辑与 API 路由解耦。
   const post = await getPostById(pb, postId);
+
+  // --- 新增：服务端解析 MDC ---
+  let mdcAst = null;
+
+  if (post && post.content) {
+    try {
+      mdcAst = await parseMarkdown(post.content, {
+        toc: { depth: 4, searchDepth: 4 },
+      });
+    } catch (e) {
+      console.error('[MDC 解析错误]:', e);
+    }
+  }
 
   const ip = getRequestIP(event, { xForwardedFor: true }) || 'unknown';
   // 构造基于文章ID和IP的唯一标识符（去除特殊字符）
@@ -55,6 +69,9 @@ export default defineApiHandler(async (event): Promise<SinglePostResponse> => {
 
   return {
     message: '获取内容详情成功',
-    data: post as any,
+    data: {
+      ...post,
+      mdcAst, // 将解析好的 AST 传给前端
+    } as any,
   };
 });

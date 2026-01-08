@@ -18,7 +18,10 @@
     </div>
 
     <div class="flex items-center gap-1.25 text-dimmed text-sm">
-      <ClientOnly><CommonAnimateNumber :value="props.postMeta.views" /> 次拾阅 </ClientOnly>
+      <ClientOnly>
+        <CommonAnimateNumber :value="props.postMeta.views" /> 次拾阅
+        <template #fallback> <CommonAnimateNumber :value="0" /> 次拾阅 </template>
+      </ClientOnly>
     </div>
   </div>
 </template>

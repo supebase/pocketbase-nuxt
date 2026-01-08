@@ -12,6 +12,7 @@ export interface PostExpand {
  */
 export interface PostRecord extends PBPostResponse<PostExpand> {
   relativeTime?: string; // 仅前端展示使用
+  mdcAst?: any; // 服务端解析后的 AST 结构
 }
 
 export interface PostsListResponse {

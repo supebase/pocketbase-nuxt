@@ -36,7 +36,7 @@
           <PostsToc :toc="toc" />
           <MDCRenderer
             v-if="ast"
-            :key="postWithRelativeTime.updated"
+            :key="postWithRelativeTime.id"
             :body="ast.body"
             :data="ast.data"
             class="prose prose-neutral prose-base dark:prose-invert max-w-none font-sans prose-p:text-justify prose-p:leading-7 wrap-break-word"
@@ -120,7 +120,6 @@ const {
   ast,
   toc,
   isUpdateRefresh,
-  parseContent,
   updatedMarks,
   clearUpdateMark,
 } = usePostLogic(id);
@@ -140,45 +139,7 @@ const onCommentSuccess = (newComment: any) => {
 
 watch(loggedIn, () => {
   isUpdateRefresh.value = true;
-  refresh();
-});
-
-watch(
-  () => (route.params as any).id as string,
-  (newId, oldId) => {
-    if (newId && newId !== oldId) {
-      if (!isUpdateRefresh.value) {
-        mdcReady.value = false;
-      }
-    }
-  },
-);
-
-// 监听内容变化进行 MDC 解析
-watch(
-  () => postWithRelativeTime.value?.content,
-  async (newContent) => {
-    if (newContent) {
-      await parseContent(newContent);
-    }
-  },
-  { immediate: true },
-);
-
-watch(status, async (newStatus) => {
-  if (newStatus === 'pending') {
-    // 只有在非静默更新时才展示 loading 遮罩
-    if (!isUpdateRefresh.value) {
-      mdcReady.value = false;
-    }
-  }
-
-  if (newStatus === 'success' && postWithRelativeTime.value?.content) {
-    // 💡 状态成功后，强制触发解析以确保解锁
-    if (!mdcReady.value || ast.value?.body?.value !== postWithRelativeTime.value.content) {
-      await parseContent(postWithRelativeTime.value.content);
-    }
-  }
+  refresh().finally(() => (isUpdateRefresh.value = false));
 });
 
 // 错误处理
@@ -205,14 +166,23 @@ useIntersectionObserver(
 
 // KeepAlive 激活时检查是否有更新标记
 onActivated(async () => {
-  // 💡 直接从 route 获取，避免解构带来的闭包旧值问题
-  const params = route.params as { id: string };
-  const currentId = params.id;
+  const currentId = (route.params as { id: string }).id;
 
   if (currentId && updatedMarks.value[currentId]) {
+    // 1. 先开启同步状态
     isUpdateRefresh.value = true;
-    await refresh();
-    clearUpdateMark(currentId);
+
+    try {
+      // 2. 强制刷新数据
+      await refresh();
+      // 3. 清除标记
+      clearUpdateMark(currentId);
+    } finally {
+      // 4. 延迟一丁点关闭遮罩，避免闪烁过快
+      setTimeout(() => {
+        isUpdateRefresh.value = false;
+      }, 300);
+    }
   }
 });
 

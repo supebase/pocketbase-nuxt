@@ -3,7 +3,7 @@
  * @description 处理 PocketBase 错误，支持多字段校验错误汇总，并将详细错误结构传递至前端。
  */
 import { ClientResponseError } from 'pocketbase';
-import { GLOBAL_ERROR_CODE_MAP, FIELD_ERROR_CODE_MAP } from './constants';
+import { GLOBAL_ERROR_CODE_MAP, FIELD_ERROR_CODE_MAP } from '~/constants/pocketbase';
 
 /**
  * PocketBase 通用错误处理函数。
