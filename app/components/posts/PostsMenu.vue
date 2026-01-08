@@ -67,12 +67,16 @@ const dropdownItems = computed(() => {
     commonSection,
     [
       authItem({
-        label: '编辑',
+        label: '重新编辑',
         icon: 'i-hugeicons:edit-04',
-        onClick: () => navigateTo(`/edit/${props.item.id}`),
+        onClick: () => {
+          setTimeout(() => {
+            navigateTo(`/edit/${props.item.id}`);
+          }, 100);
+        },
       }),
       authItem({
-        label: '删除',
+        label: '永久删除',
         icon: 'i-hugeicons:delete-01',
         color: 'error' as const,
         onClick: () => emit('requestDelete', props.item),

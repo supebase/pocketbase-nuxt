@@ -60,36 +60,37 @@
         </div>
 
         <div class="flex items-center gap-2.5">
-          <UInput
-            v-model="modelValue.icon"
-            placeholder="图标 i-simple-icons:nuxt"
-            variant="subtle"
-            color="neutral"
-            :disabled="disabled"
-            size="lg"
-            class="w-full"
-            v-if="modelValue.action === 'partager'"
-          >
-            <template #trailing>
-              <UButton
-                to="https://icones.js.org/collection/simple-icons"
-                target="_blank"
-                variant="link"
-                color="neutral"
-                icon="i-hugeicons:search-area"
-              />
-            </template>
-          </UInput>
+          <UFieldGroup v-if="modelValue.action === 'partager'" class="w-full">
+            <UInput
+              v-model="modelValue.icon"
+              placeholder="图标 - simple-icons:nuxt"
+              variant="outline"
+              color="neutral"
+              :disabled="disabled"
+              size="lg"
+              class="w-full"
+            />
+            <UButton
+              color="neutral"
+              variant="outline"
+              icon="i-hugeicons:search-area"
+              to="https://icones.js.org/collection/simple-icons"
+              target="_blank"
+            />
+          </UFieldGroup>
 
-          <UInput
-            v-model="modelValue.link"
-            placeholder="卡片链接 - https://example.com"
-            variant="subtle"
-            color="neutral"
-            :disabled="disabled"
-            size="lg"
-            class="w-full"
-          />
+          <UFieldGroup class="w-full">
+            <UBadge color="neutral" variant="outline" size="lg" label="https://" />
+            <UInput
+              v-model="modelValue.link"
+              placeholder="卡片 - example.com"
+              variant="outline"
+              color="neutral"
+              :disabled="disabled"
+              size="lg"
+              class="w-full"
+            />
+          </UFieldGroup>
         </div>
 
         <div class="flex items-center justify-between gap-6">

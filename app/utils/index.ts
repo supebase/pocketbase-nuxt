@@ -110,3 +110,22 @@ export const formatLocation = (location: string) => {
 
   return location;
 };
+
+export const formatIconName = (iconStr: string) => {
+  if (!iconStr || !iconStr.includes(':')) return '';
+
+  const str = iconStr.split(':')[1] || '';
+  return str.charAt(0).toUpperCase() + str.slice(1);
+};
+
+export const formatLink = (url: string) => {
+  if (!url) return ''; // 如果为空则返回空字符串
+
+  // 检查是否以 http:// 或 https:// 开头
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url;
+  }
+
+  // 否则加上 https://
+  return `https://${url}`;
+};

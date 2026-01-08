@@ -40,17 +40,17 @@
     </div>
 
     <div
-      class="flex-1 p-3 min-w-0 flex flex-col justify-center space-y-1 tracking-wide bg-white dark:bg-neutral-900"
+      class="flex-1 p-3 min-w-0 flex flex-col justify-center space-y-1 bg-white dark:bg-neutral-900"
     >
       <div class="text-sm font-bold line-clamp-1 w-full">
         {{ data.title }}
       </div>
 
-      <div class="text-xs text-dimmed/90 line-clamp-1 w-full font-mono">
+      <div class="text-xs text-dimmed line-clamp-1 w-full">
         {{ data.description }}
       </div>
 
-      <div class="text-xs text-dimmed/90 truncate font-mono">
+      <div class="text-[11px] text-dimmed/70 truncate font-mono">
         {{ displayUrl }}
       </div>
     </div>

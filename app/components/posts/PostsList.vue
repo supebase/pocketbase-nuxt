@@ -44,7 +44,9 @@
 
             <template #title="{ item }">
               <div class="flex items-center gap-3">
-                <div class="text-base">{{ item.title }}</div>
+                <div class="text-base">
+                  {{ item.icon ? formatIconName(item.icon) : item.title }}
+                </div>
                 <div v-if="!item.published && canViewDrafts" class="text-warning">待发布稿</div>
                 <UBadge
                   v-else-if="item.action === 'dit'"

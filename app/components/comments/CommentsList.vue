@@ -21,11 +21,13 @@
 
       <CommonMotionTimeline :items="comments" line-offset="15px" :trigger-ratio="0.55">
         <template #indicator="{ item }">
-          <div
-            class="size-8 rounded-full ring-4 ring-white dark:ring-neutral-900 shadow-sm overflow-hidden"
-          >
-            <CommonGravatar :avatar-id="item.expand?.user?.avatar" :size="64" />
-          </div>
+          <UChip inset :show="item.expand?.user?.verified">
+            <div
+              class="size-8 rounded-full ring-4 ring-white dark:ring-neutral-900 shadow-sm overflow-hidden"
+            >
+              <CommonGravatar :avatar-id="item.expand?.user?.avatar" :size="64" />
+            </div>
+          </UChip>
         </template>
 
         <template #title="{ item }">

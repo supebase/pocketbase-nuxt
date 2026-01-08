@@ -34,6 +34,11 @@ export default defineAppConfig({
         },
       },
     },
+    chip: {
+      slots: {
+        base: 'ring-2',
+      },
+    },
     empty: {
       slots: {
         avatar: 'shrink-0 mb-2 bg-transparent',

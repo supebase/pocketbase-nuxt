@@ -42,6 +42,10 @@ const isSubmitting = ref(false);
 const maxLimit = CONTENT_MAX_LENGTH;
 
 const handleSubmit = async () => {
+  if (form.link) {
+    form.link = formatLink(form.link.trim());
+  }
+
   isSubmitting.value = true;
   try {
     await $fetch('/api/collections/posts', {

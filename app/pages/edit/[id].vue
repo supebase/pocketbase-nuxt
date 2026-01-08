@@ -69,6 +69,10 @@ const loadPostData = async () => {
 };
 
 const handleSubmit = async () => {
+  if (form.value.link) {
+    form.value.link = formatLink(form.value.link.trim());
+  }
+
   isSubmitting.value = true;
   try {
     await $fetch(`/api/collections/post/${id}`, {

@@ -51,25 +51,31 @@ export const useSearchLogic = () => {
   // 防抖处理
   const debouncedSearch = useDebounceFn((val: string) => {
     performSearch(val);
-  }, 400);
+  }, 600);
 
   // 监听输入变化
   watch(searchQuery, (newVal) => {
-    // 💡 关键 1: 如果正在输入法合成中，保持 isLoading 为 true
-    // 这样 UI 就会一直显示“正在搜索”或保持状态，而不是立刻显示“未找到”
+    const trimmed = newVal.trim();
+
+    // 1. 如果正在合成中，我们不应该设置 isLoading = true
+    // 而是让 UI 根据当前文字长度自然展示“请输入更多”或“搜索中”
     if (isComposing.value) {
-      isLoading.value = true;
+      // 只有当拼音长度已经足够触发搜索时，才为了视觉平滑开启加载状态
+      // 如果长度不够，我们保持 isLoading 为 false，这样 #empty 就会走长度判断逻辑
+      isLoading.value = trimmed.length >= MIN_SEARCH_LENGTH;
       return;
     }
 
-    if (!newVal.trim() || newVal.trim().length < MIN_SEARCH_LENGTH) {
-      resetPagination([], 0);
+    // 2. 长度不足判断
+    if (trimmed.length < MIN_SEARCH_LENGTH) {
       isLoading.value = false;
+      resetPagination([], 0);
       return;
     }
 
+    // 3. 正常触发防抖搜索
     isLoading.value = true;
-    debouncedSearch(newVal);
+    debouncedSearch(trimmed);
   });
 
   return {

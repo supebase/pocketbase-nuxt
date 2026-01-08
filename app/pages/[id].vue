@@ -85,6 +85,7 @@
         </ClientOnly>
 
         <CommentsList
+          v-if="postWithRelativeTime.allow_comment"
           ref="commentListRef"
           :key="postWithRelativeTime?.id"
           :post-id="postWithRelativeTime.id"
