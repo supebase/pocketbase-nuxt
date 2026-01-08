@@ -19,7 +19,7 @@ const protectedRoutes = [
 ];
 
 export default defineEventHandler(async (event) => {
-  const url = getRequestURL(event).pathname.replace(/\/$/, '') || '/';
+  const url = getRequestURL(event).pathname.replace(/\/$/, '').toLowerCase() || '/';
   const method = event.method;
 
   // 1. 无论是否是受保护路由，先尝试初始化用户信息
@@ -31,6 +31,13 @@ export default defineEventHandler(async (event) => {
   if (pb.authStore.isValid && pb.authStore.record) {
     // 注入用户信息
     event.context.user = pb.authStore.record;
+  }
+
+  // 2.1 身份解析之后
+  if (!pb.authStore.isValid && event.context.user) {
+    // 如果 Cookie 过期了，但 Nuxt Session 还在
+    await clearUserSession(event);
+    event.context.user = null;
   }
 
   // 3. 路由保护逻辑

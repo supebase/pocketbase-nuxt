@@ -19,26 +19,10 @@
 
     <div v-else class="mt-8 space-y-4 w-full">
       <ClientOnly>
-        <template v-if="allPosts.length === 0 && status !== 'pending' && !isRefreshing">
-          <div
-            class="flex flex-col items-center justify-center space-y-4 min-h-[calc(100vh-14rem)] pt-16"
-          >
-            <UEmpty
-              variant="naked"
-              title="糟糕！空空如也～"
-              description="您可以点击刷新按钮尝试获取最新的数据"
-              :actions="[
-                {
-                  label: '刷新',
-                  color: 'neutral',
-                  loadingAuto: true,
-                  class: 'cursor-pointer',
-                  onClick: manualRefresh,
-                },
-              ]"
-            />
-          </div>
-        </template>
+        <PostsEmptyState
+          v-if="allPosts.length === 0 && status !== 'pending' && !isRefreshing"
+          @refresh="manualRefresh"
+        />
 
         <template v-else>
           <CommonMotionTimeline
@@ -151,6 +135,7 @@
 <script setup lang="ts">
 import type { PostWithUser, PostsListResponse } from '~/types/posts';
 
+// 1. 获取核心状态
 const {
   allPosts,
   displayItems,
@@ -171,6 +156,7 @@ const { loggedIn } = useUserSession();
 const { isRefreshing, refreshPostsAndComments } = useRefresh();
 const toast = useToast();
 
+// 2. 数据获取
 const {
   data: fetchResult,
   status,
@@ -182,6 +168,19 @@ const {
   watch: [loggedIn],
 });
 
+// 3. 抽离的 Action 逻辑
+const { isDeleteModalOpen, isDeleting, pendingDeleteItem, handleRequestDelete, confirmDelete } =
+  usePostsActions(refresh);
+
+// 4. 私有 UI 状态
+const animationTrigger = ref(0);
+const refreshCounter = ref(0);
+
+const visibleTotalItems = computed(() =>
+  canViewDrafts.value ? totalItems.value : allPosts.value.filter((p) => p.published).length,
+);
+
+// 5. 监听与生命周期
 watch(
   fetchResult,
   (res) => {
@@ -192,23 +191,12 @@ watch(
   { immediate: true },
 );
 
-const refreshCounter = ref(0);
-const isDeleteModalOpen = ref(false);
-const isDeleting = ref(false);
-const pendingDeleteItem = ref<any>(null);
-const animationTrigger = ref(0);
-
-const visibleTotalItems = computed(() =>
-  canViewDrafts.value ? totalItems.value : allPosts.value.filter((p) => p.published).length,
-);
-
 onMounted(() => setupRealtime());
+onUnmounted(() => close());
 
-// 💡 关键：手动刷新逻辑
+// 6. 交互方法
 const manualRefresh = async () => {
   isResetting.value = true;
-
-  // 💡 同步重置 Timeline 的持久化进度
   const persistedProgress = useState<number>('timeline-progress-15px');
   persistedProgress.value = 0;
 
@@ -237,47 +225,9 @@ const handleLoadMore = () =>
     const res = await $fetch<PostsListResponse>('/api/collections/posts', {
       query: { page: currentPage.value },
     });
-
     return {
       items: res.data.posts as PostWithUser[],
       total: res.data.totalItems,
     };
   }, transformPosts);
-
-const handleRequestDelete = (item: any) => {
-  pendingDeleteItem.value = item;
-  isDeleteModalOpen.value = true;
-};
-
-const confirmDelete = async () => {
-  if (!pendingDeleteItem.value) return;
-  isDeleting.value = true;
-  try {
-    await $fetch(`/api/collections/post/${pendingDeleteItem.value.id}`, {
-      method: 'DELETE',
-    });
-    isDeleteModalOpen.value = false;
-    toast.add({
-      title: '删除成功',
-      icon: 'i-hugeicons:checkmark-circle-03',
-      color: 'success',
-    });
-  } catch (err: any) {
-    toast.add({
-      title: '删除失败',
-      description: err.data?.message,
-      icon: 'i-hugeicons:alert-02',
-      color: 'error',
-    });
-  } finally {
-    isDeleting.value = false;
-    setTimeout(() => {
-      pendingDeleteItem.value = null;
-    }, 200);
-  }
-};
-
-onUnmounted(() => {
-  close();
-});
 </script>
