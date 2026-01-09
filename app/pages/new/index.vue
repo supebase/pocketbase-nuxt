@@ -13,7 +13,7 @@
         type="submit"
         color="neutral"
         :loading="isSubmitting"
-        :disabled="form.content.trim() === ''"
+        :disabled="isSubmitting || form.content.trim() === '' || form.content.length > maxLimit"
       >
         发布
       </UButton>
@@ -42,6 +42,10 @@ const isSubmitting = ref(false);
 const maxLimit = CONTENT_MAX_LENGTH;
 
 const handleSubmit = async () => {
+  if (form.content.length > maxLimit) {
+    return;
+  }
+
   if (form.link) {
     form.link = formatLink(form.link.trim());
   }

@@ -10,6 +10,7 @@ export default defineAppConfig({
       copyCheck: 'i-hugeicons:checkmark-square-03',
       close: 'i-hugeicons:cancel-01',
       search: 'i-hugeicons:search-01',
+      check: 'i-hugeicons:tick-01',
     },
     header: {
       slots: {

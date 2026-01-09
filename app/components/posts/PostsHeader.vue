@@ -64,7 +64,7 @@ const postButtonConfig = computed(() => {
     to: props.isLogin ? '/new' : '/auth',
     disabled: isLocked,
     label: isLocked ? '未认证' : '新帖文',
-    icon: isLocked ? 'i-hugeicons:cancel-01' : 'i-hugeicons:add-01',
+    icon: isLocked ? 'i-hugeicons:remove-circle' : 'i-hugeicons:add-01',
   };
 });
 </script>

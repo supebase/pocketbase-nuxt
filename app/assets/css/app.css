@@ -246,31 +246,6 @@ body {
   border-radius: var(--radius-lg);
 }
 
-.layout-container,
-.editor-panel {
-  will-change: width, flex-basis, margin;
-  transition: all 0.7s cubic-bezier(0.4, 0, 0.2, 1) !important;
-}
-.side-slide-enter-active {
-  transition: all 0.6s cubic-bezier(0.25, 1, 0.5, 1);
-}
-.side-slide-leave-active {
-  transition: all 0.5s cubic-bezier(0.5, 0, 0.75, 0);
-}
-.side-slide-enter-from,
-.side-slide-leave-to {
-  transform: translateX(-30px);
-  opacity: 0;
-}
-.fade-content-enter-active,
-.fade-content-leave-active {
-  transition: opacity 0.3s ease;
-}
-.fade-content-enter-from,
-.fade-content-leave-to {
-  opacity: 0;
-}
-
 .v3-emojis button {
   flex-basis: 16.6% !important;
   max-width: 16.6% !important;
@@ -284,6 +259,11 @@ body {
 
 .v3-emoji-picker .v3-footer {
   display: none !important;
+}
+
+.tiptap {
+  overflow-y: auto;
+  height: 400px;
 }
 
 .logo-wrapper path {

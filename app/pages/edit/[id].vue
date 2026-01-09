@@ -23,7 +23,7 @@
         type="submit"
         color="neutral"
         :loading="isSubmitting"
-        :disabled="isLoading || form.content.trim() === ''"
+        :disabled="isSubmitting || form.content.trim() === '' || form.content.length > maxLimit"
       >
         更新内容
       </UButton>
@@ -70,6 +70,10 @@ const loadPostData = async () => {
 };
 
 const handleSubmit = async () => {
+  if (form.value.content.length > maxLimit) {
+    return;
+  }
+
   if (form.value.link) {
     form.value.link = formatLink(form.value.link.trim());
   }

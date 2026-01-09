@@ -129,3 +129,14 @@ export const formatLink = (url: string) => {
   // 否则加上 https://
   return `https://${url}`;
 };
+
+/**
+ * 根据内容长度百分比获取对应的颜色
+ * @param  内容长度百分比（0-100）
+ * @returns 对应的颜色字符串
+ */
+export const getContentLengthColor = (percent: number) => {
+  if (percent >= 100) return 'error' as const;
+  if (percent >= 80) return 'warning' as const;
+  return 'neutral' as const;
+};
