@@ -1,18 +1,7 @@
 <template>
-  <div
-    :class="[
-      'layout-container mx-auto flex flex-col lg:flex-row items-stretch overflow-visible',
-      showPreview && isDesktop
-        ? 'lg:w-[95vw] lg:-ml-[calc((95vw-100%)/2)] lg:gap-6'
-        : 'w-full gap-0',
-    ]"
-  >
+  <div class="layout-container mx-auto w-full max-w-5xl">
     <div
-      class="editor-panel relative bg-white/60 dark:bg-neutral-900/60 backdrop-blur border border-neutral-200/90 dark:border-neutral-800/70 rounded-lg p-4 shrink-0 overflow-hidden"
-      :style="{
-        flexBasis: showPreview && isDesktop ? 'calc(50% - 12px)' : '100%',
-        width: showPreview && isDesktop ? 'calc(50% - 12px)' : '100%',
-      }"
+      class="editor-panel relative bg-white/60 dark:bg-neutral-900/60 backdrop-blur border border-neutral-200/90 dark:border-neutral-800/70 rounded-lg p-4 overflow-hidden"
     >
       <slot name="loader" />
 
@@ -26,26 +15,25 @@
           :items="actionItems"
         />
 
-        <div class="relative">
-          <UTextarea
+        <div class="relative min-h-100">
+          <UEditor
+            v-slot="{ editor }"
             v-model="modelValue.content"
-            ref="editorRef"
-            @mouseenter="activeElement = 'editor'"
-            autoresize
-            color="neutral"
-            variant="none"
+            content-type="markdown"
             :placeholder="
               modelValue.action === 'partager'
                 ? '转发并分享优质内容 ...'
                 : '记录观点、动态与生活 ...'
             "
-            size="xl"
-            :rows="12"
-            :maxrows="16"
             :maxlength="maxLimit"
             :disabled="disabled"
+            autofocus
             class="w-full"
-          />
+            :ui="{ content: 'prose dark:prose-invert max-w-none min-h-[400px] focus:outline-none' }"
+          >
+            <UEditorToolbar :editor="editor" :items="items" />
+            <UEditorDragHandle :editor="editor" />
+          </UEditor>
 
           <USeparator class="pt-6">
             <template #default>
@@ -65,15 +53,13 @@
               v-model="modelValue.icon"
               placeholder="图标 - simple-icons:nuxt"
               variant="outline"
-              color="neutral"
-              :disabled="disabled"
               size="lg"
               class="w-full"
             />
             <UButton
               color="neutral"
               variant="outline"
-              icon="i-hugeicons:search-area"
+              icon="i-hugeicons:folder-search"
               to="https://icones.js.org/collection/simple-icons"
               target="_blank"
             />
@@ -85,36 +71,23 @@
               v-model="modelValue.link"
               placeholder="卡片 - example.com"
               variant="outline"
-              color="neutral"
-              :disabled="disabled"
               size="lg"
               class="w-full"
             />
           </UFieldGroup>
         </div>
 
-        <div class="flex items-center justify-between gap-6">
-          <div class="flex items-center gap-6">
-            <USwitch
-              v-model="modelValue.published"
-              :label="modelValue.published ? '正式发布' : '保存草稿'"
-              color="neutral"
-            />
-            <USwitch
-              v-model="modelValue.allow_comment"
-              :label="modelValue.allow_comment ? '允许评论' : '禁止评论'"
-              color="neutral"
-            />
-          </div>
-
-          <div :class="{ hidden: !isDesktop }">
-            <UCheckbox
-              :model-value="showPreview"
-              @update:model-value="togglePreview"
-              color="neutral"
-              label="开启实时预览"
-            />
-          </div>
+        <div class="flex items-center gap-8">
+          <USwitch
+            v-model="modelValue.published"
+            color="neutral"
+            :label="modelValue.published ? '正式发布' : '保存草稿'"
+          />
+          <USwitch
+            v-model="modelValue.allow_comment"
+            color="neutral"
+            :label="modelValue.allow_comment ? '允许评论' : '禁止评论'"
+          />
         </div>
 
         <USeparator />
@@ -124,26 +97,11 @@
         </div>
       </form>
     </div>
-
-    <Transition name="side-slide">
-      <div
-        v-if="showPreview && isDesktop"
-        ref="previewContainer"
-        @mouseenter="activeElement = 'preview'"
-        @scroll="onPreviewScroll"
-        class="lg:w-1/2 w-full bg-white/60 dark:bg-neutral-900/60 backdrop-blur border border-neutral-200/90 dark:border-neutral-800/70 rounded-lg p-4 overflow-y-auto max-h-[85vh] sticky top-4 scroll-auto"
-      >
-        <Transition name="fade-content" appear>
-          <div v-if="showPreviewContent" class="prose dark:prose-invert max-w-none">
-            <MDC :value="debouncedContent || '*等待输入内容 ...*'" />
-          </div>
-        </Transition>
-      </div>
-    </Transition>
   </div>
 </template>
 
 <script setup lang="ts">
+import type { EditorToolbarItem } from '@nuxt/ui';
 import { actionItems } from '~/constants';
 
 const props = defineProps<{
@@ -154,25 +112,16 @@ const props = defineProps<{
 
 defineEmits(['submit']);
 
-const {
-  showPreview,
-  showPreviewContent,
-  debouncedContent,
-  isDesktop,
-  activeElement,
-  editorRef,
-  previewContainer,
-  togglePreview,
-  onPreviewScroll,
-  setupContentWatch,
-} = useEditorLogic();
-
-// 核心逻辑绑定
-setupContentWatch(() => props.modelValue.content);
+const items: EditorToolbarItem[] = [
+  { kind: 'mark', mark: 'bold', icon: 'i-lucide-bold' },
+  { kind: 'mark', mark: 'italic', icon: 'i-lucide-italic' },
+  { kind: 'heading', level: 1, icon: 'i-lucide-heading-1' },
+  { kind: 'heading', level: 2, icon: 'i-lucide-heading-2' },
+  { kind: 'textAlign', align: 'left', icon: 'i-lucide-align-left' },
+  { kind: 'textAlign', align: 'center', icon: 'i-lucide-align-center' },
+  { kind: 'bulletList', icon: 'i-lucide-list' },
+  { kind: 'orderedList', icon: 'i-lucide-list-ordered' },
+  { kind: 'blockquote', icon: 'i-lucide-quote' },
+  { kind: 'link', icon: 'i-lucide-link' },
+];
 </script>
-
-<style scoped>
-:deep(.prose img) {
-  aspect-ratio: attr(width) / attr(height) !important;
-}
-</style>

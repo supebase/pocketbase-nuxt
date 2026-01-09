@@ -1,6 +1,7 @@
 <template>
   <CommonEditor
-    v-model="form"
+    v-if="!isLoading"
+    :model-value="form"
     :max-limit="maxLimit"
     :disabled="isSubmitting"
     @submit="handleSubmit"

@@ -52,6 +52,15 @@ export default defineNuxtConfig({
       sourcemap: false,
       target: 'esnext',
     },
+    optimizeDeps: {
+      include: [
+        'prosemirror-state',
+        'prosemirror-transform',
+        'prosemirror-model',
+        'prosemirror-view',
+        'prosemirror-gapcursor',
+      ],
+    },
   },
   // 压缩配置
   nitro: {
@@ -72,6 +81,9 @@ export default defineNuxtConfig({
   // UI配置
   ui: {
     fonts: false,
+    experimental: {
+      componentDetection: true,
+    },
   },
   // 图标配置
   icon: {

@@ -1,6 +1,6 @@
 <template>
   <CommonEditor
-    v-model="form"
+    :model-value="form"
     :max-limit="maxLimit"
     :disabled="isSubmitting"
     @submit="handleSubmit"
