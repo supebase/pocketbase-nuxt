@@ -126,7 +126,13 @@ export const useAuth = (isLoginModeArg?: Ref<boolean>) => {
         color: 'info',
       });
 
-      await navigateTo('/auth', { replace: true });
+      await navigateTo(
+        {
+          path: '/auth',
+          query: { redirect: route.fullPath },
+        },
+        { replace: true },
+      );
     } catch (err: any) {
       toast.add({
         title: '退出失败',

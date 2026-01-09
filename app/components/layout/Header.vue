@@ -22,16 +22,6 @@
 
         <USeparator orientation="vertical" class="h-6" />
 
-        <UButton
-          to="/new"
-          color="neutral"
-          variant="link"
-          icon="i-hugeicons:add-circle-half-dot"
-          tabindex="-1"
-          class="rounded-full"
-          v-if="user?.verified"
-        />
-
         <AuthLogoutButton />
       </div>
       <ModalSearch />

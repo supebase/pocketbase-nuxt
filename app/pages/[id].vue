@@ -1,5 +1,5 @@
 <template>
-  <div class="container mx-auto px-4 md:px-0">
+  <div>
     <div
       v-if="status === 'pending' && !postWithRelativeTime"
       key="loading"

@@ -5,6 +5,8 @@
       :count="visibleTotalItems"
       :isRefreshing="isRefreshing"
       :length="allPosts.length"
+      :is-login="loggedIn"
+      :user-verified="user?.verified"
       @refresh="manualRefresh"
     />
 
@@ -154,7 +156,7 @@ const {
   transformPosts,
 } = usePosts();
 
-const { loggedIn } = useUserSession();
+const { loggedIn, user } = useUserSession();
 const { isRefreshing, refreshPostsAndComments } = useRefresh();
 const toast = useToast();
 
@@ -215,7 +217,7 @@ const manualRefresh = async () => {
 
     toast.add({
       title: '刷新完成',
-      description: `共刷新了 ${visibleTotalItems.value} 条内容`,
+      description: `共刷新了 ${visibleTotalItems.value} 项内容`,
       icon: 'i-hugeicons:checkmark-circle-03',
       color: 'success',
     });

@@ -26,8 +26,8 @@
     "vue-router": "^4.6.4"
   },
   "devDependencies": {
-    "@iconify-json/hugeicons": "^1.2.20",
-    "@iconify-json/simple-icons": "^1.2.63",
+    "@iconify-json/hugeicons": "^1.2.22",
+    "@iconify-json/simple-icons": "^1.2.65",
     "@iconify-json/vscode-icons": "^1.2.37",
     "@tailwindcss/typography": "^0.5.19",
     "@types/node": "^25.0.3",
