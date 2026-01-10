@@ -70,6 +70,8 @@ export async function getCommentsLikesMap(
   // 1. 构建 IN 查询：comment = "id1" || comment = "id2" ...
   // PocketBase v0.20+ 支持这种简洁的 filter 构造方式
   const commentFilter = commentIds.map((id) => pb.filter('comment = {:id}', { id })).join(' || ');
+  // 未验证 (PocketBase 支持 in 操作符)
+  // const commentFilter = pb.filter('comment.id IN {:ids}', { ids: commentIds });
 
   const allLikes = await pb.collection('likes').getFullList<PBLikesResponse>({
     filter: `(${commentFilter})`,

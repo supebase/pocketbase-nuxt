@@ -19,7 +19,16 @@ export const getLinkPreview = async (url: string) => {
 
   try {
     // 1. 调用 ogs 抓取元数据
-    const { result } = await ogs({ url, timeout: 3000 });
+    const { result } = await ogs({
+      url,
+      timeout: 3000,
+      fetchOptions: {
+        headers: {
+          'user-agent':
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
+        },
+      },
+    });
 
     if (result.success) {
       const urlObj = new URL(url);

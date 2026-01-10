@@ -40,8 +40,12 @@ export default defineEventHandler(async (event) => {
       setResponseHeader(
         event,
         'Cache-Control',
-        'public, max-age=604800, stale-while-revalidate=86400',
+        'public, max-age=31536000, stale-while-revalidate=86400',
       );
+    }
+
+    if (path.includes('..')) {
+      throw createError({ statusCode: 403, message: 'Forbidden' });
     }
 
     return response.body;

@@ -147,7 +147,7 @@ watch(loggedIn, () => {
 watch(
   error,
   (newErr) => {
-    if (newErr) throw createError({ ...newErr, fatal: true });
+    if (newErr) throw createError({ ...newErr });
   },
   { immediate: true },
 );
@@ -164,6 +164,12 @@ useIntersectionObserver(
   },
   { threshold: 0 },
 );
+
+const checkHeaderVisibility = () => {
+  if (!authorRow.value) return;
+  const rect = authorRow.value.getBoundingClientRect();
+  showHeaderBack.value = rect.top < 0 && mdcReady.value;
+};
 
 // KeepAlive 激活时检查是否有更新标记
 onActivated(async () => {
@@ -185,6 +191,13 @@ onActivated(async () => {
       }, 300);
     }
   }
+
+  nextTick(() => {
+    checkHeaderVisibility();
+
+    // 如果还没对上，300ms 后（通常是页面入场动画结束）再校准一次
+    setTimeout(checkHeaderVisibility, 100);
+  });
 });
 
 // 清理 UI 状态

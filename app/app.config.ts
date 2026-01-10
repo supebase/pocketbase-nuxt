@@ -14,7 +14,6 @@ export default defineAppConfig({
     },
     header: {
       slots: {
-        root: 'bg-white dark:bg-neutral-900 backdrop-blur-none',
         container: 'max-w-xl',
       },
     },

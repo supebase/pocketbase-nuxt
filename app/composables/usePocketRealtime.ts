@@ -49,8 +49,7 @@ export const usePocketRealtime = (collections: string[]) => {
 
     // 关键：订阅所有可能用到的核心集合，确保全局连接的通用性
     const allCollections = ['posts', 'comments', 'likes'];
-    const colsParam = allCollections.join(',');
-
+    const colsParam = encodeURIComponent(allCollections.join(','));
     const es = new EventSource(`/api/realtime?cols=${colsParam}`, {
       withCredentials: true,
     });
@@ -114,5 +113,9 @@ export const usePocketRealtime = (collections: string[]) => {
     close();
   });
 
-  return { listen, status: globalStatus, close };
+  return {
+    listen,
+    status: readonly(globalStatus),
+    close,
+  };
 };

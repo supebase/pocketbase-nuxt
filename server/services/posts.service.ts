@@ -1,6 +1,7 @@
 import { ensureOwnership } from '~~/server/utils/validate-owner';
 import type { PostsResponse as PBPostsResponse, TypedPocketBase } from '~/types/pocketbase-types';
 import type { PostExpand } from '~/types/posts';
+import { getLinkPreview } from '~~/server/utils/graph-scraper';
 import { processMarkdownImages } from '~~/server/utils/markdown';
 import { sanitizePostContent } from '~~/server/utils/sanitize';
 
@@ -146,27 +147,56 @@ export async function createPost(pb: TypedPocketBase, initialData: FormData, raw
  * 更新文章
  */
 export async function updatePost(pb: TypedPocketBase, postId: string, body: any) {
-  // 验证所有权
+  // 1. 【标注：所有权检查】
+  // 统一在此处校验，防止越权修改
   const existing = await ensureOwnership(pb, 'posts', postId);
 
-  // 只有当内容发生变化时才触发图片处理流程
+  const formData = new FormData();
+
+  // 2. 【标注：智能链接处理】
+  // 只有当 link 字段被传入且发生变化时，才重新抓取预览
+  if (body.link !== undefined && body.link !== existing.link) {
+    if (body.link === '') {
+      formData.append('link_data', '');
+      formData.append('link_image', ''); // 清空
+    } else {
+      const preview = await getLinkPreview(body.link);
+      if (preview?.image?.startsWith('http')) {
+        try {
+          // 【标注：超时保护】设置 5s 超时，防止阻塞 Nitro 线程
+          const buf = await $fetch<ArrayBuffer>(preview.image, {
+            responseType: 'arrayBuffer',
+            timeout: 5000,
+          });
+          formData.append('link_image', new Blob([buf]), 'preview.png');
+          preview.image = ''; // 图片已上传至 PB，清空原始 URL
+        } catch (e) {
+          console.error('图片抓取失败', e);
+        }
+      }
+      formData.append('link_data', JSON.stringify(preview));
+    }
+  }
+
+  // 3. 【标注：Markdown 内容变更检查】
+  // 复用你已有的 performImageSync 逻辑
   if (body.content !== undefined && body.content !== existing.content) {
-    // 处理图片并获取最终的 HTML/Markdown 内容
     const cleanContent = await performImageSync(
       pb,
       postId,
       body.content,
       existing.markdown_images || [],
     );
-    body.content = cleanContent;
+    formData.append('content', cleanContent);
   }
 
-  // 关键：从 body 中删除 markdown_images 字段
-  // 因为 performImageSync 内部已经通过 FormData 更新过该字段了
-  // 如果这里不删除，随后的 JSON 更新可能会覆盖掉刚才上传的文件列表
-  delete body.markdown_images;
+  // 4. 【标注：其他字段同步】
+  const syncFields = ['allow_comment', 'published', 'icon', 'action', 'link'];
+  syncFields.forEach((field) => {
+    if (body[field] !== undefined) formData.append(field, String(body[field]));
+  });
 
-  return await pb.collection('posts').update(postId, body);
+  return await pb.collection('posts').update(postId, formData);
 }
 
 /**

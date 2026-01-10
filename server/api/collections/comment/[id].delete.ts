@@ -16,8 +16,8 @@ export default defineApiHandler(async (event): Promise<{ message: string; data: 
 
   // 步骤 2: 从路由参数中获取要删除的评论 ID。
   const commentId = getRouterParam(event, 'id');
+
   if (!commentId) {
-    // 如果 ID 不存在，这是一个无效请求。
     throw createError({
       statusCode: 400,
       message: '删除 ID 不能为空',
@@ -26,10 +26,10 @@ export default defineApiHandler(async (event): Promise<{ message: string; data: 
 
   // 步骤 3: 在权限验证通过后，执行实际的删除操作。
   // 同样传入 `pb` 实例，`deleteComment` 将以当前用户的身份执行此操作。
-  const comment = await deleteComment(pb, commentId);
+  const result = await deleteComment(pb, commentId);
 
   return {
     message: '评论已成功删除',
-    data: comment as any,
+    data: result,
   };
 });

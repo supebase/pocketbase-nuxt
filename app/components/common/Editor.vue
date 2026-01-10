@@ -24,7 +24,7 @@
             class="w-full"
             :ui="{
               content:
-                'w-xl relative left-1/2 right-1/2 -translate-x-1/2 prose dark:prose-invert max-w-none min-h-[400px] focus:outline-none pt-3',
+                'w-xl relative left-1/2 right-1/2 -translate-x-1/2 prose dark:prose-invert max-w-none min-h-[400px] focus:outline-none pt-3 pb-16',
             }"
           >
             <UEditorToolbar
@@ -33,22 +33,23 @@
               class="pb-3 border-b border-b-muted/60"
             />
             <UEditorDragHandle :editor="editor" />
-          </UEditor>
 
-          <ClientOnly>
-            <div class="pt-6">
-              <UProgress
-                :model-value="Math.min(currentLength, maxLimit)"
-                :max="maxLimit"
-                :color="getContentLengthColor(percentage)"
-                size="xs"
-                status
-              />
-              <span class="text-xs text-dimmed mt-1.5 block text-right">
-                {{ currentLength }} / {{ maxLimit }} 字符
-              </span>
-            </div>
-          </ClientOnly>
+            <ClientOnly>
+              <div class="absolute bottom-0 left-0 right-0">
+                <UProgress
+                  :model-value="Math.min(editor.storage.characterCount.characters(), maxLimit)"
+                  :max="maxLimit"
+                  :color="getContentLengthColor(percentage)"
+                  size="xs"
+                  status
+                />
+                <span class="text-xs text-dimmed mt-1.5 block text-right">
+                  {{ getChineseWordCount(editor) }}
+                  个字符（{{ editor.storage.characterCount.characters() }} / {{ maxLimit }}）
+                </span>
+              </div>
+            </ClientOnly>
+          </UEditor>
         </div>
 
         <div class="flex items-center gap-2.5">
@@ -83,23 +84,34 @@
           </UFieldGroup>
         </div>
 
-        <div class="flex items-center justify-between gap-5">
-          <UCheckbox
-            v-model="modelValue.published"
-            color="neutral"
-            :label="modelValue.published ? '正式发布' : '保存草稿'"
-            :description="
-              modelValue.published ? '对全体用户可见，完成公开展示' : '内容仅自己可见，随时编辑调整'
-            "
-          />
-          <UCheckbox
-            v-model="modelValue.allow_comment"
-            color="neutral"
-            :label="modelValue.allow_comment ? '允许评论' : '禁止评论'"
-            :description="
-              modelValue.allow_comment ? '用户可对该内容进行评论互动' : '用户将无法对该内容发表评论'
-            "
-          />
+        <div class="space-y-5">
+          <div class="flex items-center justify-between">
+            <div class="text-sm">
+              {{ modelValue.published ? '正式发布' : '保存草稿' }}
+              <p class="text-muted/70">
+                {{
+                  modelValue.published
+                    ? '对全体用户可见，完成公开展示'
+                    : '内容仅自己可见，随时编辑调整'
+                }}
+              </p>
+            </div>
+            <USwitch v-model="modelValue.published" color="neutral" />
+          </div>
+
+          <div class="flex items-center justify-between">
+            <div class="text-sm">
+              {{ modelValue.allow_comment ? '允许评论' : '禁止评论' }}
+              <p class="text-muted/70">
+                {{
+                  modelValue.allow_comment
+                    ? '用户可以对该内容进行评论互动'
+                    : '用户将会无法对该内容发表评论'
+                }}
+              </p>
+            </div>
+            <USwitch v-model="modelValue.allow_comment" color="neutral" />
+          </div>
         </div>
 
         <USeparator />
@@ -126,11 +138,10 @@
 </template>
 
 <script setup lang="ts">
-import { Extension } from '@tiptap/core';
-import { Plugin, PluginKey } from '@tiptap/pm/state';
 import Placeholder from '@tiptap/extension-placeholder';
 import CharacterCount from '@tiptap/extension-character-count';
 import { items } from '~/constants/editor';
+import { getChineseWordCount } from '~/utils';
 import { actionItems } from '~/constants';
 
 const props = defineProps<{
@@ -141,28 +152,6 @@ const props = defineProps<{
 
 defineEmits(['submit']);
 
-const MaxLengthInterceptor = Extension.create({
-  name: 'maxLengthInterceptor',
-  addProseMirrorPlugins() {
-    return [
-      new Plugin({
-        key: new PluginKey('maxLengthLimit'),
-        filterTransaction: (tr: { docChanged: any; doc: { content: { size: number } } }) => {
-          // 仅在内容发生变化时拦截
-          if (tr.docChanged) {
-            // 预计变化后的文档长度。+2 是为了抵消 ProseMirror 根节点
-            // 这种方式比判断 modelValue 更实时，能有效阻止“最后一次”越界输入
-            if (tr.doc.content.size > props.maxLimit + 2) {
-              return false;
-            }
-          }
-          return true;
-        },
-      } as any),
-    ];
-  },
-});
-
 const extensions = [
   Placeholder.configure({
     placeholder: '从这里开始写作吧 ...',
@@ -170,18 +159,22 @@ const extensions = [
   CharacterCount.configure({
     limit: props.maxLimit,
   }),
-  MaxLengthInterceptor,
 ];
 
 const editorContent = computed({
   get: () => {
-    // 如果是空字符串，返回 null 给编辑器，触发 Placeholder
     return props.modelValue.content === '' ? null : props.modelValue.content;
   },
   set: (val) => {
-    // 将编辑器传出的值更新回 modelValue
-    // 确保这里传回给父组件的一直是字符串，避免逻辑崩溃
-    props.modelValue.content = val ?? '';
+    // 如果 val 是 null，则赋空字符串
+    let content = val ?? '';
+
+    // 手动截断：防止通过粘贴等方式绕过拦截
+    if (content.length > props.maxLimit) {
+      content = content.substring(0, props.maxLimit);
+    }
+
+    props.modelValue.content = content;
   },
 });
 

@@ -32,13 +32,10 @@ const props = defineProps<{
   value: number;
 }>();
 
-const internalValue = ref(0);
-
 const formatter = new Intl.NumberFormat('en-US');
 
 const processedDigits = computed(() => {
-  if (internalValue.value === undefined) return [];
-  const str = formatter.format(internalValue.value);
+  const str = formatter.format(props.value);
   const chars = str.split('').reverse();
 
   let digitCount = 0;
@@ -59,18 +56,4 @@ const processedDigits = computed(() => {
     }
   });
 });
-
-onMounted(() => {
-  // 使用 nextTick 或直接赋值，确保 DOM 先以 0 渲染完成
-  requestAnimationFrame(() => {
-    internalValue.value = props.value;
-  });
-});
-
-watch(
-  () => props.value,
-  (newVal) => {
-    internalValue.value = newVal;
-  },
-);
 </script>

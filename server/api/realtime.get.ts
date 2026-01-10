@@ -47,7 +47,8 @@ export default defineEventHandler(async (event) => {
   // 4. 心跳检测 (每 20 秒发送一次)
   const timer = setInterval(() => {
     if (!event.node.req.destroyed) {
-      eventStream.push({ event: 'ping', data: Date.now().toString() });
+      // 发送注释行作为心跳，不会被前端 JSON.parse 干扰
+      eventStream.push(': heartbeat\n\n');
     }
   }, 20000);
 
@@ -56,11 +57,14 @@ export default defineEventHandler(async (event) => {
    * 确保释放定时器、取消所有订阅且不重复执行
    */
   let isCleaned = false;
+
   const cleanup = async () => {
     if (isCleaned) return;
     isCleaned = true;
 
     clearInterval(timer);
+    // 强制关闭事件流，通知客户端
+    eventStream.close();
     console.log(`[SSE] 正在清理连接: ${collections.join(', ')}`);
 
     try {
