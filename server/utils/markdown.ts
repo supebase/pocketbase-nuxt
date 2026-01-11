@@ -2,11 +2,15 @@
  * 提取 Markdown 中的外部远程图片并下载 (并发限制安全版)
  */
 import pLimit from 'p-limit';
-import { MD_IMAGE_MAX_SIZE } from '~/constants/index';
+import {
+  DEFAULT_IMAGE_CONCURRENCY,
+  IMAGE_DOWNLOAD_TIMEOUT,
+  MD_IMAGE_MAX_SIZE,
+} from '~/constants/index';
 
 export const processMarkdownImages = async (content: string) => {
   // 设置并发限制：例如最多同时下载 3 张图片
-  const limit = pLimit(3);
+  const limit = pLimit(DEFAULT_IMAGE_CONCURRENCY);
   const imageRegex = /!\[.*?\]\((https?:\/\/(?!.*\/api\/)[^)]+)\)/gi;
   const matches = [...content.matchAll(imageRegex)];
 
@@ -24,7 +28,7 @@ export const processMarkdownImages = async (content: string) => {
       try {
         const response = await $fetch.raw<ArrayBuffer>(url, {
           responseType: 'arrayBuffer',
-          timeout: 8000,
+          timeout: IMAGE_DOWNLOAD_TIMEOUT,
           onResponse({ response }) {
             const contentLength = response.headers.get('content-length');
             if (contentLength && parseInt(contentLength) > MD_IMAGE_MAX_SIZE) {

@@ -72,6 +72,6 @@ export default defineApiHandler(async (event): Promise<SinglePostResponse> => {
     data: {
       ...post,
       mdcAst, // 将解析好的 AST 传给前端
-    } as any,
+    },
   };
 });

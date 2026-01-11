@@ -22,15 +22,6 @@ export const usePocketRealtime = (collections: string[]) => {
 
     // 调试日志：查看当前活跃订阅数
     // console.log(`[SSE] 组件卸载，剩余订阅数: ${subscribers.size}`);
-
-    // 可选：如果希望在没有任何组件使用实时功能时断开连接，取消下面注释
-    /*
-    if (subscribers.size === 0 && globalEventSource.value) {
-      globalEventSource.value.close();
-      globalEventSource.value = null;
-      globalStatus.value = 'offline';
-    }
-    */
   };
 
   /**

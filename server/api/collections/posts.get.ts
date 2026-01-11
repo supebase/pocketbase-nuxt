@@ -34,7 +34,7 @@ export default defineApiHandler(async (event): Promise<PostsListResponse> => {
   return {
     message: '获取内容列表成功',
     data: {
-      posts: items as any,
+      posts: items,
       totalItems,
       page: currentPage,
       perPage: currentPerPage,

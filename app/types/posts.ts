@@ -50,9 +50,10 @@ export interface LinkPreviewData {
   description: string;
   image: string;
   siteName: string;
-  favicon: string;
 }
 
 export type PostWithUser = PBPostResponse<{ user: UsersResponse }> & {
   cleanContent?: string;
+  link_data?: LinkPreviewData | null;
+  firstImage?: string | null;
 };

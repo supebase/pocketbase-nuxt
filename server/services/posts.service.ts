@@ -2,8 +2,7 @@ import { ensureOwnership } from '~~/server/utils/validate-owner';
 import type { PostsResponse as PBPostsResponse, TypedPocketBase } from '~/types/pocketbase-types';
 import type { PostExpand } from '~/types/posts';
 import { getLinkPreview } from '~~/server/utils/graph-scraper';
-import { processMarkdownImages } from '~~/server/utils/markdown';
-import { sanitizePostContent } from '~~/server/utils/sanitize';
+import { syncMarkdownContent } from '~~/server/utils/markdown-sync';
 
 /**
  * 获取文章列表
@@ -62,7 +61,6 @@ export async function getPostById(pb: TypedPocketBase, postId: string) {
 
 /**
  * 核心逻辑：同步 Markdown 中的远程图片到 PocketBase
- * @returns 返回处理后的 content
  */
 async function performImageSync(
   pb: TypedPocketBase,
@@ -70,48 +68,23 @@ async function performImageSync(
   content: string,
   existingImages: string[] = [],
 ) {
-  const { successResults, skippedCount } = await processMarkdownImages(content);
+  return await syncMarkdownContent(content, postId, async (newItems) => {
+    const formData = new FormData();
 
-  // 1. 如果没有新图片下载成功，仅处理清洗逻辑
-  if (successResults.length === 0) {
-    let finalContent = content;
-    if (skippedCount > 0 && !content.includes('部分远程图片因体积过大')) {
-      finalContent += `\n\n> ⚠️ **提示**: 部分远程图片因体积过大未同步到本地。`;
-    }
-    return sanitizePostContent(finalContent);
-  }
+    // 保持旧文件
+    existingImages.forEach((name) => formData.append('markdown_images', name));
 
-  // 2. 构造 FormData 用于更新文件字段
-  const formData = new FormData();
+    // 添加新文件
+    newItems.forEach((item) => {
+      formData.append('markdown_images', item.blob, item.fileName);
+    });
 
-  // 必须逐个 append 旧文件名，否则 PocketBase 会删除未提及的文件
-  existingImages.forEach((name) => formData.append('markdown_images', name));
+    // 提交到 PB
+    const record = await pb.collection('posts').update(postId, formData);
 
-  // 添加新下载的 Blob
-  successResults.forEach((item, i) => {
-    formData.append('markdown_images', item.blob, `img_${Date.now()}_${i}.png`);
+    // 返回 PB 生成的最新的文件名数组（取最后几个新加的）
+    return record.markdown_images.slice(-newItems.length);
   });
-
-  // 3. 提交文件更新
-  const record = await pb.collection('posts').update(postId, formData);
-
-  // 4. 替换 Markdown 中的原始 URL 为本地代理 URL
-  let finalContent = content;
-  const allImages = record.markdown_images;
-  // PocketBase 默认将新文件追加到数组末尾
-  const startIndex = allImages.length - successResults.length;
-
-  successResults.forEach((item, i) => {
-    const fileName = allImages[startIndex + i];
-    const proxyUrl = `/api/images/posts/${postId}/${fileName}`;
-    finalContent = finalContent.split(item.url).join(proxyUrl);
-  });
-
-  if (skippedCount > 0 && !finalContent.includes('部分远程图片因体积过大')) {
-    finalContent += `\n\n> ⚠️ **提示**: 部分远程图片因体积过大未同步到本地。`;
-  }
-
-  return sanitizePostContent(finalContent);
 }
 
 /**
@@ -147,39 +120,35 @@ export async function createPost(pb: TypedPocketBase, initialData: FormData, raw
  * 更新文章
  */
 export async function updatePost(pb: TypedPocketBase, postId: string, body: any) {
-  // 1. 【标注：所有权检查】
-  // 统一在此处校验，防止越权修改
+  // 1. 所有权检查
   const existing = await ensureOwnership(pb, 'posts', postId);
-
   const formData = new FormData();
 
-  // 2. 【标注：智能链接处理】
-  // 只有当 link 字段被传入且发生变化时，才重新抓取预览
+  // 2. 智能链接预览逻辑 (可保持现状，或封装成小工具)
   if (body.link !== undefined && body.link !== existing.link) {
     if (body.link === '') {
       formData.append('link_data', '');
-      formData.append('link_image', ''); // 清空
+      formData.append('link_image', '');
     } else {
       const preview = await getLinkPreview(body.link);
       if (preview?.image?.startsWith('http')) {
         try {
-          // 【标注：超时保护】设置 5s 超时，防止阻塞 Nitro 线程
           const buf = await $fetch<ArrayBuffer>(preview.image, {
             responseType: 'arrayBuffer',
             timeout: 5000,
           });
           formData.append('link_image', new Blob([buf]), 'preview.png');
-          preview.image = ''; // 图片已上传至 PB，清空原始 URL
+          preview.image = '';
         } catch (e) {
-          console.error('图片抓取失败', e);
+          console.error('预览图抓取失败', e);
         }
       }
       formData.append('link_data', JSON.stringify(preview));
     }
   }
 
-  // 3. 【标注：Markdown 内容变更检查】
-  // 复用你已有的 performImageSync 逻辑
+  // 3. Markdown 内容变更处理
+  // 注意：这里我们只在内容真正变化时才执行同步
   if (body.content !== undefined && body.content !== existing.content) {
     const cleanContent = await performImageSync(
       pb,
@@ -190,11 +159,20 @@ export async function updatePost(pb: TypedPocketBase, postId: string, body: any)
     formData.append('content', cleanContent);
   }
 
-  // 4. 【标注：其他字段同步】
+  // 4. 其他字段同步
   const syncFields = ['allow_comment', 'published', 'icon', 'action', 'link'];
   syncFields.forEach((field) => {
-    if (body[field] !== undefined) formData.append(field, String(body[field]));
+    if (body[field] !== undefined) {
+      // 避免将布尔值或数字转为字符串时出现异常，PocketBase 接受字符串形式的 body
+      formData.append(field, String(body[field]));
+    }
   });
+
+  // 5. 统一提交
+  // 如果 formData 为空（比如只传了不改变内容的 body），则直接返回原数据
+  if (Array.from(formData.keys()).length === 0) {
+    return existing;
+  }
 
   return await pb.collection('posts').update(postId, formData);
 }

@@ -80,8 +80,6 @@ export default defineEventHandler(async (event) => {
       // 如果 getPocketBase 是为每个请求新建的，可以在此处销毁引用
     } catch (e) {
       console.error('[SSE] 清理资源异常:', e);
-    } finally {
-      await eventStream.close();
     }
   };
 

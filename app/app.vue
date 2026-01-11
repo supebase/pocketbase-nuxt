@@ -38,14 +38,16 @@ const appConfig = useAppConfig();
 const { showHeaderBack } = useHeader();
 const { loggedIn, fetch: fetchSession } = useUserSession();
 
-// --- 1. 身份状态清理 ---
+// 身份状态清理
+const pbAuth = useCookie('pb_auth', { path: '/' });
+
 watch(loggedIn, (isLogged) => {
-  if (import.meta.client && !isLogged) {
-    document.cookie = 'pb_auth=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+  if (isLogged === false) {
+    pbAuth.value = null;
   }
 });
 
-// --- 2. 标签页可见性监听 ---
+// 标签页可见性监听
 if (import.meta.client) {
   const visibility = useDocumentVisibility();
   watch(visibility, (state) => {

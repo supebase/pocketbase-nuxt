@@ -3,12 +3,17 @@ export const usePostUpdateTracker = () => {
   const updatedMarks = useState<Record<string, boolean>>('updated-posts-map', () => ({}));
 
   const markAsUpdated = (id: string) => {
-    updatedMarks.value[id] = true;
+    updatedMarks.value = {
+      ...updatedMarks.value,
+      [id]: true,
+    };
   };
 
   const clearUpdateMark = (id: string) => {
     if (updatedMarks.value[id]) {
-      delete updatedMarks.value[id];
+      const newMarks = { ...updatedMarks.value };
+      delete newMarks[id];
+      updatedMarks.value = newMarks;
     }
   };
 
@@ -17,7 +22,7 @@ export const usePostUpdateTracker = () => {
 
   return {
     updatedPostIds,
-    updatedMarks, // 直接判断 updatedMarks.value[id] 性能更好
+    updatedMarks,
     markAsUpdated,
     clearUpdateMark,
   };

@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div v-for="i in count" :key="i" class="relative flex gap-4 mb-6">
+    <div v-for="i in count" :key="i" class="relative flex gap-4">
       <div class="flex flex-col items-center">
         <USkeleton class="size-8 rounded-full shrink-0" />
         <div v-if="i !== count" class="w-0.5 grow bg-neutral-100 dark:bg-neutral-800 my-2"></div>
@@ -20,9 +20,9 @@
 
         <USkeleton class="h-64 w-full rounded-lg" />
 
-        <div class="flex gap-2">
-          <USkeleton class="h-6 w-16 rounded-lg" />
-          <USkeleton class="h-6 w-16 rounded-lg" />
+        <div class="flex items-center gap-2">
+          <USkeleton class="h-6 w-6 rounded-full" />
+          <USkeleton class="h-4 w-16 rounded-lg" />
         </div>
       </div>
     </div>

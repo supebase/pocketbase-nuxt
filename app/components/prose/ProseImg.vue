@@ -5,6 +5,7 @@
       @click="isExpanded = true"
     >
       <img
+        ref="imgRef"
         :src="refinedSrc"
         @load="isLoaded = true"
         loading="lazy"
@@ -48,7 +49,6 @@
 
 <script setup lang="ts">
 import { withTrailingSlash, withLeadingSlash, joinURL } from 'ufo';
-import { useRuntimeConfig, computed, ref, onMounted, onUnmounted } from '#imports';
 
 defineOptions({
   inheritAttrs: false,
@@ -63,14 +63,22 @@ const props = defineProps({
 
 const isLoaded = ref(false);
 const isExpanded = ref(false);
+const imgRef = ref<HTMLImageElement | null>(null);
 
 // 处理 ESC 键关闭
 const handleKeydown = (e: KeyboardEvent) => {
   if (e.key === 'Escape') isExpanded.value = false;
 };
 
-onMounted(() => window.addEventListener('keydown', handleKeydown));
-onUnmounted(() => window.removeEventListener('keydown', handleKeydown));
+const checkImageLoaded = () => {
+  if (imgRef.value?.complete) {
+    // 如果图片已经在缓存中（complete 为 true）
+    // 且 naturalWidth > 0（确实有图片像素数据数据）
+    if (imgRef.value.naturalWidth > 0) {
+      isLoaded.value = true;
+    }
+  }
+};
 
 const refinedSrc = computed(() => {
   if (props.src?.startsWith('/') && !props.src.startsWith('//')) {
@@ -82,4 +90,22 @@ const refinedSrc = computed(() => {
   }
   return props.src;
 });
+
+onMounted(() => {
+  window.addEventListener('keydown', handleKeydown);
+  // 此时 DOM 已挂载，立即检查
+  checkImageLoaded();
+});
+
+onUnmounted(() => window.removeEventListener('keydown', handleKeydown));
+
+watch(
+  () => refinedSrc.value,
+  async () => {
+    isLoaded.value = false;
+    // 等待 DOM 更新后重新检查新图片的缓存状态
+    await nextTick();
+    checkImageLoaded();
+  },
+);
 </script>

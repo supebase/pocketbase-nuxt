@@ -27,17 +27,16 @@ export default defineEventHandler(async (event) => {
   const pb = getPocketBase(event);
   event.context.pb = pb;
 
-  // 2. 身份解析
+  // 2 身份解析之后
   if (pb.authStore.isValid && pb.authStore.record) {
-    // 注入用户信息
+    // 状态正常：注入/同步用户信息
     event.context.user = pb.authStore.record;
-  }
-
-  // 2.1 身份解析之后
-  if (!pb.authStore.isValid && event.context.user) {
-    // 如果 Cookie 过期了，但 Nuxt Session 还在
-    await clearUserSession(event);
-    event.context.user = null;
+  } else {
+    // 状态异常：如果发现 Nuxt Session 还残留用户信息，立刻清理
+    if (event.context.user) {
+      await clearUserSession(event);
+      event.context.user = null;
+    }
   }
 
   // 3. 路由保护逻辑

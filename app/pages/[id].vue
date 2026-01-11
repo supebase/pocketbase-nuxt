@@ -18,19 +18,19 @@
 
       <div class="relative mt-6 min-h-75">
         <div
-          v-if="!mdcReady"
+          v-if="isUpdateRefresh"
           class="absolute inset-0 h-40 flex flex-col items-center justify-center z-10 select-none pointer-events-none"
         >
           <UIcon name="i-hugeicons:refresh" class="size-6 mb-2 animate-spin text-muted" />
           <span class="text-sm font-medium text-muted tracking-widest text-center">
-            {{ isUpdateRefresh ? '正在同步内容改动' : '沉浸式梳理内容' }}
+            正在同步内容改动
           </span>
         </div>
 
         <div
           :class="[
-            'transition-all duration-500 ease-out',
-            mdcReady ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none',
+            'transition-opacity duration-500',
+            isUpdateRefresh || !mdcReady ? 'opacity-50' : 'opacity-100',
           ]"
         >
           <PostsToc :toc="toc" />
@@ -44,12 +44,7 @@
         </div>
       </div>
 
-      <div
-        :class="[
-          'transition-all duration-700 delay-300',
-          mdcReady ? 'opacity-100' : 'opacity-0 pointer-events-none',
-        ]"
-      >
+      <div v-if="mdcReady">
         <UAlert
           v-if="!postWithRelativeTime.allow_comment"
           :ui="{
@@ -82,18 +77,18 @@
             @comment-created="onCommentSuccess"
             class="mt-8"
           />
-        </ClientOnly>
 
-        <CommentsList
-          v-if="postWithRelativeTime.allow_comment"
-          ref="commentListRef"
-          :key="postWithRelativeTime?.id"
-          :post-id="postWithRelativeTime.id"
-          :allow-comment="postWithRelativeTime.allow_comment"
-          :user-id="userId"
-          @loading-change="(val) => (isListLoading = val)"
-          @update-commenters="handleUpdateCommenters"
-        />
+          <CommentsList
+            v-if="postWithRelativeTime.allow_comment"
+            ref="commentListRef"
+            :key="postWithRelativeTime?.id"
+            :post-id="postWithRelativeTime.id"
+            :allow-comment="postWithRelativeTime.allow_comment"
+            :user-id="userId"
+            @loading-change="(val) => (isListLoading = val)"
+            @update-commenters="handleUpdateCommenters"
+          />
+        </ClientOnly>
       </div>
     </div>
   </div>

@@ -58,13 +58,10 @@
 </template>
 
 <script setup lang="ts">
+import type { LinkPreviewData } from '~/types/posts';
+
 const props = defineProps<{
-  data: {
-    url: string;
-    title: string;
-    description: string;
-    siteName: string;
-  };
+  data: LinkPreviewData;
   linkImage?: string;
 }>();
 

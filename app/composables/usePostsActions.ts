@@ -1,38 +1,52 @@
-export function usePostsActions(refreshCallback: () => Promise<any>) {
+interface PostItem {
+  id: string | number;
+  [key: string]: any;
+}
+
+export function usePostsActions(refreshCallback: () => Promise<void> | void) {
   const isDeleteModalOpen = ref(false);
   const isDeleting = ref(false);
-  const pendingDeleteItem = ref<any>(null);
+  // 指定类型
+  const pendingDeleteItem = ref<PostItem | null>(null);
   const toast = useToast();
 
-  const handleRequestDelete = (item: any) => {
+  const handleRequestDelete = (item: PostItem) => {
     pendingDeleteItem.value = item;
     isDeleteModalOpen.value = true;
   };
 
   const confirmDelete = async () => {
-    if (!pendingDeleteItem.value) return;
+    const targetId = pendingDeleteItem.value?.id;
+    if (!targetId) return;
+
     isDeleting.value = true;
+
     try {
-      await $fetch(`/api/collections/post/${pendingDeleteItem.value.id}`, {
-        method: 'DELETE',
-      });
+      // 1. 执行删除请求
+      await $fetch(`/api/collections/post/${targetId}`, { method: 'DELETE' });
+
+      // 2. 成功处理
       isDeleteModalOpen.value = false;
       toast.add({
         title: '删除成功',
         icon: 'i-hugeicons:checkmark-circle-03',
         color: 'success',
       });
-      // 删除成功后调用刷新
-      await refreshCallback();
+
+      // 3. 触发刷新 (不 block 最后的清理逻辑)
+      if (refreshCallback) await refreshCallback();
     } catch (err: any) {
+      // 4. 失败处理
       toast.add({
         title: '删除失败',
-        description: err.data?.message,
+        description: err.data?.message || '未知错误',
         icon: 'i-hugeicons:alert-02',
         color: 'error',
       });
     } finally {
+      // 5. 状态清理
       isDeleting.value = false;
+      // 延迟清理数据，以适配 Modal 关闭动画的平滑度
       setTimeout(() => {
         pendingDeleteItem.value = null;
       }, 200);

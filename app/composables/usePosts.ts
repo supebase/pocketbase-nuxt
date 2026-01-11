@@ -3,7 +3,7 @@ import type { PostWithUser } from '~/types/posts';
 export const usePosts = () => {
   const { loggedIn, user } = useUserSession();
   const { listen, close } = usePocketRealtime(['posts']);
-  const { updatedMarks, clearUpdateMark } = usePostUpdateTracker();
+  const { updatedMarks } = usePostUpdateTracker();
 
   const {
     allItems: allPosts,
