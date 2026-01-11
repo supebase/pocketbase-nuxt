@@ -7,34 +7,32 @@
       :has-error="hasError"
     >
       <div
-        class="relative overflow-hidden rounded-full size-full flex items-center justify-center group"
+        class="relative overflow-hidden rounded-full size-full flex items-center justify-center bg-neutral-100 dark:bg-neutral-800 group"
       >
         <div
-          v-if="isLoading && !hasError"
-          class="absolute inset-0 z-10 bg-neutral-100 dark:bg-neutral-800"
-        />
+          v-if="isLoading"
+          class="absolute inset-0 z-30 flex items-center justify-center bg-inherit"
+        >
+          <UIcon name="i-hugeicons:refresh" class="size-4 text-dimmed animate-spin" />
+        </div>
 
         <img
-          v-if="avatarId"
+          v-if="avatarId && !hasError"
           ref="imgRef"
           :src="avatarUrl"
           @load="handleLoad"
           @error="handleError"
           :class="[
-            'object-cover size-full transition-all duration-700 ease-in-out z-0',
+            'object-cover size-full transition-all duration-700 ease-in-out',
             isLoading ? 'scale-110 opacity-0' : 'scale-100 opacity-100',
           ]"
         />
 
         <div
           v-if="hasError || (!avatarId && !isLoading)"
-          class="z-20 flex items-center justify-center"
+          class="flex items-center justify-center w-full h-full"
         >
-          <UIcon name="i-hugeicons:image-02" class="text-muted size-5" />
-        </div>
-
-        <div v-if="isLoading" class="absolute inset-0 z-30 flex items-center justify-center">
-          <UIcon name="i-hugeicons:refresh" class="size-4 text-muted animate-spin" />
+          <UIcon name="i-hugeicons:image-02" class="text-dimmed size-4.5" />
         </div>
       </div>
     </slot>
@@ -42,8 +40,6 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted, nextTick } from 'vue';
-
 const props = defineProps<{
   avatarId?: string | null;
   size?: number;

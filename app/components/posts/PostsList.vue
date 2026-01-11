@@ -19,7 +19,7 @@
       class="mt-4"
     />
 
-    <div v-else class="mt-8 space-y-4 w-full">
+    <div v-else class="mt-10 space-y-4 w-full">
       <ClientOnly>
         <PostsEmptyState
           v-if="allPosts.length === 0 && status !== 'pending' && !isRefreshing"

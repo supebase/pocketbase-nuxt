@@ -1,5 +1,6 @@
 <template>
   <div class="flex items-center justify-between w-full px-1.5">
+    <PostsButton :isLogin="isLogin" :userVerified="userVerified" />
     <div class="flex items-center gap-1 text-[15px] tracking-widest text-muted">
       <ClientOnly>
         攒了 <CommonAnimateNumber :value="count" /> 篇
@@ -9,17 +10,16 @@
         <UIcon
           v-if="isRefreshing"
           name="i-hugeicons:refresh"
-          class="size-4 text-muted cursor-not-allowed animate-spin"
+          class="size-4 text-dimmed cursor-not-allowed animate-spin"
         />
         <UIcon
           v-else-if="length > 0"
           name="i-hugeicons:refresh"
-          class="size-4 text-muted cursor-pointer hover:text-primary transition-colors"
+          class="size-4 text-dimmed cursor-pointer hover:text-primary transition-colors"
           @click="emit('refresh')"
         />
       </div>
     </div>
-    <PostsButton :isLogin="isLogin" :userVerified="userVerified" />
   </div>
 </template>
 

@@ -16,12 +16,12 @@
         />
       </div>
 
-      <div class="relative mt-6 min-h-75">
+      <div class="relative mt-6 min-h-screen">
         <div
           v-if="isUpdateRefresh"
           class="absolute inset-0 h-40 flex flex-col items-center justify-center z-10 select-none pointer-events-none"
         >
-          <UIcon name="i-hugeicons:refresh" class="size-6 mb-2 animate-spin text-muted" />
+          <UIcon name="i-hugeicons:refresh" class="size-5 mb-2 animate-spin text-muted" />
           <span class="text-sm font-medium text-muted tracking-widest text-center">
             正在同步内容改动
           </span>
@@ -30,7 +30,7 @@
         <div
           :class="[
             'transition-opacity duration-500',
-            isUpdateRefresh || !mdcReady ? 'opacity-50' : 'opacity-100',
+            isUpdateRefresh || !mdcReady ? 'opacity-10 pointer-events-none' : 'opacity-100',
           ]"
         >
           <PostsToc :toc="toc" />
@@ -44,31 +44,18 @@
         </div>
       </div>
 
-      <div v-if="mdcReady">
-        <UAlert
-          v-if="!postWithRelativeTime.allow_comment"
-          :ui="{
-            root: 'items-center justify-center text-dimmed',
-            wrapper: 'flex-none',
-          }"
-          icon="i-hugeicons:comment-block-02"
-          color="neutral"
-          variant="outline"
-          title="评论功能已关闭"
-          class="mt-8 select-none"
-        />
-
-        <UEmpty
-          v-if="!loggedIn && postWithRelativeTime.allow_comment"
-          size="lg"
-          icon="i-hugeicons:chat-lock-01"
-          title="参与评论需要登录"
-          description="登录后即可在评论区发布你的观点与见解"
-          :actions="[{ label: '立即登录', color: 'neutral', to: '/auth' }]"
-          class="mt-8 select-none"
-        />
-
+      <div v-show="mdcReady">
         <ClientOnly>
+          <UEmpty
+            v-if="!loggedIn && postWithRelativeTime.allow_comment"
+            size="lg"
+            icon="i-hugeicons:chat-lock-01"
+            title="参与评论需要登录"
+            description="登录后即可在评论区发布你的观点与见解"
+            :actions="[{ label: '立即登录', color: 'neutral', to: '/auth' }]"
+            class="mt-8 select-none"
+          />
+
           <CommentsForm
             v-if="loggedIn && postWithRelativeTime.allow_comment"
             :post-id="postWithRelativeTime.id"

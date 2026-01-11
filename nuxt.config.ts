@@ -1,7 +1,7 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
-  devtools: { enabled: false },
+  devtools: { enabled: true },
   modules: ['nuxt-auth-utils', '@nuxt/ui', '@nuxtjs/mdc', 'nuxt-emoji-picker'],
   runtimeConfig: {
     session: {
@@ -106,6 +106,7 @@ export default defineNuxtConfig({
     highlight: {
       theme: {
         default: 'github-light',
+        light: 'github-light',
         dark: 'github-dark',
       },
     },

@@ -43,7 +43,7 @@
       class="flex-1 p-3 min-w-0 flex flex-col justify-center space-y-1 bg-white dark:bg-neutral-900"
     >
       <div class="text-sm font-bold line-clamp-1 w-full">
-        {{ data.title }}
+        {{ cleanTitle }}
       </div>
 
       <div class="text-xs text-dimmed line-clamp-1 w-full">
@@ -79,6 +79,12 @@ const isGitHub = computed(() => {
   } catch {
     return false;
   }
+});
+
+const cleanTitle = computed(() => {
+  if (!props.data.title) return '';
+  // 使用正则：忽略大小写 (i)，匹配字符串开头的 "GitHub - "
+  return props.data.title.replace(/^GitHub\s*-\s*/i, '');
 });
 
 const displayUrl = computed(() => {

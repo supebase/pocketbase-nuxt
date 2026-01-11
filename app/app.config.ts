@@ -6,7 +6,7 @@ export default defineAppConfig({
     icons: {
       loading: 'i-hugeicons:loading-02',
       chevronDown: 'i-hugeicons:arrow-down-01',
-      copy: 'i-hugeicons:copy-02',
+      copy: 'i-hugeicons:copy-01',
       copyCheck: 'i-hugeicons:checkmark-square-03',
       close: 'i-hugeicons:cancel-01',
       search: 'i-hugeicons:search-01',
@@ -18,7 +18,7 @@ export default defineAppConfig({
       },
     },
     pageBody: {
-      base: 'mt-8 pb-12 space-y-12',
+      base: 'mt-6 pb-12 space-y-12',
     },
     user: {
       variants: {
@@ -41,6 +41,7 @@ export default defineAppConfig({
     },
     empty: {
       slots: {
+        root: 'bg-default/30! backdrop-blur-md',
         avatar: 'shrink-0 mb-2 bg-transparent',
       },
     },
@@ -64,7 +65,7 @@ export default defineAppConfig({
       codeCollapse: {
         slots: {
           root: 'relative [&_pre]:h-[350px]',
-          footer: 'h-16 absolute inset-x-6 bottom-px rounded-b-md flex items-center justify-end',
+          footer: 'h-16 absolute inset-x-4 bottom-px rounded-b-md flex items-center justify-end',
         },
       },
       pre: {
