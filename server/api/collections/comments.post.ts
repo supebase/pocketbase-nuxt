@@ -72,7 +72,7 @@ export default defineApiHandler(async (event) => {
   // 步骤 7: 调用服务层函数来执行数据库创建操作。
   // `createComment` 内部会使用传入的 `pb` 实例，这意味着操作将以当前登录用户的身份执行。
   // 服务层通常还会处理 `expand` 等数据关联查询的逻辑。
-  const comment = await createComment(pb, createData);
+  const comment = await createComment({ pb, data: createData });
 
   return {
     message: '发表评论成功',

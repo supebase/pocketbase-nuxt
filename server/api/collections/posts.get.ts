@@ -29,7 +29,12 @@ export default defineApiHandler(async (event): Promise<PostsListResponse> => {
     totalItems,
     page: currentPage,
     perPage: currentPerPage,
-  } = await getPostsList(pb, page, perPage, keyword);
+  } = await getPostsList({
+    pb,
+    page,
+    perPage,
+    query: keyword,
+  });
 
   return {
     message: '获取内容列表成功',

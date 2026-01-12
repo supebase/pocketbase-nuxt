@@ -7,6 +7,7 @@
 import { getMd5Hash } from '../utils/md5-hash';
 import { normalizeEmail, formatDefaultName } from '~/utils/index';
 import type { UsersResponse, Create, TypedPocketBase } from '~/types/pocketbase-types';
+import type { LoginOptions, RegisterOptions, LogoutOptions } from '~/types/server';
 import type { H3Event } from 'h3';
 
 /**
@@ -16,11 +17,7 @@ import type { H3Event } from 'h3';
  * @param password 用户的明文密码。
  * @returns 返回成功登录后的用户记录 (UsersResponse)。如果认证失败，PocketBase SDK 会自动抛出错误。
  */
-export async function loginService(
-  pb: TypedPocketBase,
-  email: string,
-  password: string,
-): Promise<UsersResponse> {
+export async function loginService({ pb, email, password }: LoginOptions): Promise<UsersResponse> {
   // 对邮箱进行标准化处理（例如，去除多余空格），确保认证的一致性。
   const cleanEmail = normalizeEmail(email);
 
@@ -43,13 +40,13 @@ export async function loginService(
  * @param passwordConfirm 用户的确认密码。
  * @returns 返回新注册并自动登录后的用户记录。
  */
-export async function registerService(
-  pb: TypedPocketBase,
-  email: string,
-  password: string,
-  passwordConfirm: string,
-  location: string,
-): Promise<UsersResponse> {
+export async function registerService({
+  pb,
+  email,
+  password,
+  passwordConfirm,
+  location,
+}: RegisterOptions): Promise<UsersResponse> {
   // 1. 准备新用户数据
   const cleanEmail = normalizeEmail(email);
   const md5Hash = getMd5Hash(cleanEmail);
@@ -75,7 +72,7 @@ export async function registerService(
   // 直接复用 `loginService`，并传入同一个 `pb` 实例。
   // 因为 `loginService` 会将认证结果存入此 `pb` 实例的 `authStore`，
   // 所以上层调用者可以从这个 `pb` 实例中获取到新用户的登录状态。
-  return await loginService(pb, cleanEmail, password);
+  return await loginService({ pb, email: cleanEmail, password });
 }
 
 /**
@@ -83,7 +80,7 @@ export async function registerService(
  * @param pb 与当前请求绑定的 PocketBase 实例。
  * @returns Promise<void>
  */
-export async function logoutService(event: H3Event, pb: TypedPocketBase): Promise<void> {
+export async function logoutService({ event, pb }: LogoutOptions): Promise<void> {
   // 调用 PocketBase 认证存储的 `clear` 方法。
   // 这会清除当前 `pb` 实例内存中的认证 token 和用户模型。
   // 注意：这本身是一个无状态的操作，它只影响这个在单次请求中创建的 `pb` 实例。

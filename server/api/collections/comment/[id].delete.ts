@@ -26,7 +26,7 @@ export default defineApiHandler(async (event): Promise<{ message: string; data: 
 
   // 步骤 3: 在权限验证通过后，执行实际的删除操作。
   // 同样传入 `pb` 实例，`deleteComment` 将以当前用户的身份执行此操作。
-  const result = await deleteComment(pb, commentId);
+  const result = await deleteComment({ pb, commentId });
 
   return {
     message: '评论已成功删除',

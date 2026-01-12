@@ -21,6 +21,20 @@
       <div class="relative">
         <USkeleton class="h-64 w-full rounded-lg" />
       </div>
+
+      <div class="space-y-3">
+        <USkeleton class="h-4 w-full" />
+        <USkeleton class="h-4 w-full" />
+        <USkeleton class="h-4 w-5/6" />
+        <USkeleton class="h-4 w-4/6" />
+      </div>
+
+      <div class="space-y-3">
+        <USkeleton class="h-4 w-full" />
+        <USkeleton class="h-4 w-full" />
+        <USkeleton class="h-4 w-5/6" />
+        <USkeleton class="h-4 w-4/6" />
+      </div>
     </div>
 
     <div class="mt-10 pt-8 border-t border-neutral-100 dark:border-neutral-800 space-y-4">
@@ -28,5 +42,3 @@
     </div>
   </div>
 </template>
-
-<script setup lang="ts"></script>

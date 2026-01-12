@@ -53,10 +53,14 @@ export default defineApiHandler(async (event): Promise<SinglePostResponse> => {
     if (preview) formData.append('link_data', JSON.stringify(preview));
   }
 
-  const finalPost = await createPost(pb, formData, content);
+  const finalPost = await createPost({
+    pb,
+    initialData: formData,
+    rawContent: content,
+  });
 
   return {
     message: '发布成功',
-    data: finalPost as any,
+    data: finalPost,
   };
 });

@@ -28,7 +28,7 @@ export default defineApiHandler(async (event): Promise<SinglePostResponse> => {
 
   // 步骤 4: 调用服务层的 `getPostById` 函数来执行实际的数据库查询。
   // 传入 `pb` 实例和 `postId`，将具体的查询逻辑与 API 路由解耦。
-  const post = await getPostById(pb, postId);
+  const post = await getPostById({ pb, postId });
 
   // --- 新增：服务端解析 MDC ---
   let mdcAst = null;
@@ -51,7 +51,7 @@ export default defineApiHandler(async (event): Promise<SinglePostResponse> => {
 
   if (!hasViewed && post) {
     // A. 异步触发 Service 层的自增逻辑 (不使用 await 避免阻塞页面渲染速度)
-    incrementPostViews(pb, postId).catch((err) => {
+    incrementPostViews({ pb, postId }).catch((err) => {
       console.error('[Views] 自增失败:', err);
     });
 

@@ -3,22 +3,23 @@ import { READ_SPEED_CONFIG } from '~/constants';
 /**
  * 计算文章阅读时间的组合式函数
  * @param content - 文章内容（包含 Markdown 格式）
- * @param images - 文章关联的图片元数据数组
- * @returns 预计阅读时间（分钟）
+ * @param externalImagesCount - 外部图片数量（如封面图等）
+ * @returns 预计阅读时间（分钟）字符串
  */
 export const useReadingTime = (content: string, externalImagesCount: number = 0): string => {
   const safeContent = content || '';
 
   /**
    * 计算代码块阅读时间
-   * @param content - 文章内容
+   * @param contentWithCode - 原始包含代码的内容
    * @returns 代码阅读时间（分钟）
    */
-  const calculateCodeTime = (content: string): number => {
-    const codeBlocks = content.match(/```[\s\S]*?```/g) || [];
+  const calculateCodeTime = (contentWithCode: string): number => {
+    const codeBlocks = contentWithCode.match(/```[\s\S]*?```/g) || [];
 
     return codeBlocks.reduce((total, block) => {
-      const lines = block.split('\n').length - 2; // 减去代码块标记的两行
+      // 减去代码块标记 ``` 的两行
+      const lines = Math.max(0, block.split('\n').length - 2);
       return (
         total + READ_SPEED_CONFIG.CODE_BLOCK_BASE_TIME + lines * READ_SPEED_CONFIG.CODE_LINE_TIME
       );
@@ -27,28 +28,29 @@ export const useReadingTime = (content: string, externalImagesCount: number = 0)
 
   /**
    * 计算文本内容阅读时间
-   * @param content - 文章内容（不含代码块）
+   * @param textOnlyContent - 已经剔除了代码块的纯文本内容
    * @returns 文本阅读时间（分钟）
    */
-  const calculateTextTime = (content: string): number => {
-    const contentWithoutCode = content.replace(/```[\s\S]*?```/g, '');
-    const chineseChars = contentWithoutCode.match(/[\u4e00-\u9fa5]/g)?.length || 0;
-    const englishWordsArr = contentWithoutCode
-      .replace(/[\u4e00-\u9fa5]/g, '')
+  const calculateTextTime = (textOnlyContent: string): number => {
+    // 使用 Unicode 属性匹配所有汉字，比旧正则更严谨
+    const chineseChars = textOnlyContent.match(/\p{Unified_Ideograph}/gu)?.length || 0;
+
+    // 将汉字替换为空格，确保 "Hello世界" 被正确识别为 "Hello"
+    const englishWords = textOnlyContent
+      .replace(/\p{Unified_Ideograph}/gu, ' ')
       .trim()
       .split(/\s+/)
-      .filter(Boolean); // 过滤空字符串
-    const englishWords = englishWordsArr.length;
+      .filter(Boolean).length;
 
     return (
       chineseChars / READ_SPEED_CONFIG.CHINESE_CHARS_PER_MINUTE +
-      (englishWords > 0 ? englishWords / READ_SPEED_CONFIG.WORDS_PER_MINUTE : 0)
+      englishWords / READ_SPEED_CONFIG.WORDS_PER_MINUTE
     );
   };
 
   /**
    * 计算图片查看时间
-   * @param imagesCount - 图片数量
+   * @param imagesCount - 图片总数量
    * @returns 图片查看时间（分钟）
    */
   const calculateImageTime = (imagesCount: number): number => {
@@ -57,30 +59,22 @@ export const useReadingTime = (content: string, externalImagesCount: number = 0)
       : 0;
   };
 
-  /**
-   * 计算总阅读时间
-   * @param content - 文章内容
-   * @param imagesCount - 图片数量
-   * @returns 总阅读时间（分钟）
-   */
-  const calculateReadingTime = (content: string, totalImages: number): number => {
-    if (!content && totalImages === 0) return 0;
+  // --- 执行逻辑 ---
 
-    const codeTime = calculateCodeTime(content);
-    const textTime = calculateTextTime(content);
-    const imageTime = calculateImageTime(totalImages);
-
-    // 向上取整，最少 1 分钟
-    return Math.max(1, Math.ceil(textTime + imageTime + codeTime));
-  };
-
-  // 1. 提取 Markdown 图片：匹配 ![alt](url)
-  // 2. 考虑更严谨的正则，防止匹配到代码块内部的文本
+  // 1. 预处理：剔除代码块，用于后续计算图片和文本
   const contentWithoutCode = safeContent.replace(/```[\s\S]*?```/g, '');
-  const markdownImagesCount = (contentWithoutCode.match(/!\[.*?\]\(.*?\)/g) || []).length;
 
-  // 总图片 = 正文内的图片 + 外部传入的（如封面图、图集等不属于正文的内容）
+  // 2. 提取正文图片数量
+  const markdownImagesCount = (contentWithoutCode.match(/!\[.*?\]\(.*?\)/g) || []).length;
   const totalImages = markdownImagesCount + externalImagesCount;
 
-  return `${calculateReadingTime(safeContent, totalImages)} 分钟阅读`;
+  // 3. 汇总计算
+  const codeTime = calculateCodeTime(safeContent);
+  const textTime = calculateTextTime(contentWithoutCode);
+  const imageTime = calculateImageTime(totalImages);
+
+  // 向上取整，最少展示 1 分钟
+  const totalMinutes = Math.max(1, Math.ceil(textTime + imageTime + codeTime));
+
+  return `${totalMinutes} 分钟阅读`;
 };

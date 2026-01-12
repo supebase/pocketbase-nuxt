@@ -5,8 +5,6 @@ export const usePostLogic = (id: string | string[]) => {
   const { user: currentUser } = useUserSession();
   const { listen, close } = usePocketRealtime(['posts']);
 
-  const isUpdateRefresh = ref(false);
-
   // 数据抓取：开启 server 端抓取以支持 SSR 和 SEO
   const { data, status, refresh, error } = useFetch<SinglePostResponse>(
     () => `/api/collections/post/${unref(id)}`,
@@ -23,7 +21,6 @@ export const usePostLogic = (id: string | string[]) => {
 
   // 状态判定：只有在 success 且 ast 存在时才算 ready
   const mdcReady = computed(() => {
-    if (isUpdateRefresh.value) return false; // 更新中显示 loading
     return status.value === 'success' && !!ast.value;
   });
 
@@ -37,8 +34,7 @@ export const usePostLogic = (id: string | string[]) => {
             // 注意：如果内容(content)发生变化，实时同步推荐直接触发 refresh()
             // 这样能确保重新走一遍服务端的最新解析逻辑
             if (record.content !== data.value.data.content) {
-              isUpdateRefresh.value = true;
-              refresh().finally(() => (isUpdateRefresh.value = false));
+              refresh();
             }
           }
         }
@@ -56,10 +52,9 @@ export const usePostLogic = (id: string | string[]) => {
     status,
     error,
     refresh,
-    mdcReady, // 这里的 ready 逻辑已经变了
+    mdcReady,
     ast,
     toc,
-    isUpdateRefresh,
     updatedMarks,
     clearUpdateMark,
   };

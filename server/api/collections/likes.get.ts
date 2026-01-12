@@ -52,7 +52,7 @@ export default defineApiHandler(async (event): Promise<CommentLikesResponse> => 
 
   // 步骤 5: 调用服务层的 `getCommentsLikesMap` 函数。
   // 传入 `pb` 实例、评论 ID 数组和当前用户 ID，服务层将完成所有复杂的数据库查询和数据组装工作。
-  const likesMap = await getCommentsLikesMap(pb, commentIds, userId);
+  const likesMap = await getCommentsLikesMap({ pb, commentIds, userId });
 
   // 步骤 6: 将服务层返回的数据组装成标准化的 API 响应。
   return {

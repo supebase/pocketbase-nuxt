@@ -1,9 +1,8 @@
-export const MAX_CACHE_SIZE = 2000;
-export const MIN_SEARCH_LENGTH = 2;
-// export const REFRESH_THRESHOLD = 5 * 60 * 1000; // 首页预览不需要太频繁，改为 5 分钟
-export const MENTION_REGEX = /(@[^@\s]+)/g;
-export const CONTENT_MAX_LENGTH = 10000;
-export const COMMENT_MAX_LENGTH = 300;
+export const MAX_CACHE_SIZE = 2000; // 缓存大小
+export const MIN_SEARCH_LENGTH = 2; // 搜索最小长度
+export const MENTION_REGEX = /(@[^@\s]+)/g; // 提及正则表达式
+export const CONTENT_MAX_LENGTH = 10000; // 内容最大长度
+export const COMMENT_MAX_LENGTH = 300; // 评论最大长度
 export const MD_IMAGE_MAX_SIZE = 2 * 1024 * 1024; // 限制最大 2MB
 export const DEFAULT_IMAGE_CONCURRENCY = 3; // 默认并发数
 export const IMAGE_DOWNLOAD_TIMEOUT = 8000; // 超时时间
@@ -18,19 +17,14 @@ export const timeMap: Record<string, string> = {
 
 /**
  * 阅读速度配置常量
- * WORDS_PER_MINUTE: 英文单词阅读速度（词/分钟）
- * CHINESE_CHARS_PER_MINUTE: 中文字符阅读速度（字/分钟）
- * IMAGE_TIME: 单张图片预计观看时间（分钟）
- * CODE_BLOCK_BASE_TIME: 代码块基础阅读时间（分钟）
- * CODE_LINE_TIME: 每行代码预计阅读时间（分钟）
  */
 export const READ_SPEED_CONFIG = {
-  WORDS_PER_MINUTE: 200,
-  CHINESE_CHARS_PER_MINUTE: 300,
-  IMAGE_TIME: 0.25,
-  CAROUSEL_BASE_TIME: 0.25,
-  CODE_BLOCK_BASE_TIME: 0.3,
-  CODE_LINE_TIME: 0.07,
+  WORDS_PER_MINUTE: 200, // 英文：约 200 词/分
+  CHINESE_CHARS_PER_MINUTE: 300, // 中文：约 300 字/分
+  IMAGE_TIME: 0.2, // 每张图约 12 秒
+  CAROUSEL_BASE_TIME: 0.2, // 图片渲染/切换基础耗时
+  CODE_BLOCK_BASE_TIME: 0.2, // 进入代码阅读状态的心理切换时间
+  CODE_LINE_TIME: 0.05, // 每行代码约 3 秒（代码阅读通常比文本慢）
 } as const;
 
 export const TABS = [

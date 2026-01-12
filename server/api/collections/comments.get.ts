@@ -38,7 +38,13 @@ export default defineApiHandler(async (event): Promise<CommentsListResponse> => 
     totalItems,
     page: currentPage,
     perPage: currentPerPage,
-  } = await getCommentsList(pb, page, perPage, filter, userId);
+  } = await getCommentsList({
+    pb,
+    page,
+    perPage,
+    filter,
+    userId,
+  });
 
   return {
     message: '获取评论列表成功',

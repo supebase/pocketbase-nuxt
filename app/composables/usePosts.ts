@@ -1,9 +1,16 @@
 import type { PostWithUser } from '~/types/posts';
 
+// --- 修改：全局标记防止重复订阅 ---
+const isPostsSubscribed = ref(false);
+
 export const usePosts = () => {
   const { loggedIn, user } = useUserSession();
   const { listen, close } = usePocketRealtime(['posts']);
-  const { updatedMarks } = usePostUpdateTracker();
+  const { updatedMarks, clearUpdateMark } = usePostUpdateTracker();
+
+  // --- 修改：使用 useState 确保列表在路由切换时不销毁 ---
+  const cachedPosts = useState<PostWithUser[]>('global_posts_list', () => []);
+  const cachedTotal = useState<number>('global_posts_total', () => -1);
 
   const {
     allItems: allPosts,
@@ -13,36 +20,37 @@ export const usePosts = () => {
     hasMore,
     loadMore,
     resetPagination,
-  } = usePagination<PostWithUser>();
+  } = usePagination<PostWithUser>(cachedPosts); // 注入全局 Ref
+
+  // 同步分页工具的总数到全局状态
+  if (cachedTotal.value !== -1 && totalItems.value === -1) {
+    totalItems.value = cachedTotal.value;
+  }
+  watch(totalItems, (val) => {
+    cachedTotal.value = val;
+  });
 
   const isResetting = ref(false);
 
   /**
    * 工具函数：预处理 Markdown 内容
+   * 修改：增加 firstImage 提取，减少计算属性压力
    */
   const transformPosts = (items: PostWithUser[]) => {
     return items.map((item) => ({
       ...item,
       cleanContent: cleanMarkdown(item.content || ''),
+      firstImage: getFirstImageUrl(item.content), // 预处理
     }));
   };
 
-  /**
-   * 权限检查：是否可以查看草稿
-   */
   const canViewDrafts = computed(() => loggedIn.value && !!user.value?.verified);
 
-  /**
-   * 核心展示数据 (已优化)
-   * 移除了冗余的 .sort()，因为服务端已通过 sort: '-created' 返回了正确顺序
-   */
   const displayItems = computed(() => {
-    // 1. 根据权限过滤内容
     const filtered = canViewDrafts.value
       ? allPosts.value
       : allPosts.value.filter((p) => p.published);
 
-    // 2. 直接映射为视图对象，避免在计算属性中进行耗时的排序操作
     return filtered.map((item) => ({
       id: item.id,
       title: item.expand?.user?.name || '未知用户',
@@ -53,7 +61,7 @@ export const usePosts = () => {
       published: item.published,
       icon: item.icon,
       avatarId: item.expand?.user?.avatar,
-      firstImage: getFirstImageUrl(item.content),
+      firstImage: item.firstImage || getFirstImageUrl(item.content),
       link_data: item.link_data,
       link_image: item.link_image,
       content: item.content,
@@ -61,18 +69,14 @@ export const usePosts = () => {
     }));
   });
 
-  /**
-   * 配置实时订阅逻辑
-   */
   const setupRealtime = () => {
-    if (import.meta.server) return;
+    if (import.meta.server || isPostsSubscribed.value) return;
+    isPostsSubscribed.value = true;
 
     listen(({ collection, action, record }) => {
       if (collection !== 'posts') return;
-
       const idx = allPosts.value.findIndex((p) => p.id === record.id);
 
-      // --- 场景 1: 删除操作 ---
       if (action === 'delete') {
         if (idx !== -1) {
           allPosts.value.splice(idx, 1);
@@ -81,64 +85,65 @@ export const usePosts = () => {
         return;
       }
 
-      // 计算该记录在当前用户视图下是否可见
       const isVisible = record.published || canViewDrafts.value;
+      const processed = {
+        ...record,
+        cleanContent: cleanMarkdown(record.content || ''),
+        firstImage: getFirstImageUrl(record.content),
+      } as PostWithUser;
 
-      // --- 场景 2: 新增操作 ---
       if (action === 'create' && isVisible && idx === -1) {
-        // 服务端返回的是最新的，所以 unshift 到头部符合时间倒序逻辑
-        allPosts.value.unshift({
-          ...record,
-          cleanContent: cleanMarkdown(record.content || ''),
-        } as PostWithUser);
+        allPosts.value.unshift(processed);
         totalItems.value++;
-      }
-
-      // --- 场景 3: 更新操作 ---
-      else if (action === 'update') {
+      } else if (action === 'update') {
         if (idx !== -1) {
           if (!isVisible) {
-            // 如果更新后变为不可见（如：设为草稿），则从列表中移除
             allPosts.value.splice(idx, 1);
             totalItems.value--;
           } else {
-            // 原地更新数据，保持位置不变（避免 UI 闪烁）
             const oldItem = allPosts.value[idx];
             allPosts.value[idx] = {
               ...oldItem,
-              ...record,
+              ...processed,
               expand: { ...(oldItem?.expand || {}), ...(record?.expand || {}) },
-              cleanContent: cleanMarkdown(record.content || ''),
-            } as PostWithUser;
+            };
           }
         } else if (isVisible) {
-          // 如果原本不在列表中（如：从草稿变为发布），则添加到头部
-          allPosts.value.unshift({
-            ...record,
-            cleanContent: cleanMarkdown(record.content || ''),
-          } as PostWithUser);
+          allPosts.value.unshift(processed);
           totalItems.value++;
         }
       }
     });
   };
 
-  // 客户端挂载后的清理逻辑
+  const originalClose = close;
+  const safeClose = () => {
+    isPostsSubscribed.value = false;
+    originalClose();
+  };
+
   if (import.meta.client) {
     onUnmounted(() => {
-      close(); // 销毁连接，防止内存泄漏
+      safeClose();
     });
   }
 
   onActivated(() => {
-    // 检查是否有标记为更新的文章
     const updatedIds = Object.keys(updatedMarks.value);
+
     if (updatedIds.length > 0) {
       updatedIds.forEach((id) => {
-        // 这里的 refresh 逻辑可以根据你的 useFetch 配合
-        // 或者直接让具体的 PostItem 监听到变化
-        // console.log(`文章 ${id} 有更新，正在同步数据...`);
-        // 如果你使用的是全局 list 状态，可以在这里局部更新 allPosts 中的那一条
+        // 1. 找到本地列表中对应的文章
+        const idx = allPosts.value.findIndex((p) => p.id === id);
+
+        if (idx !== -1) {
+          // 这里如果是 true，说明数据更新已经由 setupRealtime 完成了
+          // 或者你可以在这里执行一些 UI 上的高亮逻辑
+          // console.log(`文章 ${id} 已在后台同步完成`);
+        }
+
+        // 2. --- 关键：调用你定义的清理函数 ---
+        clearUpdateMark(id);
       });
     }
   });
@@ -153,7 +158,7 @@ export const usePosts = () => {
     isResetting,
     canViewDrafts,
     setupRealtime,
-    close,
+    close: safeClose,
     loadMore,
     resetPagination,
     transformPosts,

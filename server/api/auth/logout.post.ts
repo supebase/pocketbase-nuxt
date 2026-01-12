@@ -18,7 +18,7 @@ export default defineApiHandler(async (event) => {
   // 步骤 2: 调用服务层的 `logoutService`。
   // 这一步的主要作用是清除当前 `pb` 实例内存中的 `authStore` 状态。
   // 这是一个无状态的操作，本身不影响客户端。
-  await logoutService(event, pb);
+  await logoutService({ event, pb });
 
   return {
     message: '退出登录成功',

@@ -16,21 +16,11 @@
         />
       </div>
 
-      <div class="relative mt-6 min-h-screen">
-        <div
-          v-if="isUpdateRefresh"
-          class="absolute inset-0 h-40 flex flex-col items-center justify-center z-10 select-none pointer-events-none"
-        >
-          <UIcon name="i-hugeicons:refresh" class="size-5 mb-2 animate-spin text-muted" />
-          <span class="text-sm font-medium text-muted tracking-widest text-center">
-            正在同步内容改动
-          </span>
-        </div>
-
+      <div class="relative mt-6 min-h-100">
         <div
           :class="[
             'transition-opacity duration-500',
-            isUpdateRefresh || !mdcReady ? 'opacity-10 pointer-events-none' : 'opacity-100',
+            !mdcReady ? 'opacity-10 pointer-events-none' : 'opacity-100',
           ]"
         >
           <PostsToc :toc="toc" />
@@ -102,7 +92,6 @@ const {
   mdcReady,
   ast,
   toc,
-  isUpdateRefresh,
   updatedMarks,
   clearUpdateMark,
 } = usePostLogic(id);
@@ -121,8 +110,7 @@ const onCommentSuccess = (newComment: any) => {
 };
 
 watch(loggedIn, () => {
-  isUpdateRefresh.value = true;
-  refresh().finally(() => (isUpdateRefresh.value = false));
+  refresh();
 });
 
 // 错误处理
@@ -158,27 +146,19 @@ onActivated(async () => {
   const currentId = (route.params as { id: string }).id;
 
   if (currentId && updatedMarks.value[currentId]) {
-    // 1. 先开启同步状态
-    isUpdateRefresh.value = true;
-
+    // 直接后台静默刷新
     try {
-      // 2. 强制刷新数据
       await refresh();
-      // 3. 清除标记
       clearUpdateMark(currentId);
-    } finally {
-      // 4. 延迟一丁点关闭遮罩，避免闪烁过快
-      setTimeout(() => {
-        isUpdateRefresh.value = false;
-      }, 300);
+      // 只有在数据刷新后，Notify 用户一下（可选）
+      // toast.add({ title: '内容已同步最新版本', color: 'gray' })
+    } catch (e) {
+      console.error('静默刷新失败', e);
     }
   }
 
   nextTick(() => {
     checkHeaderVisibility();
-
-    // 如果还没对上，300ms 后（通常是页面入场动画结束）再校准一次
-    setTimeout(checkHeaderVisibility, 100);
   });
 });
 

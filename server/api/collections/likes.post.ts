@@ -36,7 +36,7 @@ export default defineApiHandler(async (event): Promise<ToggleLikeResponse> => {
   //   b. 如果已点赞，则删除该点赞记录。
   //   c. 如果未点赞，则创建一条新的点赞记录。
   //   d. 返回操作后的最新状态（是否点赞，以及最新的点赞总数）。
-  const result = await toggleLike(pb, commentId, user.id);
+  const result = await toggleLike({ pb, commentId, userId: user.id });
 
   return {
     message: result.liked ? '点赞成功' : '已取消点赞',

@@ -19,20 +19,19 @@ const protectedRoutes = [
 ];
 
 export default defineEventHandler(async (event) => {
+  // 统一路径格式
   const url = getRequestURL(event).pathname.replace(/\/$/, '').toLowerCase() || '/';
   const method = event.method;
 
-  // 1. 无论是否是受保护路由，先尝试初始化用户信息
-  // 这样 event.context.user 就能在后续的 API 处理程序中使用了
+  // 1. 初始化 PocketBase 实例并注入 context
   const pb = getPocketBase(event);
   event.context.pb = pb;
 
-  // 2 身份解析之后
+  // 2. 身份解析与 Session 同步
   if (pb.authStore.isValid && pb.authStore.record) {
-    // 状态正常：注入/同步用户信息
     event.context.user = pb.authStore.record;
   } else {
-    // 状态异常：如果发现 Nuxt Session 还残留用户信息，立刻清理
+    // 如果 PocketBase 状态失效但 Session 还在，执行清理
     if (event.context.user) {
       await clearUserSession(event);
       event.context.user = null;
@@ -41,20 +40,15 @@ export default defineEventHandler(async (event) => {
 
   // 3. 路由保护逻辑
   const isProtected = protectedRoutes.some((route) => {
-    // 处理方法匹配：支持单字符串或数组
     const methodMatch = Array.isArray(route.method)
       ? route.method.includes(method)
       : method === route.method;
 
     if (!methodMatch) return false;
 
-    // 处理路径匹配
     if (route.isPrefix) {
-      // 确保是真正的目录层级匹配，防止 /post-list 匹配到 /post/
       return url === route.path || url.startsWith(`${route.path}/`);
     }
-
-    // 精确匹配
     return url === route.path;
   });
 

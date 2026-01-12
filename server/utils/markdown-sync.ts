@@ -10,7 +10,6 @@ export async function syncMarkdownContent(
   let finalContent = content;
 
   if (successResults.length > 0) {
-    // 将 Blob 交给回调函数（通常是数据库更新），获取存入后的文件名
     const newFileNames = await onNewImages(
       successResults.map((item, i) => ({
         blob: item.blob,
@@ -18,7 +17,7 @@ export async function syncMarkdownContent(
       })),
     );
 
-    // 替换 URL
+    // 替换原始 URL 为本地代理 URL
     successResults.forEach((item, i) => {
       const fileName = newFileNames[i];
       const proxyUrl = `/api/images/posts/${postId}/${fileName}`;
@@ -26,7 +25,7 @@ export async function syncMarkdownContent(
     });
   }
 
-  // 追加警告信息
+  // 注入警告信息（仅在包含跳过的图片且未曾注入过时）
   if (skippedCount > 0 && !finalContent.includes('部分远程图片因体积过大')) {
     finalContent += `\n\n> ⚠️ **提示**: 部分远程图片因体积过大未同步到本地。`;
   }

@@ -23,7 +23,7 @@ export default defineApiHandler(async (event): Promise<{ message: string; data: 
     });
   }
 
-  const result = await deletePost(pb, postId);
+  const result = await deletePost({ pb, postId });
 
   return {
     message: '内容已成功删除',

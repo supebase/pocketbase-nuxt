@@ -11,6 +11,12 @@ import type {
   TypedPocketBase,
 } from '~/types/pocketbase-types';
 import type { CommentRecord, CommentExpand } from '~/types/comments';
+import {
+  GetCommentsOptions,
+  GetCommentByIdOptions,
+  CreateCommentOptions,
+  DeleteCommentOptions,
+} from '~/types/server';
 
 /**
  * 获取经过处理的评论列表，包含点赞信息。
@@ -21,13 +27,13 @@ import type { CommentRecord, CommentExpand } from '~/types/comments';
  * @param userId 可选的当前登录用户 ID。如果提供，将一并查询该用户是否对每条评论点了赞。
  * @returns 返回一个分页对象，其中的 `items` 数组是包含了点赞信息的 `CommentRecord` 列表。
  */
-export async function getCommentsList(
-  pb: TypedPocketBase,
-  page: number = 1,
-  perPage: number = 10,
-  filter?: string,
-  userId?: string,
-) {
+export async function getCommentsList({
+  pb,
+  page = 1,
+  perPage = 10,
+  filter,
+  userId,
+}: GetCommentsOptions) {
   // 构建 PocketBase 查询参数对象。
   const queryOptions: any = {
     sort: '-created',
@@ -46,7 +52,7 @@ export async function getCommentsList(
 
   // 步骤 2: 如果查询结果不为空，则进一步获取这些评论的点赞信息。
   const commentIds = result.items.map((comment) => comment.id);
-  const likesMap = await getCommentsLikesMap(pb, commentIds, userId);
+  const likesMap = await getCommentsLikesMap({ pb, commentIds, userId });
 
   // 💡 使用一个新的变量承载处理后的结果，避免原地修改带来的类型冲突
   const processedItems: CommentRecord[] = result.items.map((comment) => {
@@ -75,7 +81,7 @@ export async function getCommentsList(
  * @param commentId 要查询的评论 ID。
  * @returns 返回包含用户信息（通过 expand）的单条评论数据。
  */
-export async function getCommentById(pb: TypedPocketBase, commentId: string) {
+export async function getCommentById({ pb, commentId }: GetCommentByIdOptions) {
   return await pb.collection('comments').getOne<PBCommentsResponse<CommentExpand>>(commentId, {
     expand: 'user',
   });
@@ -88,7 +94,7 @@ export async function getCommentById(pb: TypedPocketBase, commentId: string) {
  * @param data 符合 `Create<'comments'>` 类型的新评论数据。
  * @returns 返回创建成功后的评论记录，并关联了创建者的用户信息。
  */
-export async function createComment(pb: TypedPocketBase, data: Create<'comments'>) {
+export async function createComment({ pb, data }: CreateCommentOptions) {
   // 💡 由于传入的 `pb` 实例已经包含了用户的认证 Token，
   // PocketBase 后端会自动将这条新评论的 `user` 字段设置为当前登录的用户。
   return await pb.collection('comments').create<PBCommentsResponse<CommentExpand>>(data, {
@@ -102,7 +108,7 @@ export async function createComment(pb: TypedPocketBase, data: Create<'comments'
  * @param commentId 要删除的评论 ID。
  * @returns Promise<boolean> 删除成功时 PocketBase SDK 返回 true。
  */
-export async function deleteComment(pb: TypedPocketBase, commentId: string) {
+export async function deleteComment({ pb, commentId }: DeleteCommentOptions) {
   await ensureOwnership(pb, 'comments', commentId);
   return await pb.collection('comments').delete(commentId);
 }

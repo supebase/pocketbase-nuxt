@@ -1,20 +1,39 @@
 <template>
-  <UPopover arrow :ui="{ content: 'bg-neutral-100/80 dark:bg-neutral-950/80 backdrop-blur' }">
+  <UPopover arrow :ui="{ content: 'bg-neutral-50/80 dark:bg-neutral-950/80 backdrop-blur' }">
     <UButton
       color="neutral"
       variant="link"
-      icon="i-hugeicons:user-status"
+      icon="i-hugeicons:user-multiple-02"
       tabindex="-1"
       class="rounded-full cursor-pointer"
     />
     <template #content>
+      <div class="flex items-center justify-between px-5 pt-4 select-none">
+        <div class="font-semibold text-sm text-muted">用户统计信息</div>
+        <div class="flex items-center gap-1.5">
+          <span v-if="isCoolingDown" class="text-xs font-mono text-dimmed animate-pulse">
+            {{ cooldown }}s
+          </span>
+
+          <UIcon
+            class="size-4 transition-all duration-300"
+            :class="[
+              isCoolingDown
+                ? 'text-dimmed opacity-40 cursor-not-allowed rotate-180'
+                : 'text-dimmed cursor-pointer hover:text-primary hover:rotate-45',
+            ]"
+            name="i-hugeicons:refresh"
+            @click="updated"
+          />
+        </div>
+      </div>
       <div class="grid gap-4 md:grid-cols-3 p-4 font-sans select-none">
         <div
-          class="rounded-xl border border-neutral-100 dark:border-neutral-800 bg-white dark:bg-neutral-900"
+          class="rounded-xl border border-neutral-100 dark:border-neutral-800 bg-white dark:bg-neutral-900/80"
         >
           <div class="p-6 flex flex-row items-center justify-between space-y-0 pb-2">
             <h3 class="tracking-tight text-sm font-medium">总用户数</h3>
-            <UIcon name="i-hugeicons:user-multiple-02" class="size-4.5 text-dimmed" />
+            <UIcon name="i-hugeicons:user-multiple-02" class="size-4.5 text-dimmed/80" />
           </div>
           <div class="p-6 pt-0">
             <div class="text-2xl font-bold tabular-nums tracking-tight">
@@ -25,11 +44,11 @@
         </div>
 
         <div
-          class="rounded-xl border border-neutral-100 dark:border-neutral-800 bg-white dark:bg-neutral-900"
+          class="rounded-xl border border-neutral-100 dark:border-neutral-800 bg-white dark:bg-neutral-900/80"
         >
           <div class="p-6 flex flex-row items-center justify-between space-y-0 pb-2">
             <h3 class="tracking-tight text-sm font-medium">今日新增</h3>
-            <UIcon name="i-hugeicons:user-add-02" class="size-4.5 text-dimmed" />
+            <UIcon name="i-hugeicons:user-add-02" class="size-4.5 text-dimmed/80" />
           </div>
           <div class="p-6 pt-0">
             <div class="text-2xl font-bold tabular-nums tracking-tight">
@@ -54,11 +73,11 @@
         </div>
 
         <div
-          class="rounded-xl border border-neutral-100 dark:border-neutral-800 bg-white dark:bg-neutral-900"
+          class="rounded-xl border border-neutral-100 dark:border-neutral-800 bg-white dark:bg-neutral-900/80"
         >
           <div class="p-6 flex flex-row items-center justify-between space-y-0 pb-2">
             <h3 class="tracking-tight text-sm font-medium">活跃用户</h3>
-            <UIcon name="i-hugeicons:chart-up" class="size-4.5 text-dimmed" />
+            <UIcon name="i-hugeicons:chart-up" class="size-4.5 text-dimmed/80" />
           </div>
           <div class="p-6 pt-0">
             <div class="text-2xl font-bold tabular-nums tracking-tight">
@@ -106,4 +125,23 @@ const growthInfo = computed(() => {
     val: percent,
   };
 });
+
+const cooldown = ref(0);
+const isCoolingDown = computed(() => cooldown.value > 0);
+
+const updated = async () => {
+  if (isCoolingDown.value) return;
+
+  // 1. 立即执行刷新
+  await refresh();
+
+  // 2. 开启 10 秒倒计时
+  cooldown.value = 10;
+  const timer = setInterval(() => {
+    cooldown.value--;
+    if (cooldown.value <= 0) {
+      clearInterval(timer);
+    }
+  }, 1000);
+};
 </script>

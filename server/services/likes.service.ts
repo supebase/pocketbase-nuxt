@@ -9,11 +9,16 @@ import type {
   TypedPocketBase,
 } from '~/types/pocketbase-types';
 import type { CommentLikeInfo } from '~/types/likes';
+import type {
+  ToggleLikeOptions,
+  GetCommentLikesOptions,
+  GetCommentsLikesMapOptions,
+} from '~/types/server';
 
 /**
  * 切换点赞状态
  */
-export async function toggleLike(pb: TypedPocketBase, commentId: string, userId: string) {
+export async function toggleLike({ pb, commentId, userId }: ToggleLikeOptions) {
   // 使用 pb.filter 构造安全查询
   const filter = pb.filter('comment = {:commentId} && user = {:userId}', { commentId, userId });
 
@@ -41,14 +46,14 @@ export async function toggleLike(pb: TypedPocketBase, commentId: string, userId:
   }
 
   // 2. 获取最新计数
-  const likes = await getCommentLikes(pb, commentId);
+  const likes = await getCommentLikes({ pb, commentId });
   return { liked, likes, commentId };
 }
 
 /**
  * 获取单条评论点赞数
  */
-export async function getCommentLikes(pb: TypedPocketBase, commentId: string): Promise<number> {
+export async function getCommentLikes({ pb, commentId }: GetCommentLikesOptions): Promise<number> {
   const result = await pb.collection('likes').getList(1, 1, {
     filter: pb.filter('comment = {:commentId}', { commentId }),
     fields: 'id',
@@ -60,11 +65,11 @@ export async function getCommentLikes(pb: TypedPocketBase, commentId: string): P
 /**
  * 批量获取点赞信息（高性能）
  */
-export async function getCommentsLikesMap(
-  pb: TypedPocketBase,
-  commentIds: string[],
-  userId?: string,
-): Promise<Record<string, CommentLikeInfo>> {
+export async function getCommentsLikesMap({
+  pb,
+  commentIds,
+  userId,
+}: GetCommentsLikesMapOptions): Promise<Record<string, CommentLikeInfo>> {
   if (!commentIds || commentIds.length === 0) return {};
 
   // 1. 构建 IN 查询：comment = "id1" || comment = "id2" ...

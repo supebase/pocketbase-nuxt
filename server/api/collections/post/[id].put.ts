@@ -10,7 +10,7 @@ export default defineApiHandler(async (event) => {
   const postId = getRouterParam(event, 'id')!;
   const body = await readBody(event);
 
-  const updatedPost = await updatePost(pb, postId, body);
+  const updatedPost = await updatePost({ pb, postId, body });
 
   return {
     message: '更新成功',

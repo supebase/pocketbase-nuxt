@@ -1,7 +1,14 @@
 import type { CommentRecord } from '~/types/comments';
 
+// --- 修改：全局评论缓存池 ---
+interface CommentCache {
+  items: CommentRecord[];
+  total: number;
+}
+const COMMENT_CACHE = new Map<string, CommentCache>();
+const MAX_CACHE_SIZE = 15;
+
 export const useComments = (postId: string) => {
-  // 1. 基础分页状态
   const {
     allItems: comments,
     totalItems,
@@ -14,33 +21,55 @@ export const useComments = (postId: string) => {
   const loading = ref(false);
   const lastLoadedPostId = ref<string | null>(null);
 
-  // 2. 内部 API 请求函数
+  // --- 修改：内部更新缓存方法 ---
+  const updateCache = () => {
+    if (COMMENT_CACHE.size > MAX_CACHE_SIZE) {
+      // 获取迭代器的第一个值
+      const firstKey = COMMENT_CACHE.keys().next().value;
+
+      // --- 修复：增加类型守卫，确保 firstKey 存在 ---
+      if (firstKey !== undefined) {
+        COMMENT_CACHE.delete(firstKey);
+      }
+    }
+
+    COMMENT_CACHE.set(postId, {
+      items: [...comments.value],
+      total: totalItems.value,
+    });
+  };
+
   const fetchCommentsApi = async (page: number) => {
     const res = await $fetch<any>(`/api/collections/comments`, {
       query: { post: postId, page, perPage: 10 },
     });
-
     const items = (res.data?.comments || []).map((c: any) => ({
       ...c,
       likes: c.likes || 0,
       isLiked: c.isLiked || false,
       relativeTime: useRelativeTime(c.created),
     }));
-
     return { items, total: res.data?.totalItems || 0 };
   };
 
-  // 3. 供外部调用的方法
   const fetchComments = async (isSilent = false) => {
-    if (!isSilent && lastLoadedPostId.value === postId && comments.value.length > 0) return;
+    // --- 修改：如果已经加载过且 postId 没变，直接返回 ---
+    if (lastLoadedPostId.value === postId && comments.value.length > 0) return;
+
+    // --- 修改：检查缓存 ---
+    const cached = COMMENT_CACHE.get(postId);
+    if (cached && !isSilent) {
+      resetPagination(cached.items, cached.total);
+      lastLoadedPostId.value = postId;
+      return;
+    }
 
     if (!isSilent) loading.value = true;
-
     try {
       const result = await fetchCommentsApi(1);
-
       resetPagination(result.items, result.total);
       lastLoadedPostId.value = postId;
+      updateCache(); // 写入缓存
     } finally {
       loading.value = false;
     }
@@ -48,7 +77,6 @@ export const useComments = (postId: string) => {
 
   const handleLoadMore = () => loadMore(fetchCommentsApi);
 
-  // 4. 同步动作 (Actions)
   const syncSingleComment = (record: CommentRecord, action: 'create' | 'update' | 'delete') => {
     const index = comments.value.findIndex((c) => c.id === record.id);
 
@@ -70,6 +98,7 @@ export const useComments = (postId: string) => {
         expand: { ...(comments.value[index]?.expand || {}), ...(record.expand || {}) },
       };
     }
+    updateCache(); // 同步动作后更新缓存
   };
 
   const handleLikeChange = (
@@ -79,21 +108,19 @@ export const useComments = (postId: string) => {
     isFromRealtime = false,
   ) => {
     const target = comments.value.find((c) => c.id === commentId);
-
     if (target) {
       target.likes = likes;
       if (!isFromRealtime) target.isLiked = liked;
+      updateCache(); // 点赞后更新缓存
     }
   };
 
   const getUniqueUsers = () => {
     const usersMap = new Map();
-
     comments.value.forEach((c) => {
       const u = c.expand?.user;
       if (u) usersMap.set(u.id, { id: u.id, name: u.name, avatar: u.avatar, location: u.location });
     });
-
     return Array.from(usersMap.values());
   };
 

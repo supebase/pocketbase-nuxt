@@ -1,18 +1,19 @@
 import { ensureOwnership } from '~~/server/utils/validate-owner';
 import type { PostsResponse as PBPostsResponse, TypedPocketBase } from '~/types/pocketbase-types';
-import type { PostExpand } from '~/types/posts';
+import type { PostExpand, PostRecord } from '~/types/posts';
+import type {
+  GetPostsOptions,
+  GetPostByIdOptions,
+  CreatePostOptions,
+  UpdatePostOptions,
+  DeletePostOptions,
+} from '~/types/server';
 import { getLinkPreview } from '~~/server/utils/graph-scraper';
-import { syncMarkdownContent } from '~~/server/utils/markdown-sync';
 
 /**
  * 获取文章列表
  */
-export async function getPostsList(
-  pb: TypedPocketBase,
-  page: number = 1,
-  perPage: number = 10,
-  query?: string,
-) {
+export async function getPostsList({ pb, page = 1, perPage = 10, query }: GetPostsOptions) {
   let filterString = '(published = true';
   const currentUser = pb.authStore.record;
 
@@ -38,7 +39,7 @@ export async function getPostsList(
 /**
  * 根据 ID 获取单篇文章详情
  */
-export async function getPostById(pb: TypedPocketBase, postId: string) {
+export async function getPostById({ pb, postId }: GetPostByIdOptions) {
   const currentUser = pb.authStore.record;
   let filter = `id = "${postId}" && (published = true`;
 
@@ -60,54 +61,40 @@ export async function getPostById(pb: TypedPocketBase, postId: string) {
 }
 
 /**
- * 核心逻辑：同步 Markdown 中的远程图片到 PocketBase
- */
-async function performImageSync(
-  pb: TypedPocketBase,
-  postId: string,
-  content: string,
-  existingImages: string[] = [],
-) {
-  return await syncMarkdownContent(content, postId, async (newItems) => {
-    const formData = new FormData();
-
-    // 保持旧文件
-    existingImages.forEach((name) => formData.append('markdown_images', name));
-
-    // 添加新文件
-    newItems.forEach((item) => {
-      formData.append('markdown_images', item.blob, item.fileName);
-    });
-
-    // 提交到 PB
-    const record = await pb.collection('posts').update(postId, formData);
-
-    // 返回 PB 生成的最新的文件名数组（取最后几个新加的）
-    return record.markdown_images.slice(-newItems.length);
-  });
-}
-
-/**
  * 创建新文章
  */
-export async function createPost(pb: TypedPocketBase, initialData: FormData, rawContent: string) {
+export async function createPost({
+  pb,
+  initialData,
+  rawContent,
+}: CreatePostOptions): Promise<PostRecord> {
   const originalPublishedStatus = initialData.get('published') === 'true';
 
-  // 先以草稿状态创建，避免图片未处理完就发布
+  // 先创建草稿
   initialData.set('published', 'false');
   initialData.set('content', 'Processing images...');
-
   const post = await pb.collection('posts').create(initialData);
 
   try {
-    const cleanContent = await performImageSync(pb, post.id, rawContent, []);
-    return await pb.collection('posts').update(post.id, {
-      content: cleanContent,
-      published: originalPublishedStatus,
+    // 调用图片同步服务
+    const cleanContent = await performMarkdownImageSync({
+      pb,
+      collection: 'posts',
+      recordId: post.id,
+      content: rawContent,
+      existingImages: [],
     });
-  } catch (error: any) {
-    console.error(`[CreatePost] 图片同步失败: ${post.id}`, error);
-    // 即使失败也返回文章 ID，让用户知道内容已存在
+
+    return (await pb.collection('posts').update(
+      post.id,
+      {
+        content: cleanContent,
+        published: originalPublishedStatus,
+      },
+      { expand: 'user' },
+    )) as PostRecord;
+  } catch (error) {
+    console.error(`[CreatePost] 同步失败: ${post.id}`, error);
     throw createError({
       statusCode: 202,
       message: '内容已保存，但图片同步失败。',
@@ -119,12 +106,11 @@ export async function createPost(pb: TypedPocketBase, initialData: FormData, raw
 /**
  * 更新文章
  */
-export async function updatePost(pb: TypedPocketBase, postId: string, body: any) {
-  // 1. 所有权检查
-  const existing = await ensureOwnership(pb, 'posts', postId);
+export async function updatePost({ pb, postId, body }: UpdatePostOptions): Promise<PostRecord> {
+  const existing = (await ensureOwnership(pb, 'posts', postId)) as PostRecord;
   const formData = new FormData();
 
-  // 2. 智能链接预览逻辑 (可保持现状，或封装成小工具)
+  // 1. 处理链接预览 (逻辑保持)
   if (body.link !== undefined && body.link !== existing.link) {
     if (body.link === '') {
       formData.append('link_data', '');
@@ -147,40 +133,35 @@ export async function updatePost(pb: TypedPocketBase, postId: string, body: any)
     }
   }
 
-  // 3. Markdown 内容变更处理
-  // 注意：这里我们只在内容真正变化时才执行同步
+  // 2. 调用图片同步服务
   if (body.content !== undefined && body.content !== existing.content) {
-    const cleanContent = await performImageSync(
+    const cleanContent = await performMarkdownImageSync({
       pb,
-      postId,
-      body.content,
-      existing.markdown_images || [],
-    );
+      collection: 'posts',
+      recordId: postId,
+      content: body.content,
+      existingImages: existing.markdown_images || [],
+    });
     formData.append('content', cleanContent);
   }
 
-  // 4. 其他字段同步
+  // 3. 其他字段
   const syncFields = ['allow_comment', 'published', 'icon', 'action', 'link'];
   syncFields.forEach((field) => {
-    if (body[field] !== undefined) {
-      // 避免将布尔值或数字转为字符串时出现异常，PocketBase 接受字符串形式的 body
-      formData.append(field, String(body[field]));
-    }
+    if (body[field] !== undefined) formData.append(field, String(body[field]));
   });
 
-  // 5. 统一提交
-  // 如果 formData 为空（比如只传了不改变内容的 body），则直接返回原数据
-  if (Array.from(formData.keys()).length === 0) {
-    return existing;
-  }
+  if (Array.from(formData.keys()).length === 0) return existing;
 
-  return await pb.collection('posts').update(postId, formData);
+  return (await pb.collection('posts').update(postId, formData, {
+    expand: 'user',
+  })) as PostRecord;
 }
 
 /**
  * 删除文章
  */
-export async function deletePost(pb: TypedPocketBase, postId: string) {
+export async function deletePost({ pb, postId }: DeletePostOptions) {
   await ensureOwnership(pb, 'posts', postId);
   return await pb.collection('posts').delete(postId);
 }
@@ -188,7 +169,7 @@ export async function deletePost(pb: TypedPocketBase, postId: string) {
 /**
  * 增加浏览量
  */
-export async function incrementPostViews(pb: TypedPocketBase, postId: string) {
+export async function incrementPostViews({ pb, postId }: { pb: TypedPocketBase; postId: string }) {
   try {
     await pb.collection('posts').update(postId, { 'views+': 1 });
   } catch (error) {

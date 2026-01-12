@@ -33,7 +33,7 @@ export default defineApiHandler(async (event): Promise<AuthResponse> => {
   const pb = getPocketBase(event);
 
   // 步骤 2: 调用服务层的 `loginService`，并传入当前的 `pb` 实例以及用户凭证。
-  await loginService(pb, email, password);
+  await loginService({ pb, email, password });
 
   // 步骤 3: 如果 `loginService` 没有抛出错误，说明登录成功。
   // 接着，调用 `handleAuthSuccess` 并将已经填充了认证信息的 `pb` 实例传递给它。

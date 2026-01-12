@@ -1,5 +1,4 @@
 import { useTimeAgo, type UseTimeAgoMessages } from '@vueuse/core';
-import { computed, type ComputedRef } from 'vue';
 import { timeMap } from '~/constants';
 
 const fullDateFormatter = (date: Date): string => {
@@ -12,9 +11,9 @@ const fullDateFormatter = (date: Date): string => {
 
 const messages: UseTimeAgoMessages = {
   justNow: '刚刚',
-  past: (n) => timeMap[n] || `${n}前`,
-  future: (n) => `${n} 后`,
-  second: (n) => (n < 10 ? '刚刚' : `${n} 秒前`), // 优化：10秒内都叫刚刚，减少水合冲突
+  past: (n) => timeMap[n] || (n.endsWith('前') ? n : `${n}前`),
+  future: (n) => `${n}后`,
+  second: (n) => (n < 10 ? '刚刚' : `${n} 秒前`),
   minute: (n) => `${n} 分钟`,
   hour: (n) => `${n} 小时`,
   day: (n) => `${n} 天`,
@@ -41,11 +40,12 @@ export function useRelativeTime(date: string | Date | number | null): ComputedRe
     const now = Date.now();
     const diff = now - d.getTime();
 
-    // 如果是服务器渲染，且时间在 1 分钟内，统一返回“刚刚”
-    // 这能极大程度避免客户端激活时因几秒之差导致的水合失败
-    if (diff < 60000 && diff >= 0) {
-      return computed(() => '刚刚');
-    }
+    // 1分钟内统一“刚刚”，1小时内统一“n 分钟前”，避免水合抖动
+    if (diff < 60000) return computed(() => '刚刚');
+    if (diff < 3600000) return computed(() => `${Math.floor(diff / 60000)} 分钟前`);
+
+    // 其他情况返回完整日期，或者简单的静态处理
+    return computed(() => fullDateFormatter(d));
   }
 
   // 4. 客户端使用 useTimeAgo（带定时器更新）
