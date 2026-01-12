@@ -89,3 +89,11 @@ export interface GetCommentsLikesMapOptions {
   commentIds: string[];
   userId?: string;
 }
+
+export interface SyncOptions {
+  pb: TypedPocketBase;
+  collection: 'posts';
+  recordId: string;
+  content: string;
+  existingImages?: string[];
+}

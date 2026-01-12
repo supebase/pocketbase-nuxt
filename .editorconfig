@@ -2,8 +2,11 @@ root = true
 
 [*]
 charset = utf-8
-indent_style = space          # 使用空格缩进
-indent_size = 2               # 缩进长度为 2
-end_of_line = lf              # 换行符使用 LF
-insert_final_newline = true   # 文件末尾强制保留一行空行
-trim_trailing_whitespace = true # 自动删除行尾空格
+indent_style = space
+indent_size = 2
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.md]
+trim_trailing_whitespace = false

@@ -1,112 +1,135 @@
-// 1. 全局状态（定义在函数外部，确保内存中只有一份）
-const globalEventSource = ref<EventSource | null>(null);
-const globalStatus = ref<'connecting' | 'online' | 'offline'>('offline');
-const subscribers = new Set<(payload: any) => void>();
+/**
+ * 状态定义：
+ * 1. 使用 useState 确保状态在 SSR 序列化时是安全的，且全应用共享连接状态。
+ * 2. 物理连接实例 (EventSource) 和 订阅者集合 (Set) 放在客户端单例对象中。
+ */
 
-// 重连配置
-let retryCount = 0;
-let retryTimer: NodeJS.Timeout | null = null;
+interface RealtimePayload {
+  collection: string;
+  action: string;
+  record: any;
+}
 
-export const usePocketRealtime = (collections: string[]) => {
-  // 记录当前组件的回调引用，用于卸载时精准移除
-  let currentCallback: ((payload: any) => void) | null = null;
+// 客户端特有的单例管理容器，避免全局变量直接暴露在模块顶层
+const sseManager = {
+  instance: null as EventSource | null,
+  subscribers: new Set<(payload: RealtimePayload) => void>(),
+  retryCount: 0,
+  retryTimer: null as any,
+};
+
+export const usePocketRealtime = () => {
+  // Nuxt 响应式状态：所有调用该 composable 的组件共享此状态
+  const status = useState<'connecting' | 'online' | 'offline'>('pocket-sse-status', () => 'offline');
+
+  // 当前组件的回调引用，用于卸载
+  let currentCallback: ((payload: RealtimePayload) => void) | null = null;
 
   /**
-   * 关闭/注销逻辑
-   */
-  const close = () => {
-    if (currentCallback) {
-      subscribers.delete(currentCallback);
-      currentCallback = null;
-    }
-
-    // 调试日志：查看当前活跃订阅数
-    // console.log(`[SSE] 组件卸载，剩余订阅数: ${subscribers.size}`);
-  };
-
-  /**
-   * 建立物理连接（内部私有函数）
+   * 建立物理连接（内部逻辑）
    */
   const connectPhysical = () => {
-    if (import.meta.server || globalStatus.value === 'connecting') return;
+    // 严禁在服务端运行，防止内存泄漏和跨用户污染
+    if (import.meta.server) return;
 
-    // 如果已经有在线的连接，不需要重新创建
-    if (globalEventSource.value && globalEventSource.value.readyState === 1) {
-      globalStatus.value = 'online';
+    // 状态检查：如果正在连接或已连接，则跳过
+    if (status.value === 'connecting') return;
+    if (sseManager.instance && sseManager.instance.readyState === 1) {
+      status.value = 'online';
       return;
     }
 
-    globalStatus.value = 'connecting';
+    status.value = 'connecting';
 
-    // 关键：订阅所有可能用到的核心集合，确保全局连接的通用性
     const allCollections = ['posts', 'comments', 'likes'];
     const colsParam = encodeURIComponent(allCollections.join(','));
+
+    // 创建原生 EventSource
     const es = new EventSource(`/api/realtime?cols=${colsParam}`, {
       withCredentials: true,
     });
 
     es.onopen = () => {
-      globalStatus.value = 'online';
-      retryCount = 0;
-      console.log('[SSE] 全局物理连接建立成功');
+      status.value = 'online';
+      sseManager.retryCount = 0;
+      console.log('[SSE] 全局物理连接已建立');
     };
 
-    // 绑定事件处理器
+    // 监听特定集合事件
     allCollections.forEach((col) => {
       es.addEventListener(col, (event: MessageEvent) => {
         try {
           const data = JSON.parse(event.data);
-          // 核心：将收到的消息分发给所有活跃的订阅者
-          subscribers.forEach((cb) => {
-            cb({
-              collection: col,
-              action: data.action,
-              record: data.record,
-            });
-          });
+          const payload: RealtimePayload = {
+            collection: col,
+            action: data.action,
+            record: data.record,
+          };
+          // 广播给所有组件订阅者
+          sseManager.subscribers.forEach((cb) => cb(payload));
         } catch (e) {
-          console.error(`[SSE] 解析数据失败 (${col}):`, e);
+          console.error(`[SSE] 解析事件数据失败 (${col}):`, e);
         }
       });
     });
 
     es.onerror = () => {
-      globalStatus.value = 'offline';
+      status.value = 'offline';
       es.close();
+      sseManager.instance = null;
 
-      // 指数退避重连逻辑
-      const delay = Math.min(1000 * Math.pow(2, retryCount), 30000);
-      retryTimer = setTimeout(() => {
-        retryCount++;
+      // 指数退避重连
+      const delay = Math.min(1000 * Math.pow(2, sseManager.retryCount), 30000);
+      console.warn(`[SSE] 连接已断开，${delay}ms 后重试...`);
+
+      clearTimeout(sseManager.retryTimer);
+      sseManager.retryTimer = setTimeout(() => {
+        sseManager.retryCount++;
         connectPhysical();
       }, delay);
     };
 
-    globalEventSource.value = es;
+    sseManager.instance = es;
   };
 
   /**
-   * 暴露给组件的监听接口
+   * 暴露给组件的接口：监听消息
    */
-  const listen = (callback: (payload: any) => void) => {
+  const listen = (callback: (payload: RealtimePayload) => void) => {
     if (import.meta.server) return;
 
-    // 保存引用以便后续移除
     currentCallback = callback;
-    subscribers.add(currentCallback);
+    sseManager.subscribers.add(callback);
 
-    // 确保物理连接已开启
+    // 只要有组件开始监听，就确保物理连接存在
     connectPhysical();
   };
 
-  // 组件自动卸载清理
+  /**
+   * 暴露给组件的接口：主动关闭
+   */
+  const close = () => {
+    if (currentCallback) {
+      sseManager.subscribers.delete(currentCallback);
+      currentCallback = null;
+    }
+
+    // 可选：如果没有任何订阅者了，可以在这里关闭物理连接以节省资源
+    // if (sseManager.subscribers.size === 0 && sseManager.instance) {
+    //   sseManager.instance.close();
+    //   sseManager.instance = null;
+    //   status.value = 'offline';
+    // }
+  };
+
+  // 组件卸载自动清理
   onUnmounted(() => {
     close();
   });
 
   return {
     listen,
-    status: readonly(globalStatus),
+    status: readonly(status), // 状态只读，防止组件意外修改
     close,
   };
 };

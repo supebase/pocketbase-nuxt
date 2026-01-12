@@ -28,22 +28,13 @@
         </UBadge>
 
         <span class="text-sm font-medium text-dimmed ml-2 truncate max-w-40">
-          {{
-            !allowComment
-              ? '评论已关闭'
-              : totalCount === 1
-                ? `${lastUserName} 发表了评论`
-                : '参与了评论'
-          }}
+          {{ !allowComment ? '评论已关闭' : totalCount === 1 ? `${lastUserName} 发表了评论` : '参与了评论' }}
         </span>
       </div>
     </template>
 
     <div v-else class="flex items-center gap-2 text-sm text-dimmed">
-      <UIcon
-        :name="!allowComment ? 'i-hugeicons:comment-block-02' : 'i-hugeicons:comment-02'"
-        class="size-4.5"
-      />
+      <UIcon :name="!allowComment ? 'i-hugeicons:comment-block-02' : 'i-hugeicons:comment-02'" class="size-4.5" />
       <span class="text-sm">{{ !allowComment ? '评论已关闭' : '暂无评论' }}</span>
     </div>
   </div>
@@ -80,17 +71,31 @@ const {
 });
 
 // 3. 借壳监听 Realtime (核心改进)
-const { listen } = usePocketRealtime(['comments']);
+const { listen, close } = usePocketRealtime();
 let debounceTimer: any;
 
-onMounted(() => {
+const setupRealtime = () => {
+  if (import.meta.server) return;
+
   listen(({ collection, record }) => {
-    // 监听原始 comments 表，但刷新 view 数据的请求
+    // 逻辑：如果有人评论了这篇文章，且当前小部件已经出现在视口中
     if (collection === 'comments' && record.post === props.postId && isRendered.value) {
-      clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(() => refresh(), 500);
+      // 防抖处理：防止多人同时评论时短时间内触发大量 API 请求
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        refresh();
+      }, 500);
     }
   });
+};
+
+onMounted(() => {
+  setupRealtime();
+});
+
+onUnmounted(() => {
+  if (debounceTimer) clearTimeout(debounceTimer);
+  close(); // 必须调用，移除当前组件在 sseManager 中的 callback
 });
 
 // 4. 数据解析

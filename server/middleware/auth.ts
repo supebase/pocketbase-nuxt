@@ -1,15 +1,13 @@
 /**
- * @file /server/middleware/auth.ts
- * @description 身份认证中间件 (Authentication Middleware)。
- *              该中间件会在处理受保护的 API 路由之前执行，集中处理用户身份验证逻辑。
+ * @file Auth Middleware
+ * @description 全局身份认证中间件。负责 PocketBase 实例初始化、用户状态同步及受保护路由的鉴权拦截。
  */
 
-/**
- * 定义一个需要身份验证的路由和方法的列表。
- * 这使得认证逻辑与 API 路由处理程序本身分离，提高了代码的模块化和可维护性。
- */
 import { getPocketBase } from '../utils/pocketbase';
 
+/** * 受保护路由配置
+ * @description 定义需要登录才能访问的 API 路径及对应的方法
+ */
 const protectedRoutes = [
   { path: '/api/collections/posts', method: 'POST' },
   { path: '/api/collections/post', method: ['PUT', 'DELETE'], isPrefix: true },
@@ -19,39 +17,39 @@ const protectedRoutes = [
 ];
 
 export default defineEventHandler(async (event) => {
-  // 统一路径格式
+  // 路径标准化：移除尾部斜杠并转为小写，确保匹配一致性
   const url = getRequestURL(event).pathname.replace(/\/$/, '').toLowerCase() || '/';
   const method = event.method;
 
-  // 1. 初始化 PocketBase 实例并注入 context
+  // 实例初始化：将 PocketBase 注入 event.context 供后续 Handler 使用
   const pb = getPocketBase(event);
   event.context.pb = pb;
 
-  // 2. 身份解析与 Session 同步
+  // 状态同步：确保 PocketBase AuthStore 与 Nuxt Session 状态一致
   if (pb.authStore.isValid && pb.authStore.record) {
     event.context.user = pb.authStore.record;
   } else {
-    // 如果 PocketBase 状态失效但 Session 还在，执行清理
+    // 自动降级：若 PB Token 失效则同步清理 Nuxt Session
     if (event.context.user) {
       await clearUserSession(event);
       event.context.user = null;
     }
   }
 
-  // 3. 路由保护逻辑
+  // 拦截逻辑：检查当前请求是否命中保护路由
   const isProtected = protectedRoutes.some((route) => {
-    const methodMatch = Array.isArray(route.method)
-      ? route.method.includes(method)
-      : method === route.method;
+    const methodMatch = Array.isArray(route.method) ? route.method.includes(method) : method === route.method;
 
     if (!methodMatch) return false;
 
+    // 前缀匹配支持（适用于 /api/comment/:id 等动态路由）
     if (route.isPrefix) {
       return url === route.path || url.startsWith(`${route.path}/`);
     }
     return url === route.path;
   });
 
+  // 鉴权判定：若为保护路由且无有效用户，则阻断请求
   if (isProtected && !event.context.user) {
     throw createError({
       statusCode: 401,

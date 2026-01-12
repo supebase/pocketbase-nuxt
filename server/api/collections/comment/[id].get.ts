@@ -1,26 +1,47 @@
 /**
- * @file API Route: /api/collections/comment/[id] [GET]
- * @description 获取评论统计的 API 端点。
- *              支持根据评论 ID 获取具体的统计信息。
+ * @file API Route: /api/collections/comment/:id [GET]
+ * @description 获取指定内容的评论聚合统计（如评论总数、参与者头像列表等）。
  */
+
 import { defineApiHandler } from '~~/server/utils/api-wrapper';
 
 export default defineApiHandler(async (event) => {
   const pb = event.context.pb;
-  const postId = event.context.params?.id;
 
-  if (!postId) throw createError({ statusCode: 400, message: 'Post ID is required' });
+  // 获取路由参数：此处 id 通常指代关联的文章 ID (postId)
+  const id = getRouterParam(event, 'id');
+
+  if (!id) {
+    throw createError({
+      statusCode: 400,
+      message: '参数缺失：必须提供目标内容 ID',
+    });
+  }
 
   try {
-    const record = await pb.collection('comment_stats').getOne(postId, {
+    // 查询聚合视图：从 comment_stats 视图中获取预计算的统计数据
+    const record = await pb.collection('comment_stats').getOne(id, {
       fields: 'id,total_items,user_avatars,last_user_name',
     });
-    return { message: '获取统计成功', data: record };
+
+    return {
+      message: '获取统计成功',
+      data: record,
+    };
   } catch (e) {
-    // 如果没有找到记录（通常是没评论时），返回默认结构，防止前端解析出错
+    /**
+     * 降级逻辑 (Graceful Degradation)：
+     * 当文章尚未有评论时，视图中可能不存在该记录。
+     * 返回标准化的“零值”对象，确保前端头像墙或计数组件不会因为 undefined 而崩溃。
+     */
     return {
       message: '暂无统计数据',
-      data: { id: postId, total_items: 0, user_avatars: '', last_user_name: '' },
+      data: {
+        id,
+        total_items: 0,
+        user_avatars: '',
+        last_user_name: '',
+      },
     };
   }
 });

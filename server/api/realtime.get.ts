@@ -1,14 +1,20 @@
+/**
+ * @file Real-time SSE Handler
+ * @description 提供 Server-Sent Events 流式推送，监听 PocketBase 数据库变动并同步至前端。
+ */
+
 import { getPocketBase } from '../utils/pocketbase';
 
 export default defineEventHandler(async (event) => {
-  // 1. 设置 SSE 标准响应头
+  // 设置 SSE 标准响应头：确保流式传输不被缓存或缓冲
   setHeaders(event, {
     'Content-Type': 'text/event-stream',
     'Cache-Control': 'no-cache, no-transform',
     Connection: 'keep-alive',
-    'X-Accel-Buffering': 'no', // 关键：禁用 Nginx 缓冲
+    'X-Accel-Buffering': 'no', // 禁用 Nginx 缓冲，确保数据即时到达
   });
 
+  // 解析待订阅的集合列表 (默认为 posts)
   const query = getQuery(event);
   const collections =
     typeof query.cols === 'string'
@@ -18,14 +24,14 @@ export default defineEventHandler(async (event) => {
           .filter(Boolean)
       : ['posts'];
 
-  // 2. 初始化流和独立的 PB 实例
+  // 初始化流与独立的 PB 实例 (确保请求间状态隔离)
   const eventStream = createEventStream(event);
   const pb = getPocketBase(event);
 
-  // 3. 订阅逻辑
+  // 订阅逻辑：动态监听多个集合的实时变动
   for (const col of collections) {
     try {
-      // 建议使用具体的回调函数以方便取消订阅
+      // 将 PB 的变更推送至 SSE 事件流
       await pb.collection(col).subscribe(
         '*',
         (data) => {
@@ -40,21 +46,19 @@ export default defineEventHandler(async (event) => {
         { expand: 'user' },
       );
     } catch (err) {
-      console.error(`[SSE] 订阅集合 ${col} 失败:`, err);
+      console.error(`[SSE 错误] 集合订阅失败 ${col}`, err);
     }
   }
 
-  // 4. 心跳检测 (每 20 秒发送一次)
+  // 心跳机制：每 20 秒发送一次注释行，防止连接因闲置被网关断开
   const timer = setInterval(() => {
     if (!event.node.req.destroyed) {
-      // 发送注释行作为心跳，不会被前端 JSON.parse 干扰
       eventStream.push(': heartbeat\n\n');
     }
   }, 20000);
 
   /**
-   * 核心修复：清理锁机制
-   * 确保释放定时器、取消所有订阅且不重复执行
+   * 资源清理锁：防止重复执行清理逻辑
    */
   let isCleaned = false;
 
@@ -63,12 +67,11 @@ export default defineEventHandler(async (event) => {
     isCleaned = true;
 
     clearInterval(timer);
-    // 强制关闭事件流，通知客户端
     eventStream.close();
-    console.log(`[SSE] 正在清理连接: ${collections.join(', ')}`);
+    console.log(`[SSE 关闭] 释放订阅资源: ${collections.join(', ')}`);
 
     try {
-      // 遍历取消订阅，确保释放 PocketBase 服务器资源
+      // 批量取消订阅，避免 PocketBase 后端连接堆积
       await Promise.all(
         collections.map((col) =>
           pb
@@ -77,16 +80,13 @@ export default defineEventHandler(async (event) => {
             .catch(() => {}),
         ),
       );
-      // 如果 getPocketBase 是为每个请求新建的，可以在此处销毁引用
     } catch (e) {
-      console.error('[SSE] 清理资源异常:', e);
+      console.error('[SSE 错误] 清理资源异常:', e);
     }
   };
 
-  // 5. 监听断开事件
-  // node.req.on('close') 是捕捉客户端（如刷新页面）断开最可靠的方式
+  // 生命周期监听：捕获客户端断开（如刷新、关闭页面）
   event.node.req.on('close', cleanup);
-  // eventStream.onClosed 作为第二重保障
   eventStream.onClosed(cleanup);
 
   return eventStream.send();

@@ -1,13 +1,20 @@
+/**
+ * @file Permission Guard
+ * @description 资源所有权校验工具，确保当前登录用户仅能操作属于自己的数据。
+ */
+
 import type { TypedPocketBase, CollectionResponses } from '~/types/pocketbase-types';
 
 /**
- * 通用所有权校验函数 (Type-Safe Version)
- * * @template T - 自动推导的集合名称类型 (如 'posts' | 'comments')
- * @param pb - PocketBase 实例
- * @param collectionName - 集合名称，必须是 schema 中定义的有效名称
- * @param resourceId - 资源 ID
- * @param userField - 存储用户 ID 的字段名 (默认为 'user')。TS 会强制检查该字段是否存在于对应集合中。
- * @returns 返回查找到的强类型资源记录
+ * 强类型所有权校验
+ * @template T - 集合名称类型（由参数自动推导）
+ * @param collectionName - PocketBase 集合名
+ * @param resourceId - 待操作的资源 ID
+ * @param userField - 关联用户 ID 的字段名，默认为 'user'
+ * @description
+ * 1. 自动从 pb.authStore 获取当前用户。
+ * 2. 校验资源所属关系，若不匹配则抛出 403 错误。
+ * @returns 校验成功后返回完整的强类型资源记录
  */
 export async function ensureOwnership<T extends keyof CollectionResponses>(
   pb: TypedPocketBase,
@@ -16,28 +23,28 @@ export async function ensureOwnership<T extends keyof CollectionResponses>(
   // 关键优化：限制 userField 必须是该集合类型中的有效键
   userField: keyof CollectionResponses[T] = 'user' as keyof CollectionResponses[T],
 ): Promise<CollectionResponses[T]> {
-  // 1. 获取资源记录 (返回类型自动推导为 CollectionResponses[T])
+  // 获取目标记录（基于泛型 T 自动推导返回类型）
   const record = await pb.collection(collectionName).getOne(resourceId);
 
-  // 2. 获取当前登录用户
+  // 获取当前认证用户状态
   const currentUser = pb.authStore.record;
 
-  // 3. 安全检查：运行时确认字段是否存在
-  // 防止虽然类型强转骗过了编译器，但数据库 schema 实际并不存在该字段的情况
+  // 字段存在性防御检查
+  // 确保 userField 确实存在于数据库返回的对象中，避免逻辑穿透
   if (!(userField in record)) {
-    console.error(`校验 '${String(userField)}' 字段不存在于集合 '${collectionName}'`);
+    console.error(`[Guard Error]: 字段 '${String(userField)}' 不存在于集合 '${collectionName}'`);
     throw createError({
       statusCode: 500,
-      message: '服务器内部配置错误: 校验字段不存在',
+      message: '系统配置异常：校验字段缺失',
     });
   }
 
-  // 4. 核心校验逻辑
-  // 强制转换为 String 进行比较，防止某些特殊情况下类型不一致
+  // 核心鉴权逻辑
+  // 比较记录中的关联 ID 与当前用户 ID 是否一致
   if (!currentUser || String(record[userField]) !== currentUser.id) {
     throw createError({
       statusCode: 403,
-      message: '您没有权限操作此内容',
+      message: '无权操作：您不是该内容的所有者',
     });
   }
 

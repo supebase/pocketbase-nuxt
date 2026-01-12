@@ -1,3 +1,8 @@
+/**
+ * @file Posts Service
+ * @description 处理文章的 CRUD，包含自动图片同步、链接预览抓取及复杂的可见性过滤。
+ */
+
 import { ensureOwnership } from '~~/server/utils/validate-owner';
 import type { PostsResponse as PBPostsResponse, TypedPocketBase } from '~/types/pocketbase-types';
 import type { PostExpand, PostRecord } from '~/types/posts';
@@ -12,16 +17,19 @@ import { getLinkPreview } from '~~/server/utils/graph-scraper';
 
 /**
  * 获取文章列表
+ * @description 权限过滤逻辑：公开文章 || 自己的草稿
  */
 export async function getPostsList({ pb, page = 1, perPage = 10, query }: GetPostsOptions) {
-  let filterString = '(published = true';
   const currentUser = pb.authStore.record;
 
+  // 基础权限过滤
+  let filterString = '(published = true';
   if (currentUser) {
     filterString += ` || (published = false && user = "${currentUser.id}")`;
   }
   filterString += ')';
 
+  // 附加搜索过滤
   if (query) {
     const searchQuery = pb.filter('content ~ {:q}', { q: query });
     filterString = `(${filterString} && ${searchQuery})`;
@@ -37,7 +45,8 @@ export async function getPostsList({ pb, page = 1, perPage = 10, query }: GetPos
 }
 
 /**
- * 根据 ID 获取单篇文章详情
+ * 获取单篇文章
+ * @throws 404 - 如果文章不存在或无访问权限（非作者且未发布）
  */
 export async function getPostById({ pb, postId }: GetPostByIdOptions) {
   const currentUser = pb.authStore.record;
@@ -62,21 +71,18 @@ export async function getPostById({ pb, postId }: GetPostByIdOptions) {
 
 /**
  * 创建新文章
+ * @description 两阶段提交：1.先创建草稿以获取 ID 2.同步处理 Markdown 中的远程图片 3.更新最终内容
  */
-export async function createPost({
-  pb,
-  initialData,
-  rawContent,
-}: CreatePostOptions): Promise<PostRecord> {
+export async function createPost({ pb, initialData, rawContent }: CreatePostOptions): Promise<PostRecord> {
   const originalPublishedStatus = initialData.get('published') === 'true';
 
-  // 先创建草稿
+  // 占位创建
   initialData.set('published', 'false');
   initialData.set('content', 'Processing images...');
   const post = await pb.collection('posts').create(initialData);
 
   try {
-    // 调用图片同步服务
+    // 同步 Markdown 图片到 PocketBase 存储
     const cleanContent = await performMarkdownImageSync({
       pb,
       collection: 'posts',
@@ -85,6 +91,7 @@ export async function createPost({
       existingImages: [],
     });
 
+    // 更新最终状态
     return (await pb.collection('posts').update(
       post.id,
       {
@@ -105,12 +112,13 @@ export async function createPost({
 
 /**
  * 更新文章
+ * @description 处理链接预览抓取及内容差异化同步
  */
 export async function updatePost({ pb, postId, body }: UpdatePostOptions): Promise<PostRecord> {
   const existing = (await ensureOwnership(pb, 'posts', postId)) as PostRecord;
   const formData = new FormData();
 
-  // 1. 处理链接预览 (逻辑保持)
+  // 链接预览：若链接变化则重新抓取元数据及 OpenGraph 图片
   if (body.link !== undefined && body.link !== existing.link) {
     if (body.link === '') {
       formData.append('link_data', '');
@@ -124,6 +132,7 @@ export async function updatePost({ pb, postId, body }: UpdatePostOptions): Promi
             timeout: 5000,
           });
           formData.append('link_image', new Blob([buf]), 'preview.png');
+          // 图片已转存，清除原始 URL
           preview.image = '';
         } catch (e) {
           console.error('预览图抓取失败', e);
@@ -133,7 +142,7 @@ export async function updatePost({ pb, postId, body }: UpdatePostOptions): Promi
     }
   }
 
-  // 2. 调用图片同步服务
+  // 内容更新：仅在内容变化时重新同步图片
   if (body.content !== undefined && body.content !== existing.content) {
     const cleanContent = await performMarkdownImageSync({
       pb,
@@ -145,7 +154,7 @@ export async function updatePost({ pb, postId, body }: UpdatePostOptions): Promi
     formData.append('content', cleanContent);
   }
 
-  // 3. 其他字段
+  // 基础字段同步
   const syncFields = ['allow_comment', 'published', 'icon', 'action', 'link'];
   syncFields.forEach((field) => {
     if (body[field] !== undefined) formData.append(field, String(body[field]));
@@ -167,10 +176,11 @@ export async function deletePost({ pb, postId }: DeletePostOptions) {
 }
 
 /**
- * 增加浏览量
+ * 增加浏览量 (原子更新)
  */
 export async function incrementPostViews({ pb, postId }: { pb: TypedPocketBase; postId: string }) {
   try {
+    // 使用 PocketBase 的原子加法操作
     await pb.collection('posts').update(postId, { 'views+': 1 });
   } catch (error) {
     console.error(`无法更新浏览量:`, error);

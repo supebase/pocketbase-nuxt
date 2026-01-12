@@ -1,24 +1,35 @@
 /**
- * 抓取链接的 Open Graph 元数据。
- * 不再负责本地缓存图片，仅返回原始图片链接供后续本地化处理。
+ * @file Link Preview Service
+ * @description 抓取并解析远程链接的 Open Graph 元数据，用于生成卡片预览。
  */
-import ogs from 'open-graph-scraper';
 
+import ogs from 'open-graph-scraper';
+import type { LinkPreviewData } from '~/types/posts';
+
+/**
+ * 确保 URL 为绝对路径
+ * @private
+ */
 const ensureAbsoluteUrl = (pathStr: string | undefined, baseUrl: string): string => {
   if (!pathStr) return '';
   try {
-    // 处理相对路径
+    // 自动合并相对路径 (如 /img/logo.png) 与基础域名
     return new URL(pathStr, baseUrl).href;
   } catch (e) {
     return pathStr;
   }
 };
 
-export const getLinkPreview = async (url: string) => {
+/**
+ * 抓取链接元数据
+ * @description 逻辑：抓取 HTML -> 提取 OG/Twitter 标签 -> 过滤 GitHub 特殊逻辑 -> 绝对路径转换
+ * @returns {Promise<LinkPreviewData | null>} 标准化的预览数据对象
+ */
+export const getLinkPreview = async (url: string): Promise<LinkPreviewData | null> => {
   if (!url) return null;
 
   try {
-    // 1. 调用 ogs 抓取元数据
+    // 发起爬取请求，配置高仿真 User-Agent 以减少被拦截风险
     const { result } = await ogs({
       url,
       timeout: 3000,
@@ -32,13 +43,15 @@ export const getLinkPreview = async (url: string) => {
 
     if (result.success) {
       const urlObj = new URL(url);
+
+      // 特殊策略处理：GitHub 的 OG 图通常是头像或动态生成的，按需决定是否过滤
       const isGitHub = urlObj.hostname === 'github.com' || urlObj.hostname.endsWith('.github.com');
-      // 2. 提取原始图片链接
+
+      // 优先级提取图片：优先 OG，次选 Twitter
       const rawImage = result.ogImage?.[0]?.url || result.twitterImage?.[0]?.url || '';
-      // 3. 如果是 GitHub，则无图
       const finalImage = !isGitHub && rawImage ? ensureAbsoluteUrl(rawImage, url) : '';
 
-      // 返回标准化数据
+      // 返回跨平台一致的元数据结构
       return {
         url,
         title: result.ogTitle || result.twitterTitle || '无标题',
@@ -48,7 +61,7 @@ export const getLinkPreview = async (url: string) => {
       };
     }
   } catch (e) {
-    console.error('OGS Fetch Error:', url, e);
+    console.error('[OGS Error] 抓取失败:', url, e);
   }
   return null;
 };

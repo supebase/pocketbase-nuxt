@@ -1,14 +1,11 @@
 import type { PostWithUser } from '~/types/posts';
 
-// --- 修改：全局标记防止重复订阅 ---
-const isPostsSubscribed = ref(false);
-
 export const usePosts = () => {
   const { loggedIn, user } = useUserSession();
-  const { listen, close } = usePocketRealtime(['posts']);
+  const { listen, close } = usePocketRealtime();
   const { updatedMarks, clearUpdateMark } = usePostUpdateTracker();
 
-  // --- 修改：使用 useState 确保列表在路由切换时不销毁 ---
+  // 状态共享
   const cachedPosts = useState<PostWithUser[]>('global_posts_list', () => []);
   const cachedTotal = useState<number>('global_posts_total', () => -1);
 
@@ -18,9 +15,9 @@ export const usePosts = () => {
     totalItems,
     isLoadingMore,
     hasMore,
-    loadMore,
+    loadMore: originalLoadMore,
     resetPagination,
-  } = usePagination<PostWithUser>(cachedPosts); // 注入全局 Ref
+  } = usePagination<PostWithUser>(cachedPosts);
 
   // 同步分页工具的总数到全局状态
   if (cachedTotal.value !== -1 && totalItems.value === -1) {
@@ -30,26 +27,37 @@ export const usePosts = () => {
     cachedTotal.value = val;
   });
 
-  const isResetting = ref(false);
+  /**
+   * 优化：单条数据处理逻辑
+   */
+  const processPost = (item: PostWithUser): PostWithUser => ({
+    ...item,
+    cleanContent: item.cleanContent || cleanMarkdown(item.content || ''),
+    firstImage: item.firstImage || getFirstImageUrl(item.content),
+  });
 
   /**
    * 工具函数：预处理 Markdown 内容
-   * 修改：增加 firstImage 提取，减少计算属性压力
+   * 用于封装给 usePagination 使用
    */
   const transformPosts = (items: PostWithUser[]) => {
-    return items.map((item) => ({
-      ...item,
-      cleanContent: cleanMarkdown(item.content || ''),
-      firstImage: getFirstImageUrl(item.content), // 预处理
-    }));
+    return items.map(processPost);
+  };
+
+  // 包装 loadMore，确保传入 transformPosts
+  const loadMore = (fetchDataFn: (page: number) => Promise<{ items: PostWithUser[]; total: number } | undefined>) => {
+    return originalLoadMore(fetchDataFn, transformPosts);
   };
 
   const canViewDrafts = computed(() => loggedIn.value && !!user.value?.verified);
+  const isResetting = ref(false);
 
+  /**
+   * 优化：这里的 computed 不再执行 Markdown 解析
+   * 只是简单的过滤和浅层对象映射
+   */
   const displayItems = computed(() => {
-    const filtered = canViewDrafts.value
-      ? allPosts.value
-      : allPosts.value.filter((p) => p.published);
+    const filtered = canViewDrafts.value ? allPosts.value : allPosts.value.filter((p) => p.published);
 
     return filtered.map((item) => ({
       id: item.id,
@@ -61,7 +69,7 @@ export const usePosts = () => {
       published: item.published,
       icon: item.icon,
       avatarId: item.expand?.user?.avatar,
-      firstImage: item.firstImage || getFirstImageUrl(item.content),
+      firstImage: item.firstImage,
       link_data: item.link_data,
       link_image: item.link_image,
       content: item.content,
@@ -69,12 +77,15 @@ export const usePosts = () => {
     }));
   });
 
+  const isListening = ref(false);
+
   const setupRealtime = () => {
-    if (import.meta.server || isPostsSubscribed.value) return;
-    isPostsSubscribed.value = true;
+    if (import.meta.server || isListening.value) return;
+    isListening.value = true;
 
     listen(({ collection, action, record }) => {
       if (collection !== 'posts') return;
+
       const idx = allPosts.value.findIndex((p) => p.id === record.id);
 
       if (action === 'delete') {
@@ -85,12 +96,9 @@ export const usePosts = () => {
         return;
       }
 
-      const isVisible = record.published || canViewDrafts.value;
-      const processed = {
-        ...record,
-        cleanContent: cleanMarkdown(record.content || ''),
-        firstImage: getFirstImageUrl(record.content),
-      } as PostWithUser;
+      // 关键优化：实时数据进入前也进行预处理
+      const processed = processPost(record as PostWithUser);
+      const isVisible = processed.published || canViewDrafts.value;
 
       if (action === 'create' && isVisible && idx === -1) {
         allPosts.value.unshift(processed);
@@ -102,11 +110,11 @@ export const usePosts = () => {
             totalItems.value--;
           } else {
             const oldItem = allPosts.value[idx];
-            allPosts.value[idx] = {
+            allPosts.value.splice(idx, 1, {
               ...oldItem,
               ...processed,
               expand: { ...(oldItem?.expand || {}), ...(record?.expand || {}) },
-            };
+            });
           }
         } else if (isVisible) {
           allPosts.value.unshift(processed);
@@ -116,33 +124,19 @@ export const usePosts = () => {
     });
   };
 
-  const originalClose = close;
   const safeClose = () => {
-    isPostsSubscribed.value = false;
-    originalClose();
+    isListening.value = false;
+    close();
   };
 
-  if (import.meta.client) {
-    onUnmounted(() => {
-      safeClose();
-    });
-  }
+  onUnmounted(() => {
+    safeClose();
+  });
 
   onActivated(() => {
     const updatedIds = Object.keys(updatedMarks.value);
-
     if (updatedIds.length > 0) {
       updatedIds.forEach((id) => {
-        // 1. 找到本地列表中对应的文章
-        const idx = allPosts.value.findIndex((p) => p.id === id);
-
-        if (idx !== -1) {
-          // 这里如果是 true，说明数据更新已经由 setupRealtime 完成了
-          // 或者你可以在这里执行一些 UI 上的高亮逻辑
-          // console.log(`文章 ${id} 已在后台同步完成`);
-        }
-
-        // 2. --- 关键：调用你定义的清理函数 ---
         clearUpdateMark(id);
       });
     }

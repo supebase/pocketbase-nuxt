@@ -54,23 +54,13 @@
           </div>
           <div class="text-sm text-dimmed mt-1.5">
             {{ item.relativeTime
-            }}{{
-              item.expand?.user?.location
-                ? `，来自${formatLocation(item.expand?.user?.location)}`
-                : ''
-            }}
+            }}{{ item.expand?.user?.location ? `，来自${formatLocation(item.expand?.user?.location)}` : '' }}
           </div>
         </template>
       </CommonMotionTimeline>
 
       <div class="flex justify-center mt-8 mb-4 select-none">
-        <UButton
-          v-if="hasMore"
-          :loading="isLoadingMore"
-          variant="soft"
-          color="neutral"
-          @click="handleLoadMore"
-        >
+        <UButton v-if="hasMore" :loading="isLoadingMore" variant="soft" color="neutral" @click="handleLoadMore">
           加载更多评论
         </UButton>
         <USeparator v-else label="已经到底了" type="dashed" />
@@ -101,7 +91,7 @@ const {
   getUniqueUsers,
 } = useComments(props.postId);
 
-const { listen, close } = usePocketRealtime(['comments', 'likes']);
+const { listen, close } = usePocketRealtime();
 const isModalOpen = ref(false);
 const isDeleting = ref(false);
 const selectedComment = ref<CommentRecord | null>(null);
@@ -145,38 +135,50 @@ const parsedContent = (text: string) => {
 };
 
 // 3. 实时监听与初始化
+const setupRealtime = () => {
+  if (import.meta.server) return;
+
+  listen(({ collection, action, record }) => {
+    // 评论逻辑
+    if (collection === 'comments' && record.post === props.postId) {
+      syncSingleComment(record as CommentRecord, action as any);
+    }
+
+    // 点赞逻辑
+    if (collection === 'likes') {
+      const targetCommentId = record.comment;
+      // 使用 find 查找对象引用
+      const target = comments.value.find((c) => c.id === targetCommentId);
+
+      // 关键修正：增加防御性判断，只有找到目标评论才处理
+      if (!target) {
+        // 如果当前列表里没有这条评论，直接跳过，不做任何操作
+        return;
+      }
+
+      // 此时 target 已经被 TS 推断为 CommentRecord (非 undefined)
+      const currentLikes = typeof target.likes === 'number' ? target.likes : 0;
+
+      // 根据 action 计算新的点赞数
+      const newLikes = action === 'create' ? currentLikes + 1 : Math.max(0, currentLikes - 1);
+
+      // 调用同步逻辑
+      handleLikeChange(
+        target.isLiked ?? false,
+        newLikes,
+        targetCommentId,
+        true, // 标记为远程同步，不触发 API 请求
+      );
+    }
+  });
+};
+
 if (import.meta.client) {
   onMounted(async () => {
-    listen(({ collection, action, record }) => {
-      // 评论逻辑
-      if (collection === 'comments' && record.post === props.postId) {
-        syncSingleComment(record as CommentRecord, action as any);
-      }
-      // 点赞逻辑
-      if (collection === 'likes') {
-        const targetCommentId = record.comment;
-        const target = comments.value.find((c) => c.id === targetCommentId);
-
-        if (target) {
-          // 1. 防御性处理：确保数字有效
-          if (typeof target.likes !== 'number') target.likes = 0;
-
-          const newLikes = action === 'create' ? target.likes + 1 : Math.max(0, target.likes - 1);
-
-          // 2. 核心修正点：使用 ?? false 确保传入的是 boolean 而非 undefined
-          handleLikeChange(
-            target.isLiked ?? false, // 如果是 undefined，则默认为 false
-            newLikes,
-            targetCommentId,
-            true,
-          );
-        }
-      }
-    });
-
+    setupRealtime();
     await fetchComments();
   });
-  // 显式清理连接
+
   onUnmounted(() => {
     close();
   });

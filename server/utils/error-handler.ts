@@ -1,24 +1,22 @@
 /**
- * @file 服务端统一错误处理器 (增强版)
- * @description 处理 PocketBase 错误，支持多字段校验错误汇总，并将详细错误结构传递至前端。
+ * @file Global Error Handler
+ * @description 统一转换 PocketBase 异常为标准的 Nuxt H3 错误，支持多字段校验汇总与中文映射。
  */
+
 import { ClientResponseError } from 'pocketbase';
 import { GLOBAL_ERROR_CODE_MAP, FIELD_ERROR_CODE_MAP } from '~/constants/pocketbase';
 
 /**
- * PocketBase 通用错误处理函数。
- * @param error 捕获到的错误对象。
- * @param defaultMessage 兜底的中文提示。
+ * PocketBase 异常拦截器
+ * @description 处理流程：网络检查 -> 实例校验 -> 字段级错误聚合 -> 全局映射 -> 格式化抛出
+ * @throws 转换后的 H3Error 对象
  */
-export function handlePocketBaseError(
-  error: unknown,
-  defaultMessage: string = '请求失败，请稍后再试',
-): never {
+export function handlePocketBaseError(error: unknown, defaultMessage: string = '请求失败，请稍后再试'): never {
   let friendlyMessage = defaultMessage;
   let statusCode = 500;
   let technicalMessage = 'Internal Server Error';
 
-  // 1. 网络层错误处理 (服务不可用或连接超时)
+  // 网络层异常：处理后端服务宕机或请求被拦截（Status 0）
   const isNetworkError =
     (error instanceof TypeError && error.message === 'Failed to fetch') ||
     (error instanceof ClientResponseError && error.status === 0);
@@ -32,7 +30,7 @@ export function handlePocketBaseError(
     });
   }
 
-  // 2. 非 PocketBase 产生的代码逻辑错误
+  // 外部非 PB 异常：处理服务端代码逻辑错误
   if (!(error instanceof ClientResponseError)) {
     console.error('[Internal Error]:', error);
     throw createError({
@@ -43,47 +41,37 @@ export function handlePocketBaseError(
     });
   }
 
-  // 3. 解析 PocketBase 标准错误
+  // 提取 PB 原始错误数据
   statusCode = error.status;
   const errorData = error.data || {};
   technicalMessage = error.message;
 
-  // 4. 处理多字段校验错误 (Validation Errors)
-  // 逻辑：提取所有字段的错误信息，并进行中文映射，最后通过分号连接
-  if (
-    errorData.data &&
-    typeof errorData.data === 'object' &&
-    Object.keys(errorData.data).length > 0
-  ) {
-    const errorEntries = Object.entries(errorData.data);
-
-    const translatedMessages = errorEntries.map(([field, details]: [string, any]) => {
-      const rawFieldMsg = details?.message || '格式错误';
-      // 尝试翻译具体错误信息
-      return FIELD_ERROR_CODE_MAP[rawFieldMsg] || rawFieldMsg;
+  // 处理字段级校验错误 (Validation Errors)
+  // 逻辑：遍历 errorData.data 字典，映射所有不合规字段的提示语
+  if (errorData.data && Object.keys(errorData.data).length > 0) {
+    const messages = Object.values(errorData.data).map((details: any) => {
+      const rawMsg = details?.message || '格式错误';
+      return FIELD_ERROR_CODE_MAP[rawMsg] || rawMsg;
     });
 
-    // 使用 Set 去重（例如多个字段都报“不能为空”时，汇总显示更简洁）
-    const uniqueMessages = Array.from(new Set(translatedMessages));
-
-    // 如果有多个错误，合并显示；如果只有一个，直接显示
-    friendlyMessage = uniqueMessages.length > 1 ? uniqueMessages.join('；') : uniqueMessages[0];
+    // 汇总去重：将多个字段的同类错误（如“必填”）合并显示
+    const uniqueMessages = Array.from(new Set(messages));
+    friendlyMessage = uniqueMessages.join('；');
   }
-  // 5. 处理全局业务逻辑错误 (例如：404 找不到、403 权限不足)
+  // 处理全局业务错误 (如 403 Forbidden, 404 Not Found)
   else {
-    const rawMessage = errorData.message || error.message;
+    const rawMessage = errorData.message || technicalMessage;
     friendlyMessage = GLOBAL_ERROR_CODE_MAP[rawMessage] || rawMessage;
   }
 
-  // 6. 抛出格式化的 H3 错误
+  // 抛出格式化的 Nuxt 错误，便于前端 useFetch 的 error.data 获取
   throw createError({
     statusCode,
     message: friendlyMessage,
     statusMessage: technicalMessage.substring(0, 50),
     data: {
       _isPocketBaseError: true,
-      // 💡 关键：将完整的原始错误结构返回，方便前端做字段高亮
-      fields: errorData.data || {},
+      fields: errorData.data || {}, // 透传原始字段结构，供前端表单高亮使用
       originalMessage: technicalMessage,
     },
     fatal: statusCode >= 500,

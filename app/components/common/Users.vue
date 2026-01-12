@@ -11,7 +11,7 @@
       <div class="flex items-center justify-between px-5 pt-4 select-none">
         <div class="font-semibold text-sm text-muted">用户统计信息</div>
         <div class="flex items-center gap-1.5">
-          <span v-if="isCoolingDown" class="text-xs font-mono text-dimmed animate-pulse">
+          <span v-if="isCoolingDown" class="text-xs font-mono tabular-nums text-dimmed animate-pulse">
             {{ cooldown }}s
           </span>
 
@@ -28,9 +28,7 @@
         </div>
       </div>
       <div class="grid gap-4 md:grid-cols-3 p-4 font-sans select-none">
-        <div
-          class="rounded-xl border border-neutral-100 dark:border-neutral-800 bg-white dark:bg-neutral-900/80"
-        >
+        <div class="rounded-xl border border-neutral-100 dark:border-neutral-800 bg-white dark:bg-neutral-900/80">
           <div class="p-6 flex flex-row items-center justify-between space-y-0 pb-2">
             <h3 class="tracking-tight text-sm font-medium">总用户数</h3>
             <UIcon name="i-hugeicons:user-multiple-02" class="size-4.5 text-dimmed/80" />
@@ -43,9 +41,7 @@
           </div>
         </div>
 
-        <div
-          class="rounded-xl border border-neutral-100 dark:border-neutral-800 bg-white dark:bg-neutral-900/80"
-        >
+        <div class="rounded-xl border border-neutral-100 dark:border-neutral-800 bg-white dark:bg-neutral-900/80">
           <div class="p-6 flex flex-row items-center justify-between space-y-0 pb-2">
             <h3 class="tracking-tight text-sm font-medium">今日新增</h3>
             <UIcon name="i-hugeicons:user-add-02" class="size-4.5 text-dimmed/80" />
@@ -72,9 +68,7 @@
           </div>
         </div>
 
-        <div
-          class="rounded-xl border border-neutral-100 dark:border-neutral-800 bg-white dark:bg-neutral-900/80"
-        >
+        <div class="rounded-xl border border-neutral-100 dark:border-neutral-800 bg-white dark:bg-neutral-900/80">
           <div class="p-6 flex flex-row items-center justify-between space-y-0 pb-2">
             <h3 class="tracking-tight text-sm font-medium">活跃用户</h3>
             <UIcon name="i-hugeicons:chart-up" class="size-4.5 text-dimmed/80" />

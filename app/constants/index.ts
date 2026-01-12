@@ -1,3 +1,5 @@
+export const MAX_COOKIE_AGE = 60 * 60 * 24 * 7; // 7 天
+export const MAX_VIEW_COOKIE_AGE = 60 * 60 * 24; // 1 天
 export const MAX_CACHE_SIZE = 2000; // 缓存大小
 export const MIN_SEARCH_LENGTH = 2; // 搜索最小长度
 export const MENTION_REGEX = /(@[^@\s]+)/g; // 提及正则表达式

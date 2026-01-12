@@ -1,41 +1,40 @@
 /**
  * @file API Route: /api/auth/login [POST]
- * @description 用户登录的 API 端点。
- *              接收用户的电子邮件和密码，调用认证服务进行验证，
- *              并在成功后建立用户的会话状态。
+ * @description 用户登录。验证凭证并同步 PocketBase 认证状态至 Nuxt Session。
  */
+
 import { getPocketBase } from '../../utils/pocketbase';
 import { handleAuthSuccess } from '../../utils/auth-helpers';
 import { defineApiHandler } from '~~/server/utils/api-wrapper';
 import type { LoginRequest, AuthResponse } from '~/types/auth';
 
-/**
- * 定义处理用户登录请求的事件处理器 (Event Handler)。
- * 这是 Nitro (Nuxt 的服务端引擎) 的标准写法。
- */
 export default defineApiHandler(async (event): Promise<AuthResponse> => {
-  // 从请求体中异步读取 JSON 数据，并断言其类型为 `LoginRequest`。
+  // 请求体解析与初步校验
   const body = await readBody<LoginRequest>(event);
   const { email, password } = body;
 
-  // 对输入进行基本的非空验证。
   if (!email || !password) {
-    // 如果缺少关键字段，立即抛出一个 400 Bad Request 错误。
     throw createError({
       statusCode: 400,
       message: '请输入电子邮件和登录密码',
-      statusMessage: 'Invalid Input',
     });
   }
 
-  // 步骤 1: 为本次 HTTP 请求获取一个独立的、专用的 PocketBase 实例。
-  // 传入 `event` 对象，`getPocketBase` 内部可能会用它来处理某些与请求相关的逻辑。
+  // 初始化 PocketBase
+  // 为当前请求获取独立的 PB 实例，确保并发请求间的状态隔离
   const pb = getPocketBase(event);
 
-  // 步骤 2: 调用服务层的 `loginService`，并传入当前的 `pb` 实例以及用户凭证。
+  /**
+   * 执行认证服务
+   * loginService 内部应调用 pb.collection('users').authWithPassword()
+   * 成功后，pb 实例的 authStore 将自动填充 Token 和用户信息
+   */
   await loginService({ pb, email, password });
 
-  // 步骤 3: 如果 `loginService` 没有抛出错误，说明登录成功。
-  // 接着，调用 `handleAuthSuccess` 并将已经填充了认证信息的 `pb` 实例传递给它。
+  /**
+   * 认证后续处理与响应
+   * handleAuthSuccess 负责将 pb.authStore 同步到 event.context.user、
+   * 写入加密 Cookie 以及 Session，并返回标准化的 AuthResponse
+   */
   return await handleAuthSuccess(event, pb, '登录成功');
 });

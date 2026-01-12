@@ -58,14 +58,7 @@
                   size="sm"
                   class="text-dimmed"
                 />
-                <UBadge
-                  v-else
-                  label="PARTAGER"
-                  variant="outline"
-                  color="neutral"
-                  size="sm"
-                  class="text-dimmed"
-                />
+                <UBadge v-else label="PARTAGER" variant="outline" color="neutral" size="sm" class="text-dimmed" />
               </div>
             </template>
 
@@ -91,11 +84,7 @@
             </template>
           </CommonMotionTimeline>
 
-          <ModalDelete
-            v-model:open="isDeleteModalOpen"
-            :loading="isDeleting"
-            @confirm="confirmDelete"
-          >
+          <ModalDelete v-model:open="isDeleteModalOpen" :loading="isDeleting" @confirm="confirmDelete">
             <div v-if="pendingDeleteItem" class="flex flex-col gap-2">
               <div class="text-sm text-primary font-semibold tracking-wider">即将消失的数据</div>
               <div class="text-sm text-muted line-clamp-2">
@@ -108,13 +97,7 @@
         <div v-if="allPosts.length > 0" class="flex flex-col items-center justify-center mt-8 mb-4">
           <Transition name="fade" mode="out-in">
             <div v-if="hasMore" key="load-button">
-              <UButton
-                loading-auto
-                variant="soft"
-                color="neutral"
-                class="cursor-pointer px-8"
-                @click="handleLoadMore"
-              >
+              <UButton loading-auto variant="soft" color="neutral" class="cursor-pointer px-8" @click="handleLoadMore">
                 {{ isLoadingMore ? '努力加载中...' : '加载更多' }}
               </UButton>
             </div>
@@ -180,9 +163,7 @@ const { isDeleteModalOpen, isDeleting, pendingDeleteItem, handleRequestDelete, c
 const animationTrigger = ref(0);
 const refreshCounter = ref(0);
 
-const visibleTotalItems = computed(() =>
-  canViewDrafts.value ? totalItems.value : allPosts.value.filter((p) => p.published).length,
-);
+const visibleTotalItems = computed(() => totalItems.value);
 
 // 5. 监听与生命周期
 watch(
@@ -225,13 +206,14 @@ const manualRefresh = async () => {
 };
 
 const handleLoadMore = () =>
-  loadMore(async () => {
+  loadMore(async (nextPage) => {
     const res = await $fetch<PostsListResponse>('/api/collections/posts', {
-      query: { page: currentPage.value },
+      query: { page: nextPage },
     });
+
     return {
       items: res.data.posts as PostWithUser[],
       total: res.data.totalItems,
     };
-  }, transformPosts);
+  });
 </script>

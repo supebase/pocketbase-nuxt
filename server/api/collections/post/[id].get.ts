@@ -1,77 +1,73 @@
 /**
  * @file API Route: /api/collections/post/:id [GET]
- * @description 获取单篇内容（文章）详情的 API 端点。
+ * @description 获取文章详情。集成服务端 MDC 解析、阅读量防刷统计及阅读量异步自增。
  */
+
 import { defineApiHandler } from '~~/server/utils/api-wrapper';
 import { parseMarkdown } from '@nuxtjs/mdc/runtime';
 import type { SinglePostResponse } from '~/types/posts';
+import { MAX_VIEW_COOKIE_AGE } from '~/constants';
 
-/**
- * 定义处理获取单篇文章详情请求的事件处理器。
- */
 export default defineApiHandler(async (event): Promise<SinglePostResponse> => {
-  // 步骤 1: 从动态路由中获取文章的 ID。
+  const { pb } = event.context;
   const postId = getRouterParam(event, 'id');
 
-  // 步骤 2: 对获取到的 ID 进行基础的有效性验证。
+  // 参数验证
   if (!postId) {
     throw createError({
       statusCode: 400,
-      message: '文章 ID 无效或未提供',
-      statusMessage: 'Invalid Parameter',
+      message: '内容 ID 无效或未提供',
     });
   }
 
-  // 步骤 3: 获取本次请求专用的 PocketBase 实例。
-  // 实例可以是匿名的，也可以是认证过的，服务层可以根据此来决定数据访问权限。
-  const pb = event.context.pb;
-
-  // 步骤 4: 调用服务层的 `getPostById` 函数来执行实际的数据库查询。
-  // 传入 `pb` 实例和 `postId`，将具体的查询逻辑与 API 路由解耦。
+  // 调用 Service 层获取原始记录
   const post = await getPostById({ pb, postId });
 
-  // --- 新增：服务端解析 MDC ---
+  // 服务端 MDC 预解析：将 Markdown 转换为 AST 以提升前端渲染速度
   let mdcAst = null;
-
-  if (post && post.content) {
+  if (post?.content) {
     try {
       mdcAst = await parseMarkdown(post.content, {
         toc: { depth: 4, searchDepth: 4 },
       });
     } catch (e) {
-      console.error('[MDC 解析错误]:', e);
+      console.error(`[MDC Error] 路径: ${postId}`, e);
     }
   }
 
+  // 阅读量防刷逻辑 (IP + Cookie 24h 锁定策略)
   const ip = getRequestIP(event, { xForwardedFor: true }) || 'unknown';
-  // 构造基于文章ID和IP的唯一标识符（去除特殊字符）
   const viewKey = `pv_${postId}_${ip.replace(/[^a-zA-Z0-9]/g, '')}`;
-  // 检查是否存在阅读状态的 Cookie
   const hasViewed = getCookie(event, viewKey);
 
   if (!hasViewed && post) {
-    // A. 异步触发 Service 层的自增逻辑 (不使用 await 避免阻塞页面渲染速度)
+    /**
+     * 非阻塞自增：不使用 await，让阅读量在后台静默更新，不干扰页面首屏响应速度。
+     */
     incrementPostViews({ pb, postId }).catch((err) => {
       console.error('[Views] 自增失败:', err);
     });
 
-    // B. 设置防止重复计数的 Cookie，有效期 24 小时
+    /**
+     * 设置防刷标识：24 小时内同一 IP 访问该文章不再计入阅读量
+     */
     setCookie(event, viewKey, '1', {
-      maxAge: 60 * 60 * 24,
+      maxAge: MAX_VIEW_COOKIE_AGE,
       httpOnly: true,
       sameSite: 'lax',
-      path: '/', // 确保全站路径可用
+      path: '/',
     });
 
-    const currentViews = Number(post.views || 0);
-    (post as any).views = currentViews + 1;
+    // 内存数据同步：让当前请求返回的数据即时反映出自增后的数值
+    (post as any).views = Number(post.views || 0) + 1;
   }
 
+  // 返回标准化响应：携带 AST 内容
   return {
     message: '获取内容详情成功',
     data: {
       ...post,
-      mdcAst, // 将解析好的 AST 传给前端
+      mdcAst,
     },
   };
 });

@@ -3,17 +3,14 @@ import type { SinglePostResponse } from '~/types/posts';
 export const usePostLogic = (id: string | string[]) => {
   const { updatedMarks, clearUpdateMark } = usePostUpdateTracker();
   const { user: currentUser } = useUserSession();
-  const { listen, close } = usePocketRealtime(['posts']);
+  const { listen, close } = usePocketRealtime();
 
   // 数据抓取：开启 server 端抓取以支持 SSR 和 SEO
-  const { data, status, refresh, error } = useFetch<SinglePostResponse>(
-    () => `/api/collections/post/${unref(id)}`,
-    {
-      key: `post-detail-${unref(id)}`,
-      server: true,
-      query: { userId: computed(() => currentUser.value?.id) },
-    },
-  );
+  const { data, status, refresh, error } = useFetch<SinglePostResponse>(() => `/api/collections/post/${unref(id)}`, {
+    key: `post-detail-${unref(id)}`,
+    server: true,
+    query: { userId: computed(() => currentUser.value?.id) },
+  });
 
   // 直接关联服务端返回的 AST
   const ast = computed(() => data.value?.data?.mdcAst || null);
@@ -25,22 +22,43 @@ export const usePostLogic = (id: string | string[]) => {
   });
 
   // 实时监听逻辑 (仅在客户端)
-  if (import.meta.client) {
-    onMounted(() => {
-      listen(({ collection, action, record }) => {
-        if (collection === 'posts' && record.id === unref(id) && action === 'update') {
-          if (data.value?.data) {
-            data.value.data.views = record.views;
-            // 注意：如果内容(content)发生变化，实时同步推荐直接触发 refresh()
-            // 这样能确保重新走一遍服务端的最新解析逻辑
-            if (record.content !== data.value.data.content) {
-              refresh();
-            }
+  const setupRealtime = () => {
+    if (import.meta.server) return;
+
+    listen(async ({ collection, action, record }) => {
+      // 只有当集合匹配且 ID 对应时才处理
+      const targetId = unref(id);
+      if (collection !== 'posts' || record.id !== targetId) return;
+
+      if (action === 'update') {
+        if (data.value?.data) {
+          // 浏览量等轻量字段：手动热更新 UI，无需刷新页面
+          data.value.data.views = record.views;
+
+          // 内容变化：由于涉及服务端 AST 解析，必须调用 refresh
+          // 这样能确保重新获取服务端生成的最新 mdcAst
+          if (record.content !== data.value.data.content) {
+            console.log('[SSE] 内容变化，刷新 AST...');
+            refresh();
           }
         }
-      });
+      } else if (action === 'delete') {
+        // 如果文章被删除了，可以重定向或修改状态
+        // data.value = null;
+        await navigateTo('/');
+      }
     });
-    onUnmounted(close);
+  };
+
+  if (import.meta.client) {
+    onMounted(() => {
+      setupRealtime();
+    });
+
+    // usePocketRealtime 的 close 会精准移除当前 callback
+    onUnmounted(() => {
+      close();
+    });
   }
 
   return {
