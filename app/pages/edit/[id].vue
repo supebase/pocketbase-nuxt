@@ -6,15 +6,6 @@
     :disabled="isSubmitting"
     @submit="handleSubmit"
   >
-    <template #loader>
-      <div
-        v-if="isLoading"
-        class="z-10 absolute inset-0 flex items-center justify-center bg-white/80 dark:bg-neutral-900/80 backdrop-blur rounded-lg"
-      >
-        <UIcon name="i-hugeicons:loading-02" class="animate-spin size-6.5 text-primary" />
-      </div>
-    </template>
-
     <template #actions>
       <UButton type="button" color="warning" variant="soft" @click="$router.back()"> 取消编辑 </UButton>
       <UButton
@@ -27,10 +18,17 @@
       </UButton>
     </template>
   </CommonEditor>
+
+  <div
+    v-else
+    class="z-10 absolute inset-0 flex items-center justify-center bg-white/80 dark:bg-neutral-900/80 backdrop-blur rounded-lg"
+  >
+    <UIcon name="i-hugeicons:loading-02" class="animate-spin size-6.5 text-primary" />
+  </div>
 </template>
 
 <script setup lang="ts">
-import type { SinglePostResponse } from '~/types/posts';
+import type { SinglePostResponse, PostWithUser } from '~/types/posts';
 import { CONTENT_MAX_LENGTH } from '~/constants';
 
 definePageMeta({
@@ -68,6 +66,8 @@ const loadPostData = async () => {
   }
 };
 
+const { allPosts, transformPosts } = usePosts();
+
 const handleSubmit = async () => {
   if (form.value.content.length > maxLimit) {
     return;
@@ -79,11 +79,26 @@ const handleSubmit = async () => {
 
   isSubmitting.value = true;
   try {
-    await $fetch(`/api/collections/post/${id}`, {
+    const response = await $fetch(`/api/collections/post/${id}`, {
       method: 'PUT',
       body: form.value,
     });
-    await refreshNuxtData('posts-list-data');
+
+    if (response?.data) {
+      const index = allPosts.value.findIndex((p) => p.id === id);
+      if (index !== -1) {
+        const transformedArray = transformPosts([response.data as any]);
+        const transformed = transformedArray[0];
+
+        if (transformed) {
+          allPosts.value[index] = {
+            ...allPosts.value[index],
+            ...transformed,
+          } as PostWithUser;
+        }
+      }
+    }
+
     markAsUpdated(id);
     await navigateTo('/');
   } finally {
