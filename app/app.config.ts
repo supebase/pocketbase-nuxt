@@ -14,7 +14,7 @@ export default defineAppConfig({
     },
     header: {
       slots: {
-        container: 'max-w-xl',
+        // container: 'max-w-xl',
       },
     },
     pageBody: {
@@ -42,7 +42,8 @@ export default defineAppConfig({
     empty: {
       slots: {
         root: 'bg-default/30! backdrop-blur-md',
-        avatar: 'shrink-0 mb-2 bg-transparent',
+        title: 'text-dimmed',
+        description: 'text-dimmed/80!',
       },
     },
     separator: {

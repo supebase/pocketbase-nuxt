@@ -1,8 +1,5 @@
 <template>
-  <UCard
-    variant="subtle"
-    class="mx-auto select-none bg-white/60 dark:bg-neutral-900/60 backdrop-blur"
-  >
+  <UCard variant="subtle" class="mx-auto select-none bg-white/60 dark:bg-neutral-900/60 backdrop-blur">
     <UTabs
       v-model="activeTab"
       :items="TABS"
@@ -24,11 +21,7 @@
         class="transition-all duration-500"
       />
 
-      <AuthForm
-        :key="activeTab"
-        :is-login-mode="activeTab === 'login'"
-        @update:error="(val) => (authError = val)"
-      />
+      <AuthForm :key="activeTab" :is-login-mode="activeTab === 'login'" @update:error="(val) => (authError = val)" />
     </div>
   </UCard>
 </template>
@@ -37,7 +30,7 @@
 import { TABS } from '~/constants';
 
 definePageMeta({
-  hideHeaderBack: false,
+  hideHeaderBack: true,
 });
 
 const route = useRoute();

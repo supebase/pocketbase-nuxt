@@ -130,6 +130,7 @@ const {
   currentPage,
   isLoadingMore,
   hasMore,
+  isInitialLoaded,
   isResetting,
   canViewDrafts,
   setupRealtime,
@@ -170,7 +171,12 @@ watch(
   fetchResult,
   (res) => {
     if (res?.data && res.data.page === 1) {
+      if (allPosts.value.length === 0) {
+        animationTrigger.value++;
+      }
+
       resetPagination(res.data.posts as PostWithUser[], res.data.totalItems, transformPosts);
+      isInitialLoaded.value = true;
     }
   },
   { immediate: true },

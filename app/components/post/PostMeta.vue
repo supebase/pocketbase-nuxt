@@ -1,25 +1,25 @@
 <template>
   <div class="flex items-center justify-between gap-2 w-full">
     <div class="flex items-center gap-3 tracking-wide">
-      <UIcon v-if="props.postMeta.icon" :name="props.postMeta.icon" class="size-7 text-primary" />
+      <UIcon v-if="postMeta.icon" :name="postMeta.icon" class="size-7 text-primary" />
       <div v-else class="size-8">
-        <CommonGravatar :avatar-id="props.avatarId" :size="64" />
+        <CommonGravatar :avatar-id="avatarId" :size="64" />
       </div>
       <div class="text-dimmed text-sm flex items-center">
         <ClientOnly>
-          {{ props.postMeta.relativeTime }}
-          <template #fallback
-            ><span>{{ useRelativeTime(props.postMeta.created).value }}</span></template
-          >
+          {{ postMeta.relativeTime }}
+          <template #fallback>
+            <span>同步中</span>
+          </template>
         </ClientOnly>
         <span class="mx-1.5">&bull;</span>
-        {{ useReadingTime(props.postMeta.content) }}
+        {{ useReadingTime(postMeta.content) }}
       </div>
     </div>
 
     <div class="flex items-center gap-1.25 text-dimmed text-sm">
       <ClientOnly>
-        <CommonAnimateNumber :value="props.postMeta.views" /> 次拾阅
+        <CommonAnimateNumber :value="postMeta.views" /> 次拾阅
         <template #fallback> <CommonAnimateNumber :value="0" /> 次拾阅 </template>
       </ClientOnly>
     </div>

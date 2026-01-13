@@ -16,9 +16,7 @@
     </template>
 
     <template #actions>
-      <UButton type="button" color="warning" variant="soft" @click="$router.back()">
-        取消编辑
-      </UButton>
+      <UButton type="button" color="warning" variant="soft" @click="$router.back()"> 取消编辑 </UButton>
       <UButton
         type="submit"
         color="neutral"

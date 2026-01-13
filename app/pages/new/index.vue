@@ -1,14 +1,7 @@
 <template>
-  <CommonEditor
-    :model-value="form"
-    :max-limit="maxLimit"
-    :disabled="isSubmitting"
-    @submit="handleSubmit"
-  >
+  <CommonEditor :model-value="form" :max-limit="maxLimit" :disabled="isSubmitting" @submit="handleSubmit">
     <template #actions>
-      <UButton type="button" color="warning" variant="soft" @click="useRouter().back()">
-        取消发布
-      </UButton>
+      <UButton type="button" color="warning" variant="soft" @click="useRouter().back()"> 取消发布 </UButton>
       <UButton
         type="submit"
         color="neutral"

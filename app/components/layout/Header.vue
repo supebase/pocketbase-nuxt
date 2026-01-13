@@ -1,6 +1,12 @@
 <template>
   <div>
     <div class="flex items-center gap-3 select-none">
+      <ModalSearch />
+      <StatsUsers />
+      <CommonColorModeButton />
+
+      <USeparator orientation="vertical" class="h-6" />
+
       <UButton
         to="/auth"
         color="neutral"
@@ -20,13 +26,8 @@
           </template>
         </UUser>
 
-        <USeparator orientation="vertical" class="h-6" />
-
         <AuthLogoutButton />
       </div>
-      <ModalSearch />
-      <CommonUsers />
-      <CommonColorModeButton />
     </div>
   </div>
 </template>

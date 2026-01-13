@@ -8,6 +8,7 @@ export const usePosts = () => {
   // 状态共享
   const cachedPosts = useState<PostWithUser[]>('global_posts_list', () => []);
   const cachedTotal = useState<number>('global_posts_total', () => -1);
+  const isInitialLoaded = useState<boolean>('posts_initial_loaded', () => false);
 
   const {
     allItems: allPosts,
@@ -149,6 +150,7 @@ export const usePosts = () => {
     currentPage,
     isLoadingMore,
     hasMore,
+    isInitialLoaded,
     isResetting,
     canViewDrafts,
     setupRealtime,

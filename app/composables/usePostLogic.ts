@@ -5,9 +5,12 @@ export const usePostLogic = (id: string | string[]) => {
   const { user: currentUser } = useUserSession();
   const { listen, close } = usePocketRealtime();
 
+  // 确保 ID 的响应式引用，支持路由参数切换
+  const idRef = computed(() => (isRef(id) ? id.value : Array.isArray(id) ? id[0] : id));
+
   // 数据抓取：开启 server 端抓取以支持 SSR 和 SEO
-  const { data, status, refresh, error } = useFetch<SinglePostResponse>(() => `/api/collections/post/${unref(id)}`, {
-    key: `post-detail-${unref(id)}`,
+  const { data, status, refresh, error } = useFetch<SinglePostResponse>(() => `/api/collections/post/${idRef.value}`, {
+    key: `post-detail-${idRef.value}`,
     server: true,
     query: { userId: computed(() => currentUser.value?.id) },
   });
@@ -27,7 +30,7 @@ export const usePostLogic = (id: string | string[]) => {
 
     listen(async ({ collection, action, record }) => {
       // 只有当集合匹配且 ID 对应时才处理
-      const targetId = unref(id);
+      const targetId = idRef.value;
       if (collection !== 'posts' || record.id !== targetId) return;
 
       if (action === 'update') {
@@ -39,7 +42,7 @@ export const usePostLogic = (id: string | string[]) => {
           // 这样能确保重新获取服务端生成的最新 mdcAst
           if (record.content !== data.value.data.content) {
             console.log('[SSE] 内容变化，刷新 AST...');
-            refresh();
+            await refresh();
           }
         }
       } else if (action === 'delete') {
