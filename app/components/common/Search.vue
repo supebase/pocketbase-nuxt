@@ -22,11 +22,7 @@
           class="flex items-center justify-center w-full py-2 text-sm font-medium text-dimmed"
           @click.stop.prevent="onSelect(item)"
         >
-          <UIcon
-            v-if="isLoadingMore"
-            name="i-hugeicons:loading-02"
-            class="animate-spin size-4 mr-2"
-          />
+          <UIcon v-if="isLoadingMore" name="i-hugeicons:loading-02" class="animate-spin size-4 mr-2" />
           <span>{{ item.label }}</span>
         </div>
 
@@ -52,16 +48,11 @@
           请输入至少 {{ MIN_SEARCH_LENGTH }} 个字符后开始搜索
         </p>
 
-        <div
-          v-else-if="isLoading || isComposing"
-          class="flex items-center text-dimmed animate-pulse"
-        >
-          正在搜索中 ...
+        <div v-else-if="isLoading || isComposing" class="flex items-center text-dimmed animate-pulse">
+          正在翻箱倒柜找内容
         </div>
 
-        <p v-else-if="!allItems.length" class="text-dimmed">
-          未找到与 "{{ searchQuery }}" 相关的数据
-        </p>
+        <p v-else-if="!allItems.length" class="text-dimmed">未找到与 "{{ searchQuery }}" 相关的数据</p>
       </div>
     </template>
 

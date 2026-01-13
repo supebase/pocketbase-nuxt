@@ -1,21 +1,11 @@
 <template>
-  <div
-    :key="item.id"
-    :class="[isFirstTimeRender ? 'record-item-animate' : '']"
-    :style="{ '--delay': `${delay}s` }"
-  >
-    <ULink
-      :to="`/${item.id}`"
-      class="line-clamp-3 font-sans tracking-normal leading-7 wrap-break-word"
-      tabindex="-1"
-    >
+  <div :key="item.id" :class="[isFirstTimeRender ? 'record-item-animate' : '']" :style="{ '--delay': `${delay}s` }">
+    <ULink :to="`/${item.id}`" class="line-clamp-3 font-sans tracking-normal leading-7 wrap-break-word" tabindex="-1">
       {{ item.cleanContent }}
     </ULink>
 
     <ULink v-if="item.firstImage" :to="`/${item.id}`" class="group" tabindex="-1">
-      <div
-        class="my-3 rounded-lg overflow-hidden border border-neutral-200 dark:border-neutral-800"
-      >
+      <div class="my-3 rounded-lg overflow-hidden border border-neutral-200 dark:border-neutral-800">
         <div class="relative overflow-hidden aspect-video">
           <img
             :src="item.firstImage"
@@ -35,11 +25,7 @@
       </div>
     </ULink>
 
-    <CommonLinkCard
-      v-if="item.link_data"
-      :data="item.link_data"
-      :link-image="getLinkImage(item, item.link_image)"
-    />
+    <CommonLinkCard v-if="item.link_data" :data="item.link_data" :link-image="getLinkImage(item, item.link_image)" />
     <CommentsUsers :post-id="item.id" :allow-comment="item.allow_comment" />
   </div>
 </template>

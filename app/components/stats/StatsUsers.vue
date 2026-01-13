@@ -35,7 +35,7 @@
             <USkeleton
               v-for="i in 3"
               :key="i"
-              class="h-32.5 w-39.5 animate-pulse rounded-lg border border-neutral-100 dark:border-neutral-800 bg-white dark:bg-neutral-900/80"
+              class="h-32.5 w-39.5 animate-pulse rounded-lg border border-neutral-200/60 dark:border-neutral-800/60 bg-white/60 dark:bg-neutral-900/60"
             />
           </div>
         </template>

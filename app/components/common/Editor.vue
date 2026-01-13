@@ -15,16 +15,9 @@
             :disabled="disabled"
           />
 
-          <EditorMetaForm
-            v-model:icon="modelValue.icon"
-            v-model:link="modelValue.link"
-            :action="modelValue.action"
-          />
+          <EditorMetaForm v-model:icon="modelValue.icon" v-model:link="modelValue.link" :action="modelValue.action" />
 
-          <EditorSettings
-            v-model:published="modelValue.published"
-            v-model:allow-comment="modelValue.allow_comment"
-          />
+          <EditorSettings v-model:published="modelValue.published" v-model:allow-comment="modelValue.allow_comment" />
 
           <USeparator />
 
@@ -39,12 +32,8 @@
           <div class="bg-muted/30 p-6 rounded-lg border border-dashed border-muted">
             <UIcon name="i-hugeicons:phone-lock" class="w-12 h-12 mb-4 text-dimmed/60" />
             <h2 class="text-base font-bold">暂不支持移动端</h2>
-            <p class="text-sm text-dimmed max-w-60 mt-2">
-              当前页面包含复杂排版功能，请在电脑端打开。
-            </p>
-            <UButton class="mt-6" block color="neutral" size="xl" @click="useRouter().back()"
-              >返回</UButton
-            >
+            <p class="text-sm text-dimmed max-w-60 mt-2">当前页面包含复杂排版功能，请在电脑端打开。</p>
+            <UButton class="mt-6" block color="neutral" size="xl" @click="useRouter().back()">返回</UButton>
           </div>
         </div>
       </template>
@@ -76,11 +65,7 @@ const extensions = [
 const editorContent = computed({
   get: () => (props.modelValue.content === '' ? null : props.modelValue.content),
   set: (val) => {
-    let content = val ?? '';
-    if (content.length > props.maxLimit) {
-      content = content.substring(0, props.maxLimit);
-    }
-    props.modelValue.content = content;
+    props.modelValue.content = val ?? '';
   },
 });
 

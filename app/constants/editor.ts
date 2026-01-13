@@ -70,16 +70,16 @@ export const items: EditorToolbarItem[][] = [
       kind: 'blockquote',
       icon: 'i-hugeicons:left-to-right-block-quote',
     },
-    {
-      kind: 'link',
-      icon: 'i-hugeicons:link-01',
-    },
+    // {
+    //   kind: 'link',
+    //   icon: 'i-hugeicons:link-01',
+    // },
   ],
   [
-    {
-      kind: 'codeBlock',
-      icon: 'i-hugeicons:code',
-    },
+    // {
+    //   kind: 'codeBlock',
+    //   icon: 'i-hugeicons:code',
+    // },
     {
       kind: 'horizontalRule',
       icon: 'i-hugeicons:solid-line-01',

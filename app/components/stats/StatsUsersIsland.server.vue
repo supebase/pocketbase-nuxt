@@ -1,6 +1,6 @@
 <template>
   <div class="grid gap-4 md:grid-cols-3 p-4 font-sans select-none">
-    <div class="rounded-lg border border-neutral-100 dark:border-neutral-800 bg-white dark:bg-neutral-900/80">
+    <div class="rounded-lg border border-neutral-200/60 dark:border-neutral-800/60 bg-white/60 dark:bg-neutral-900/60">
       <div class="p-6 flex flex-row items-center justify-between space-y-0 pb-2">
         <h3 class="tracking-tight text-sm font-medium">总用户数</h3>
         <UIcon name="i-hugeicons:user-multiple-02" class="size-4.5 text-dimmed/80" />
@@ -11,7 +11,7 @@
       </div>
     </div>
 
-    <div class="rounded-lg border border-neutral-100 dark:border-neutral-800 bg-white dark:bg-neutral-900/80">
+    <div class="rounded-lg border border-neutral-200/60 dark:border-neutral-800/60 bg-white/60 dark:bg-neutral-900/60">
       <div class="p-6 flex flex-row items-center justify-between space-y-0 pb-2">
         <h3 class="tracking-tight text-sm font-medium">今日新增</h3>
         <UIcon name="i-hugeicons:user-add-02" class="size-4.5 text-dimmed/80" />
@@ -34,7 +34,7 @@
       </div>
     </div>
 
-    <div class="rounded-lg border border-neutral-100 dark:border-neutral-800 bg-white dark:bg-neutral-900/80">
+    <div class="rounded-lg border border-neutral-200/60 dark:border-neutral-800/60 bg-white/60 dark:bg-neutral-900/60">
       <div class="p-6 flex flex-row items-center justify-between space-y-0 pb-2">
         <h3 class="tracking-tight text-sm font-medium">活跃用户</h3>
         <UIcon name="i-hugeicons:chart-up" class="size-4.5 text-dimmed/80" />

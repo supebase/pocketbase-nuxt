@@ -18,6 +18,8 @@
       />
 
       <div class="flex items-center gap-3" v-else>
+        <AuthLogoutButton />
+
         <UUser size="sm">
           <template #avatar>
             <div class="size-7 rounded-full overflow-hidden">
@@ -25,8 +27,6 @@
             </div>
           </template>
         </UUser>
-
-        <AuthLogoutButton />
       </div>
     </div>
   </div>

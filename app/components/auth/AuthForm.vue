@@ -40,17 +40,14 @@
       </UInput>
 
       <div v-if="!isLoginMode">
-        <ul class="space-y-2 ml-3.25">
+        <ul class="space-y-2 ml-4.25">
           <li
             v-for="(req, index) in strength"
             :key="index"
-            class="flex items-center gap-1"
-            :class="req.met ? 'text-primary' : 'text-dimmed'"
+            class="flex items-center gap-3"
+            :class="req.met ? 'text-success' : 'text-dimmed'"
           >
-            <UIcon
-              :name="req.met ? 'i-hugeicons:checkmark-circle-03' : 'i-hugeicons:circle'"
-              class="size-4 shrink-0"
-            />
+            <UIcon :name="req.met ? 'i-hugeicons:checkmark-circle-03' : 'i-hugeicons:circle'" class="size-4 shrink-0" />
             <span class="text-xs text-dimmed tabular-nums">
               {{ req.text }}
             </span>
@@ -111,15 +108,14 @@ const props = defineProps<{
 const emit = defineEmits(['update:error']);
 
 // 1. 引入 Auth 逻辑
-const { email, password, passwordConfirm, loading, error, strength, color, handleAuth, fetchGeo } =
-  useAuth(toRef(props, 'isLoginMode'));
+const { email, password, passwordConfirm, loading, error, strength, color, handleAuth, fetchGeo } = useAuth(
+  toRef(props, 'isLoginMode'),
+);
 
 // 2. 密码可见性逻辑 (保持原始自定义组合函数)
-const { isVisible: showPassword, toggleVisibility: togglePasswordVisibility } =
-  usePasswordVisibility();
+const { isVisible: showPassword, toggleVisibility: togglePasswordVisibility } = usePasswordVisibility();
 
-const { isVisible: showPasswordConfirm, toggleVisibility: togglePasswordConfirmVisibility } =
-  usePasswordVisibility();
+const { isVisible: showPasswordConfirm, toggleVisibility: togglePasswordConfirmVisibility } = usePasswordVisibility();
 
 // 3. 这里的 formState 主要是给 UForm 的 state 绑定的
 const formState = computed(() => ({

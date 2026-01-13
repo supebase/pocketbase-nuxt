@@ -4,6 +4,9 @@
       v-slot="{ editor }"
       v-model="content"
       content-type="markdown"
+      :starter-kit="{
+        link: false,
+      }"
       :extensions="extensions"
       :enable-input-rules="false"
       :enable-paste-rules="false"
@@ -15,11 +18,7 @@
           'w-xl relative left-1/2 right-1/2 -translate-x-1/2 prose dark:prose-invert max-w-none min-h-[400px] focus:outline-none pt-3 pb-16',
       }"
     >
-      <UEditorToolbar
-        :editor="editor"
-        :items="toolbarItems"
-        class="pb-3 border-b border-b-muted/60"
-      />
+      <UEditorToolbar :editor="editor" :items="toolbarItems" class="pb-3 border-b border-b-muted/60" />
       <UEditorDragHandle :editor="editor" />
 
       <ClientOnly>
@@ -53,9 +52,7 @@ const props = defineProps<{
 }>();
 
 const currentLength = computed(() => content.value?.length || 0);
-const percentage = computed(() =>
-  Math.min(Math.round((currentLength.value / props.maxLimit) * 100), 100),
-);
+const percentage = computed(() => Math.min(Math.round((currentLength.value / props.maxLimit) * 100), 100));
 
 const progressColor = computed(() => {
   if (percentage.value >= 100) return 'error';

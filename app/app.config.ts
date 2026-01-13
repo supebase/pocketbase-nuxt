@@ -11,6 +11,10 @@ export default defineAppConfig({
       close: 'i-hugeicons:cancel-01',
       search: 'i-hugeicons:search-01',
       check: 'i-hugeicons:tick-01',
+      info: 'i-hugeicons:information-circle',
+      tip: 'i-hugeicons:bulb',
+      warning: 'i-hugeicons:alert-01',
+      caution: 'i-hugeicons:alert-circle',
     },
     header: {
       slots: {
@@ -32,6 +36,16 @@ export default defineAppConfig({
             root: 'flex-col items-center justify-center',
           },
         },
+      },
+    },
+    input: {
+      slots: {
+        leadingIcon: 'size-5! ml-1!',
+      },
+    },
+    tabs: {
+      slots: {
+        label: 'text-[15px]!',
       },
     },
     chip: {
