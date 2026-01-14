@@ -1,5 +1,5 @@
 <template>
-  <div class="leading-7 hyphens-none mb-4 last:mb-0">
+  <div class="text-justify hyphens-auto wrap-break-word tracking-tight leading-relaxed mb-4">
     <slot />
   </div>
 </template>

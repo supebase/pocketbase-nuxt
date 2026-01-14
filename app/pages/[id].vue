@@ -1,7 +1,7 @@
 <template>
   <div>
     <div v-if="status === 'pending' && !postWithRelativeTime" key="loading" class="flex flex-col gap-6 mt-4">
-      <SkeletonPost class="opacity-70 mask-b-from-10" />
+      <SkeletonPost class="mask-b-from-10" />
     </div>
 
     <div v-else-if="postWithRelativeTime" key="content">

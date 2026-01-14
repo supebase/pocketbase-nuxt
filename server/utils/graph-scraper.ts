@@ -42,22 +42,33 @@ export const getLinkPreview = async (url: string): Promise<LinkPreviewData | nul
     });
 
     if (result.success) {
-      const urlObj = new URL(url);
+      let isGitHub = false;
+      let hostname = '';
 
-      // 特殊策略处理：GitHub 的 OG 图通常是头像或动态生成的，按需决定是否过滤
-      const isGitHub = urlObj.hostname === 'github.com' || urlObj.hostname.endsWith('.github.com');
+      try {
+        const urlObj = new URL(url);
+        hostname = urlObj.hostname;
+        isGitHub = hostname === 'github.com' || hostname.endsWith('.github.com');
+      } catch (e) {
+        // 如果 URL 解析失败，安全退回到非 GitHub 逻辑
+      }
 
-      // 优先级提取图片：优先 OG，次选 Twitter
-      const rawImage = result.ogImage?.[0]?.url || result.twitterImage?.[0]?.url || '';
-      const finalImage = !isGitHub && rawImage ? ensureAbsoluteUrl(rawImage, url) : '';
+      // 优化点 2: 逻辑更直观
+      let finalImage = '';
 
-      // 返回跨平台一致的元数据结构
+      if (!isGitHub) {
+        const rawImage = result.ogImage?.[0]?.url || result.twitterImage?.[0]?.url || '';
+        if (rawImage) {
+          finalImage = ensureAbsoluteUrl(rawImage, url);
+        }
+      }
+
       return {
         url,
         title: result.ogTitle || result.twitterTitle || '无标题',
         description: result.ogDescription || result.twitterDescription || '',
         image: finalImage,
-        siteName: result.ogSiteName || urlObj.hostname,
+        siteName: result.ogSiteName || hostname || 'Unknown',
       };
     }
   } catch (e) {

@@ -1,7 +1,6 @@
 <template>
   <div class="flex items-center justify-between w-full px-1.5">
-    <PostsButton :isLogin="isLogin" :userVerified="userVerified" />
-    <div class="flex items-center gap-1 text-[15px] tracking-widest text-muted">
+    <div class="flex items-center gap-1 text-[15px] tracking-widest text-muted mt-3">
       <ClientOnly>
         攒了 <CommonAnimateNumber :value="count" /> 篇
         <template #fallback> 攒了 <CommonAnimateNumber :value="0" /> 篇 </template>
@@ -20,6 +19,7 @@
         />
       </div>
     </div>
+    <PostsButton :isLogin="isLogin" :userVerified="userVerified" />
   </div>
 </template>
 

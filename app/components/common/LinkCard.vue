@@ -32,25 +32,20 @@
       class="relative w-21 shrink-0 border-r border-neutral-200 dark:border-neutral-800 overflow-hidden bg-white/60 dark:bg-neutral-900/60 backdrop-blur"
     >
       <div class="absolute inset-0 flex items-center justify-center">
-        <UIcon
-          :name="isGitHub ? 'i-hugeicons:github' : 'i-hugeicons:image-02'"
-          class="text-dimmed/40 size-8"
-        />
+        <UIcon :name="isGitHub ? 'i-hugeicons:github' : 'i-hugeicons:image-02'" class="text-dimmed/40 size-8" />
       </div>
     </div>
 
-    <div
-      class="flex-1 p-3 min-w-0 flex flex-col justify-center space-y-1 bg-white dark:bg-neutral-900"
-    >
-      <div class="text-sm font-bold line-clamp-1 w-full">
+    <div class="flex-1 p-3 min-w-0 flex flex-col justify-center space-y-1 bg-white dark:bg-neutral-900">
+      <div class="text-sm text-default font-bold line-clamp-1 w-full">
         {{ cleanTitle }}
       </div>
 
-      <div class="text-xs text-dimmed line-clamp-1 w-full">
+      <div class="text-xs text-muted line-clamp-1 w-full">
         {{ data.description }}
       </div>
 
-      <div class="text-[11px] text-dimmed/70 truncate font-mono">
+      <div class="text-[11px] text-dimmed/80 truncate font-mono">
         {{ displayUrl }}
       </div>
     </div>
@@ -71,37 +66,7 @@ const handleLoad = () => {
   isLoaded.value = true;
 };
 
-// 判断是否为 GitHub 链接
-const isGitHub = computed(() => {
-  try {
-    const host = new URL(props.data.url).hostname;
-    return host === 'github.com' || host.endsWith('.github.com');
-  } catch {
-    return false;
-  }
-});
-
-const cleanTitle = computed(() => {
-  if (!props.data.title) return '';
-  // 使用正则：忽略大小写 (i)，匹配字符串开头的 "GitHub - "
-  return props.data.title.replace(/^GitHub\s*-\s*/i, '');
-});
-
-const displayUrl = computed(() => {
-  try {
-    const urlObj = new URL(props.data.url);
-    const host = urlObj.hostname;
-
-    // 如果是 github.com，只保留域名 (例如: github.com)
-    if (host === 'github.com') {
-      return host;
-    }
-
-    // 其他情况：移除协议和末尾斜杠 (例如: domain.com/path/to/resource)
-    return props.data.url.replace(/^https?:\/\//, '').replace(/\/$/, '');
-  } catch {
-    // 降级处理：如果 URL 格式非法，执行简单的字符串替换
-    return props.data.url.replace(/^https?:\/\//, '').replace(/\/$/, '');
-  }
-});
+const isGitHub = computed(() => isGitHubUrl(props.data.url));
+const cleanTitle = computed(() => formatLinkTitle(props.data.title || '', props.data.url));
+const displayUrl = computed(() => formatDisplayUrl(props.data.url));
 </script>

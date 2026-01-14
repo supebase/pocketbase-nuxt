@@ -5,14 +5,15 @@
       v-model="content"
       content-type="markdown"
       :starter-kit="{
+        codeBlock: false,
         link: false,
       }"
       :extensions="extensions"
-      :enable-input-rules="false"
+      :enable-input-rules="true"
       :enable-paste-rules="false"
       :disabled="disabled"
       autofocus
-      class="w-full"
+      class="w-full custom-editor-canvas"
       :ui="{
         content:
           'w-xl relative left-1/2 right-1/2 -translate-x-1/2 prose dark:prose-invert max-w-none min-h-[400px] focus:outline-none pt-3 pb-16',

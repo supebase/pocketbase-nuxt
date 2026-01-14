@@ -1,9 +1,6 @@
 <template>
   <div class="my-6">
-    <div
-      class="rounded-lg overflow-hidden border border-neutral-200 dark:border-neutral-800 bg-neutral-100 dark:bg-neutral-900 cursor-zoom-in relative"
-      @click="isExpanded = true"
-    >
+    <div class="rounded-lg overflow-hidden cursor-zoom-in relative" @click="isExpanded = true">
       <img
         ref="imgRef"
         :src="refinedSrc"
@@ -18,7 +15,7 @@
       />
 
       <div v-if="!isLoaded" class="absolute inset-0 flex items-center justify-center">
-        <UIcon name="i-hugeicons:refresh" class="size-5 text-muted animate-spin" />
+        <UIcon name="i-hugeicons:refresh" class="size-6 text-muted animate-spin" />
       </div>
     </div>
 
@@ -38,7 +35,7 @@
         >
           <img
             :src="refinedSrc"
-            class="max-w-[95vw] max-h-[95vh] object-contain shadow-2xl rounded-sm transition-transform duration-300"
+            class="max-w-[95vw] max-h-[95vh] object-contain shadow-2xl rounded-lg transition-transform duration-300"
             :class="isExpanded ? 'scale-100' : 'scale-95'"
           />
         </div>

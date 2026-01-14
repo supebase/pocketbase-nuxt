@@ -246,6 +246,71 @@ body {
   border-radius: var(--radius-lg);
 }
 
+/* ================================
+ * Code Block Container (UI Shell)
+ * ================================ */
+.custom-editor-canvas pre {
+  position: relative;
+  padding-top: 2.25rem; /* 给 filename 留空间 */
+  border-radius: 0.5rem;
+  overflow: hidden;
+
+  background: var(--ui-bg-muted);
+  border: 1px solid var(--ui-border-muted);
+}
+
+/* ================================
+ * Filename Header (Meta UI)
+ * ================================ */
+.custom-editor-canvas .code-filename {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+
+  height: 2.25rem;
+  padding: 0 0.75rem;
+
+  display: flex;
+  align-items: center;
+
+  font-size: 0.75rem;
+  font-weight: 500;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  color: var(--ui-text-dimmed);
+  background: var(--ui-bg);
+  text-transform: uppercase;
+
+  border-bottom: 1px solid var(--ui-border-muted);
+
+  user-select: none;
+  pointer-events: none;
+}
+
+/* ================================
+ * Code Content (Semantic Scope)
+ * ================================ */
+.tiptap pre > code {
+  display: block;
+  padding: .8rem .1rem;
+  background: transparent;
+}
+
+/* ================================
+ * Light Mode – Improve Readability
+ * ================================ */
+html:not(.dark) .tiptap pre > code {
+  color: var(--ui-text);
+}
+
+/* ================================
+ * Dark Mode – Keep Native Contrast
+ * ================================ */
+.dark .tiptap pre > code {
+  background: transparent;
+}
+
 .v3-emojis button {
   flex-basis: 16.6% !important;
   max-width: 16.6% !important;

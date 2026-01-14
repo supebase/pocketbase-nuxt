@@ -45,6 +45,7 @@
 import { breakpointsTailwind, useBreakpoints } from '@vueuse/core';
 import Placeholder from '@tiptap/extension-placeholder';
 import CharacterCount from '@tiptap/extension-character-count';
+import { CustomCodeBlock } from '~/extensions/CustomCodeBlock';
 import { items } from '~/constants/editor';
 import { actionItems } from '~/constants';
 
@@ -60,6 +61,7 @@ defineEmits(['submit']);
 const extensions = [
   Placeholder.configure({ placeholder: '从这里开始写作吧 ...' }),
   CharacterCount.configure({ limit: props.maxLimit }),
+  CustomCodeBlock,
 ];
 
 const editorContent = computed({

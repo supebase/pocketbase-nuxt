@@ -64,7 +64,7 @@
 
             <template #date="{ item }">
               <div class="flex items-center gap-2.5">
-                <span class="text-dimmed/80">{{ item.date }}</span>
+                <span class="text-dimmed">{{ item.date }}</span>
                 <PostsMenu
                   :is-logined="loggedIn"
                   :item="item"
@@ -106,12 +106,12 @@
             </div>
           </Transition>
 
-          <SkeletonPosts v-if="isLoadingMore" :count="1" class="opacity-60 mt-4 w-full" />
+          <SkeletonPosts v-if="isLoadingMore" :count="1" class="mt-4 w-full" />
         </div>
 
         <template #fallback>
           <div class="space-y-8 w-full">
-            <SkeletonPosts :count="3" class="opacity-70 mask-b-from-10" />
+            <SkeletonPosts :count="3" class="mask-b-from-10" />
           </div>
         </template>
       </ClientOnly>
