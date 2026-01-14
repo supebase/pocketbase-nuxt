@@ -76,10 +76,10 @@ export const items: EditorToolbarItem[][] = [
     // },
   ],
   [
-    // {
-    //   kind: 'codeBlock',
-    //   icon: 'i-hugeicons:code',
-    // },
+    {
+      kind: 'customCodeBlock',
+      icon: 'i-hugeicons:code',
+    },
     {
       kind: 'horizontalRule',
       icon: 'i-hugeicons:solid-line-01',
