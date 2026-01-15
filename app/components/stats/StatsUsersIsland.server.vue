@@ -28,7 +28,8 @@
                 : 'text-rose-600 bg-rose-50 dark:bg-rose-500/10',
             ]"
           >
-            {{ growth.text }} {{ growth.val !== 0 ? (growth.isUp ? '↑' : '↓') : '' }}
+            {{ growth.val > 0 ? '+' : growth.val < 0 ? '-' : '' }}{{ growth.text }}
+            {{ growth.val !== 0 ? (growth.isUp ? '↑' : '↓') : '' }}
           </div>
         </div>
       </div>
@@ -48,20 +49,31 @@
 </template>
 
 <script setup lang="ts">
-const response = await $fetch<{ data: any }>('/api/stats/users');
+const response = await $fetch<{ data: any }>(`/api/stats/users`, {
+  query: { t: Date.now() },
+});
+
 const stats = response.data;
 
 const growth = (() => {
   const today = stats.today_new_users || 0;
   const yesterday = stats.yesterday_new_users || 0;
 
-  if (yesterday === 0) return { text: '持平', isUp: true, val: 0 };
+  // 2. 修正分母为 0 的情况
+  if (yesterday === 0) {
+    return {
+      text: today > 0 ? '100%' : '持平',
+      isUp: today >= 0,
+      val: today > 0 ? 100 : 0,
+    };
+  }
 
   const diff = today - yesterday;
   const percent = Math.round((diff / yesterday) * 100);
 
   return {
-    text: `${percent > 0 ? '+' : ''}${percent}%`,
+    // 3. 存储绝对值，正负号在 template 里根据 val 统一判断显示
+    text: percent === 0 ? '持平' : `${Math.abs(percent)}%`,
     isUp: percent >= 0,
     val: percent,
   };

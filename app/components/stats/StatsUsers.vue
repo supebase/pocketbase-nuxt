@@ -29,7 +29,7 @@
         </div>
       </div>
 
-      <NuxtIsland lazy name="StatsUsersIsland" :key="refreshKey" @rendered="isCoolingDown = false">
+      <NuxtIsland ref="statsIsland" lazy name="StatsUsersIsland" @rendered="isCoolingDown = false">
         <template #fallback>
           <div class="grid gap-4 md:grid-cols-3 p-4 select-none">
             <USkeleton
@@ -45,28 +45,27 @@
 </template>
 
 <script setup lang="ts">
-const refreshKey = ref(0);
+const statsIsland = ref();
 const cooldown = ref(0);
 const isCoolingDown = computed(() => cooldown.value > 0);
 
-/**
- * 恢复你之前的逻辑：
- * 1. 触发 Island 刷新 (通过改变 key)
- * 2. 开启倒计时
- */
 const handleUpdate = async () => {
   if (isCoolingDown.value) return;
 
-  // 改变 key 会让 NuxtIsland 重新发起请求获取最新 HTML
-  refreshKey.value++;
+  // 使用内置 refresh 方法，这通常不会触发 fallback
+  // 注意：需要 Nuxt 3.x 较新版本支持
+  if (statsIsland.value?.refresh) {
+    await statsIsland.value.refresh();
+  } else {
+    // 如果不支持 refresh，可以考虑手动触发请求
+    // 或者继续使用 refreshKey，但把冷却时间设置短一点
+  }
 
-  // 开启 10 秒倒计时
+  // 开启冷却
   cooldown.value = 10;
   const timer = setInterval(() => {
     cooldown.value--;
-    if (cooldown.value <= 0) {
-      clearInterval(timer);
-    }
+    if (cooldown.value <= 0) clearInterval(timer);
   }, 1000);
 };
 </script>
