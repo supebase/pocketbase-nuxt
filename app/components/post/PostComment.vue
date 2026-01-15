@@ -2,12 +2,24 @@
   <div>
     <ClientOnly>
       <UEmpty
-        v-if="!loggedIn && allowComment"
+        v-if="!allowComment || !loggedIn"
         size="lg"
-        title="参与评论需要登录"
-        description="登录后即可在评论区发布你的观点与见解"
-        :actions="[{ label: '立即登录', variant: 'soft', color: 'neutral', to: '/auth' }]"
-        class="mt-8 select-none"
+        variant="soft"
+        :title="!allowComment ? '评论已关闭' : '参与评论需要登录'"
+        :description="!allowComment ? '评论区暂停开放，感谢关注，敬请谅解！' : '登录后即可在评论区发布你的观点与见解'"
+        :actions="
+          allowComment && !loggedIn
+            ? [
+                {
+                  label: '立即登录',
+                  variant: 'soft',
+                  color: 'neutral',
+                  to: '/auth',
+                },
+              ]
+            : []
+        "
+        class="my-6 select-none"
       />
 
       <CommentsForm
@@ -16,7 +28,7 @@
         :raw-suggestions="commenters"
         :is-list-loading="isListLoading"
         @comment-created="onCommentSuccess"
-        class="mt-8"
+        class="my-6"
       />
 
       <CommentsList

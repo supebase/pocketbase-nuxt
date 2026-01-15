@@ -55,7 +55,7 @@ export default defineAppConfig({
     },
     empty: {
       slots: {
-        root: 'bg-default/30! backdrop-blur-md',
+        root: 'bg-neutral-200/30! dark:bg-neutral-950/30! backdrop-blur-md',
         title: 'text-dimmed',
         description: 'text-dimmed/80!',
       },

@@ -1,5 +1,5 @@
 <template>
-  <UPopover arrow :ui="{ content: 'bg-neutral-50/80 dark:bg-neutral-950/80 backdrop-blur' }">
+  <UPopover arrow :ui="{ content: 'bg-neutral-50/60 dark:bg-neutral-950/60 backdrop-blur' }">
     <UButton
       color="neutral"
       variant="link"
@@ -19,9 +19,10 @@
           <UIcon
             class="size-4 transition-all duration-300"
             :class="[
-              isCoolingDown
+              isCoolingDown || isRefreshing
                 ? 'text-dimmed opacity-40 cursor-not-allowed rotate-180'
                 : 'text-dimmed cursor-pointer hover:text-primary hover:rotate-45',
+              isRefreshing ? 'animate-spin' : '',
             ]"
             name="i-hugeicons:refresh"
             @click="handleUpdate"
@@ -31,11 +32,11 @@
 
       <NuxtIsland ref="statsIsland" lazy name="StatsUsersIsland" @rendered="isCoolingDown = false">
         <template #fallback>
-          <div class="grid gap-4 md:grid-cols-3 p-4 select-none">
+          <div class="grid gap-3.5 md:grid-cols-3 p-3.5 select-none">
             <USkeleton
               v-for="i in 3"
               :key="i"
-              class="h-32.5 w-39.5 animate-pulse rounded-lg border border-neutral-200/60 dark:border-neutral-800/60 bg-white/60 dark:bg-neutral-900/60"
+              class="h-29 w-34.75 animate-pulse rounded-lg bg-white/90 dark:bg-neutral-900/60 backdrop-blur-sm shadow-xs ring-0"
             />
           </div>
         </template>
@@ -47,21 +48,27 @@
 <script setup lang="ts">
 const statsIsland = ref();
 const cooldown = ref(0);
+const isRefreshing = ref(false);
 const isCoolingDown = computed(() => cooldown.value > 0);
 
 const handleUpdate = async () => {
-  if (isCoolingDown.value) return;
+  if (isCoolingDown.value || isRefreshing.value) return;
 
-  // 使用内置 refresh 方法，这通常不会触发 fallback
-  // 注意：需要 Nuxt 3.x 较新版本支持
-  if (statsIsland.value?.refresh) {
-    await statsIsland.value.refresh();
-  } else {
-    // 如果不支持 refresh，可以考虑手动触发请求
-    // 或者继续使用 refreshKey，但把冷却时间设置短一点
+  isRefreshing.value = true;
+  try {
+    // 调用 Island 的刷新方法
+    if (statsIsland.value?.refresh) {
+      await statsIsland.value.refresh();
+    }
+
+    // 刷新成功后开启冷却
+    startCooldown();
+  } finally {
+    isRefreshing.value = false;
   }
+};
 
-  // 开启冷却
+const startCooldown = () => {
   cooldown.value = 10;
   const timer = setInterval(() => {
     cooldown.value--;

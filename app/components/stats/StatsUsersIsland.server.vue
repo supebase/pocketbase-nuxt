@@ -1,81 +1,70 @@
 <template>
   <div class="grid gap-4 md:grid-cols-3 p-4 font-sans select-none">
-    <div class="rounded-lg border border-neutral-200/60 dark:border-neutral-800/60 bg-white/60 dark:bg-neutral-900/60">
-      <div class="p-6 flex flex-row items-center justify-between space-y-0 pb-2">
-        <h3 class="tracking-tight text-sm font-medium">总用户数</h3>
-        <UIcon name="i-hugeicons:user-multiple-02" class="size-4.5 text-dimmed/80" />
+    <UCard
+      v-for="item in displayStats"
+      :key="item.label"
+      :ui="{
+        root: 'bg-white/90 dark:bg-neutral-900/60 backdrop-blur-sm shadow-xs ring-0',
+        body: 'p-3.5!',
+      }"
+    >
+      <div class="flex items-center justify-between pb-2">
+        <h3 class="text-sm font-medium">{{ item.label }}</h3>
+        <UIcon :name="item.icon" class="size-4.5 text-dimmed/80" />
       </div>
-      <div class="p-6 pt-0">
-        <div class="text-2xl font-bold tabular-nums tracking-tight">{{ stats.total_users }}</div>
-        <p class="text-xs text-dimmed mt-1">从创建至今的累积量</p>
-      </div>
-    </div>
 
-    <div class="rounded-lg border border-neutral-200/60 dark:border-neutral-800/60 bg-white/60 dark:bg-neutral-900/60">
-      <div class="p-6 flex flex-row items-center justify-between space-y-0 pb-2">
-        <h3 class="tracking-tight text-sm font-medium">今日新增</h3>
-        <UIcon name="i-hugeicons:user-add-02" class="size-4.5 text-dimmed/80" />
-      </div>
-      <div class="p-6 pt-0">
-        <div class="text-2xl font-bold tabular-nums tracking-tight">{{ stats.today_new_users }}</div>
-        <div class="flex items-center justify-between gap-1">
-          <p class="text-xs text-dimmed">较昨日</p>
-          <div
-            :class="[
-              'px-2 py-0.5 rounded text-xs font-medium',
-              growth.isUp
-                ? 'text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10'
-                : 'text-rose-600 bg-rose-50 dark:bg-rose-500/10',
-            ]"
-          >
-            {{ growth.val > 0 ? '+' : growth.val < 0 ? '-' : '' }}{{ growth.text }}
-            {{ growth.val !== 0 ? (growth.isUp ? '↑' : '↓') : '' }}
-          </div>
-        </div>
-      </div>
-    </div>
+      <div class="text-2xl font-bold tabular-nums">{{ item.value }}</div>
 
-    <div class="rounded-lg border border-neutral-200/60 dark:border-neutral-800/60 bg-white/60 dark:bg-neutral-900/60">
-      <div class="p-6 flex flex-row items-center justify-between space-y-0 pb-2">
-        <h3 class="tracking-tight text-sm font-medium">活跃用户</h3>
-        <UIcon name="i-hugeicons:chart-up" class="size-4.5 text-dimmed/80" />
+      <div class="mt-1 flex items-center justify-between min-h-5">
+        <p class="text-xs text-dimmed">{{ item.desc }}</p>
+
+        <UBadge
+          v-if="item.growth !== undefined && item.growth !== 0"
+          :color="item.growth > 0 ? 'success' : 'error'"
+          variant="soft"
+          size="xs"
+        >
+          {{ item.growth > 0 ? '+' : '' }}{{ item.growth }}%
+          {{ item.growth > 0 ? '↑' : '↓' }}
+        </UBadge>
+        <span v-else-if="item.growth === 0" class="text-xs text-dimmed">持平</span>
       </div>
-      <div class="p-6 pt-0">
-        <div class="text-2xl font-bold tabular-nums tracking-tight">{{ stats.active_users_30d }}</div>
-        <p class="text-xs text-dimmed mt-1">近 30 天有登录记录</p>
-      </div>
-    </div>
+    </UCard>
   </div>
 </template>
 
 <script setup lang="ts">
-const response = await $fetch<{ data: any }>(`/api/stats/users`, {
+const { data: response } = await useFetch<{ data: any }>(`/api/stats/users`, {
   query: { t: Date.now() },
 });
 
-const stats = response.data;
+const stats = response.value?.data || {};
 
-const growth = (() => {
-  const today = stats.today_new_users || 0;
-  const yesterday = stats.yesterday_new_users || 0;
-
-  // 2. 修正分母为 0 的情况
-  if (yesterday === 0) {
-    return {
-      text: today > 0 ? '100%' : '持平',
-      isUp: today >= 0,
-      val: today > 0 ? 100 : 0,
-    };
-  }
-
-  const diff = today - yesterday;
-  const percent = Math.round((diff / yesterday) * 100);
-
-  return {
-    // 3. 存储绝对值，正负号在 template 里根据 val 统一判断显示
-    text: percent === 0 ? '持平' : `${Math.abs(percent)}%`,
-    isUp: percent >= 0,
-    val: percent,
-  };
+const growthVal = (() => {
+  const { today_new_users: today = 0, yesterday_new_users: yest = 0 } = stats;
+  if (yest === 0) return today > 0 ? 100 : 0;
+  return Math.round(((today - yest) / yest) * 100);
 })();
+
+const displayStats = [
+  {
+    label: '总用户数',
+    value: stats.total_users,
+    icon: 'i-hugeicons:user-multiple-02',
+    desc: '从创建至今的累积量',
+  },
+  {
+    label: '今日新增',
+    value: stats.today_new_users,
+    icon: 'i-hugeicons:user-add-02',
+    desc: '较昨日',
+    growth: growthVal,
+  },
+  {
+    label: '活跃用户',
+    value: stats.active_users_30d,
+    icon: 'i-hugeicons:chart-up',
+    desc: '近 30 天有登录记录',
+  },
+];
 </script>

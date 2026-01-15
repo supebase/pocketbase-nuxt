@@ -6,7 +6,13 @@
       content-type="markdown"
       :starter-kit="{
         codeBlock: false,
-        link: false,
+        link: {
+          autolink: false,
+          HTMLAttributes: {
+            rel: 'noopener noreferrer',
+            target: '_blank',
+          },
+        },
       }"
       :extensions="extensions"
       :enable-input-rules="true"
