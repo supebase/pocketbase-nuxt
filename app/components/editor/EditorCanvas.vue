@@ -19,18 +19,18 @@
           'w-xl relative left-1/2 right-1/2 -translate-x-1/2 prose dark:prose-invert max-w-none min-h-[400px] focus:outline-none pt-3 pb-16',
       }"
       :handlers="customHandlers"
+      @beforeCreate="onEditorBeforeCreate"
     >
       <template v-if="editor">
-        {{ setEditorInstance(editor) }}
         <UEditorToolbar :editor="editor" :items="toolbarItems" class="pb-3 border-b border-b-muted/60" />
         <UEditorDragHandle :editor="editor" />
 
         <ClientOnly>
-          <div class="absolute bottom-0 left-0 right-0">
+          <div class="absolute bottom-0 left-0 right-0 pointer-events-none">
             <UProgress
-              :model-value="Math.min(editor.storage.characterCount.characters(), maxLimit)"
+              :model-value="editor.storage.characterCount.characters()"
               :max="maxLimit"
-              :color="progressColor"
+              :color="getContentLengthColor(editor.storage.characterCount.characters(), maxLimit)"
               size="xs"
               status
             />
@@ -48,6 +48,7 @@
 </template>
 
 <script setup lang="ts">
+import type { Editor } from '@tiptap/vue-3';
 import { getChineseWordCount } from '~/utils/editor';
 import { createCustomCodeBlockHandlers } from '~/utils/editorHandlers';
 
@@ -59,38 +60,33 @@ const props = defineProps<{
   disabled?: boolean;
 }>();
 
-const currentLength = computed(() => content.value?.length || 0);
-const percentage = computed(() => Math.min(Math.round((currentLength.value / props.maxLimit) * 100), 100));
-
-const progressColor = computed(() => {
-  if (percentage.value >= 100) return 'error';
-  if (percentage.value >= 80) return 'warning';
-  return 'neutral';
-});
-
 const isCodeBlockModalOpen = ref(false);
-const editorInstance = shallowRef<any>(null);
+const editorRef = shallowRef<Editor | null>(null);
+
+const onEditorBeforeCreate = (props: { editor: any }) => {
+  editorRef.value = props.editor;
+};
 
 const handleCodeBlockConfirm = (data: { language: string; filename: string }) => {
-  if (!editorInstance.value) {
-    console.error('编辑器实例不存在');
-    return;
-  }
+  if (!editorRef.value) return;
 
   const language = data.language || '';
   const filename = data.filename || '';
   const info = filename ? `${language} [${filename}]` : language;
 
-  editorInstance.value
-    .chain()
-    .insertContent({
-      type: 'codeBlock',
-      attrs: {
-        language: info,
-      },
-    })
-    .focus()
-    .run();
+  setTimeout(() => {
+    editorRef.value
+      ?.chain()
+      .focus()
+      .insertContent({
+        type: 'codeBlock',
+        attrs: {
+          language: info,
+          // filename: data.filename,
+        },
+      })
+      .run();
+  }, 300);
 };
 
 const customHandlers = computed(() =>
@@ -98,11 +94,4 @@ const customHandlers = computed(() =>
     isCodeBlockModalOpen.value = true;
   }),
 );
-
-const setEditorInstance = (editor: any) => {
-  if (editor && !editorInstance.value) {
-    editorInstance.value = editor;
-  }
-  return '';
-};
 </script>

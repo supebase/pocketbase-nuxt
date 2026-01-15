@@ -2,30 +2,30 @@
   <UModal
     v-model:open="isOpen"
     :ui="{ overlay: 'backdrop-blur-xs', footer: 'justify-end' }"
-    title="代码块（代码语言和文件名）"
-    description="如果输入错误，代码块将无法正常显示。"
+    title="插入代码块"
+    description="请指定代码语言（用于高亮）和可选的文件名。"
   >
     <template #body>
-      <div class="flex items-center gap-4 w-full">
-        <UFieldGroup label="代码语言" name="language" id="language-field" class="w-full">
+      <div class="flex items-center gap-4 w-full" @keyup.enter="handleConfirm">
+        <UFieldGroup label="代码语言" name="language" class="w-full">
           <UInput
             v-model="formData.language"
             variant="outline"
             color="neutral"
             size="lg"
-            placeholder="语言: ts, js, css"
+            placeholder="例如: ts, js, vue"
             autofocus
             class="w-full"
           />
         </UFieldGroup>
 
-        <UFieldGroup label="文件名" name="filename" id="filename-field" class="w-full">
+        <UFieldGroup label="文件名" name="filename" class="w-full">
           <UInput
             v-model="formData.filename"
             variant="outline"
             color="neutral"
             size="lg"
-            placeholder="文件名: example.ts, utils.js"
+            placeholder="例如: index.ts"
             class="w-full"
           />
         </UFieldGroup>
@@ -34,8 +34,8 @@
 
     <template #footer>
       <div class="flex items-center gap-3">
-        <UButton label="取消" color="neutral" class="cursor-pointer" @click="isOpen = false" />
-        <UButton label="确认" color="success" class="cursor-pointer" @click="handleConfirm" />
+        <UButton label="取消" variant="ghost" color="neutral" @click="isOpen = false" />
+        <UButton label="插入代码块" color="primary" :disabled="!formData.language" @click="handleConfirm" />
       </div>
     </template>
   </UModal>
@@ -53,13 +53,24 @@ const formData = reactive({
   filename: '',
 });
 
+// 2. 监听弹窗关闭，彻底重置表单（防止取消后再打开仍有旧数据）
+watch(isOpen, (val) => {
+  if (!val) {
+    formData.language = '';
+    formData.filename = '';
+  }
+});
+
 const handleConfirm = () => {
+  // 3. 基础校验：如果没有语言，通常不建议提交（或者给个默认值）
+  if (!formData.language.trim()) return;
+
   emit('confirm', {
-    language: formData.language.trim(),
+    // 强制转换为小写，确保高亮插件能识别
+    language: formData.language.trim().toLowerCase(),
     filename: formData.filename.trim(),
   });
-  formData.language = '';
-  formData.filename = '';
+
   isOpen.value = false;
 };
 </script>

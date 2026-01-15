@@ -3,19 +3,22 @@
  * @param  内容长度百分比（0-100）
  * @returns 对应的颜色字符串
  */
-export const getContentLengthColor = (percent: number) => {
-  if (percent >= 100) return 'error' as const;
-  if (percent >= 80) return 'warning' as const;
-  return 'neutral' as const;
+import { CONTENT_COLOR_MAP } from '~/constants/editor';
+
+export const getContentLengthColor = (current: number, max: number) => {
+  const percent = (current / max) * 100;
+
+  if (percent >= 100) return CONTENT_COLOR_MAP.ERROR;
+  if (percent >= 80) return CONTENT_COLOR_MAP.WARNING;
+
+  return CONTENT_COLOR_MAP.NEUTRAL;
 };
 
 export const getChineseWordCount = (editor: any) => {
-  const text = editor.getText(); // 获取纯文本
-  if (!text) return 0;
+  if (!editor) return 0;
 
-  // 匹配中文词汇（近似逻辑：匹配连续汉字、或者英文单词）
-  // 或者更简单的做法：中文统计里，通常“字”就是“词”
-  // 这里演示一个简单的正则：匹配汉字 + 英文单词
-  const words = text.match(/[\u4e00-\u9fa5]|\b\w+\b/g);
+  const text = editor.getText();
+  // 更加专业的统计逻辑：匹配汉字 + 英文/数字单词
+  const words = text.match(/[\u4e00-\u9fa5]|[a-zA-Z0-9_]+/g);
   return words ? words.length : 0;
 };

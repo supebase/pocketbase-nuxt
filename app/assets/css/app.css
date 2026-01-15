@@ -255,7 +255,7 @@ body {
   border-radius: 0.5rem;
   overflow: hidden;
 
-  background: var(--ui-bg-muted);
+  background: var(--ui-bg);
   border: 1px solid var(--ui-border-muted);
 }
 
@@ -274,13 +274,12 @@ body {
   display: flex;
   align-items: center;
 
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   font-weight: 500;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-sans);
 
   color: var(--ui-text-dimmed);
-  background: var(--ui-bg);
-  text-transform: uppercase;
+  background: var(--ui-bg-muted);
 
   border-bottom: 1px solid var(--ui-border-muted);
 

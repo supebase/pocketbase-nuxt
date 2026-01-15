@@ -44,7 +44,7 @@ const TOCItem = defineComponent({
               emit('scroll', props.link.id);
             },
             class: [
-              'block text-sm leading-relaxed transition-all duration-300 py-1 px-2 rounded-md truncate',
+              'block text-[13px] leading-relaxed transition-all duration-300 py-0.25 px-2 rounded-md truncate',
               // 根据深度动态增加缩进（右对齐时使用 pr）
               props.link.depth === 3 ? 'pl-6' : '',
               props.link.depth === 4 ? 'pl-13' : '',

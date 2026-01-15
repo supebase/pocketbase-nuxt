@@ -1,5 +1,5 @@
 <template>
-  <div v-show="mdcReady">
+  <div>
     <ClientOnly>
       <UEmpty
         v-if="!loggedIn && allowComment"
@@ -33,6 +33,8 @@
 </template>
 
 <script setup lang="ts">
+import type { CommentRecord } from '~/types/comments';
+
 const props = defineProps<{
   postId: string;
   allowComment: boolean;
@@ -46,7 +48,7 @@ const isListLoading = ref(false);
 const commentListRef = ref();
 const commenters = ref<any[]>([]);
 
-const handleUpdateCommenters = (uniqueUsers: any[]) => {
+const handleUpdateCommenters = (uniqueUsers: CommentRecord[]) => {
   commenters.value = uniqueUsers.filter((u) => u.id !== currentUser.value?.id);
 };
 

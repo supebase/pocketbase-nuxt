@@ -3,7 +3,7 @@
     :href="data.url"
     target="_blank"
     tabindex="-1"
-    class="group my-3.5 flex items-stretch border border-neutral-200 dark:border-neutral-800 rounded-lg overflow-hidden no-underline"
+    class="group my-3.5 flex items-stretch border border-neutral-200/80 dark:border-neutral-700/70 rounded-lg overflow-hidden no-underline"
   >
     <div
       v-if="linkImage"
@@ -29,10 +29,10 @@
 
     <div
       v-else
-      class="relative w-21 shrink-0 border-r border-neutral-200 dark:border-neutral-800 overflow-hidden bg-white/60 dark:bg-neutral-900/60 backdrop-blur"
+      class="relative w-21 shrink-0 border-r border-neutral-200/80 dark:border-neutral-700/70 overflow-hidden bg-neutral-50/50 dark:bg-neutral-800/50 backdrop-blur"
     >
       <div class="absolute inset-0 flex items-center justify-center">
-        <UIcon :name="isGitHub ? 'i-hugeicons:github' : 'i-hugeicons:image-02'" class="text-dimmed/40 size-8" />
+        <UIcon :name="isGitHub ? 'i-hugeicons:github' : 'i-hugeicons:image-02'" class="text-dimmed/30 size-8" />
       </div>
     </div>
 

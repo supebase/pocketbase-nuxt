@@ -85,7 +85,9 @@ export default defineAppConfig({
       },
       pre: {
         slots: {
-          base: 'text-[15px]/6',
+          base: 'text-[15px]/6 bg-transparent!',
+          header: 'bg-muted!',
+          filename: 'text-muted!',
         },
       },
     },

@@ -11,7 +11,9 @@ import { DEFAULT_IMAGE_CONCURRENCY, IMAGE_DOWNLOAD_TIMEOUT, MD_IMAGE_MAX_SIZE } 
  * @description 核心特性：正则表达式过滤 -> 任务预处理 -> 并发池控制 -> 尺寸 & 类型校验
  * @returns { successResults, skippedCount } 下载成功的 Blob 对象列表及跳过的数量
  */
-export const processMarkdownImages = async (content: string) => {
+export const processMarkdownImages = async (
+  content: string,
+): Promise<{ successResults: { url: string; blob: Blob }[]; skippedCount: number }> => {
   // 初始化并发控制器（防止 OOM 内存溢出）
   const limit = pLimit(DEFAULT_IMAGE_CONCURRENCY);
   const imageRegex = /!\[.*?\]\((https?:\/\/(?!.*\/api\/)[^)]+)\)/gi;

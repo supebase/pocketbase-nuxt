@@ -13,6 +13,7 @@
             :toolbar-items="items"
             :max-limit="maxLimit"
             :disabled="disabled"
+            :key="editorKey"
           />
 
           <EditorMetaForm v-model:icon="modelValue.icon" v-model:link="modelValue.link" :action="modelValue.action" />
@@ -56,6 +57,15 @@ const props = defineProps<{
 }>();
 
 defineEmits(['submit']);
+
+const editorKey = ref(0);
+
+watch(
+  () => props.modelValue.content,
+  (newVal) => {
+    if (newVal === '') editorKey.value++;
+  },
+);
 
 // Tiptap 配置保持在父组件以确保响应 props 变化
 const extensions = [

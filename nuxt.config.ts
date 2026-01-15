@@ -23,8 +23,7 @@ export default defineNuxtConfig({
       meta: [
         {
           name: 'viewport',
-          content:
-            'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, viewport-fit=cover',
+          content: 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, viewport-fit=cover',
         },
         {
           name: 'apple-mobile-web-app-status-bar-style',
@@ -47,10 +46,25 @@ export default defineNuxtConfig({
   },
   vite: {
     build: {
-      cssMinify: 'lightningcss', // 比传统压缩更快更小
-      // 禁用 CSS 的 Source Map 生成，从而消除插件警告
+      cssMinify: 'lightningcss',
       sourcemap: false,
       target: 'esnext',
+      minify: 'terser',
+      terserOptions: {
+        compress: {
+          drop_console: true,
+          drop_debugger: true,
+        },
+      },
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (id.includes('prosemirror')) {
+              return 'editor-bundle';
+            }
+          },
+        },
+      },
     },
     optimizeDeps: {
       include: [
@@ -105,9 +119,9 @@ export default defineNuxtConfig({
     },
     highlight: {
       theme: {
-        default: 'github-light',
-        light: 'github-light',
-        dark: 'github-dark',
+        default: 'github-light-default',
+        light: 'github-light-default',
+        dark: 'github-dark-default',
       },
     },
     components: {

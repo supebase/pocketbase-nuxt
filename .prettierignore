@@ -2,7 +2,7 @@
 node_modules/
 dist/
 build/
-output/
+.output/
 target/
 
 # 静态资源（图片、字体等无需格式化）
@@ -38,3 +38,6 @@ pnpm-lock.yaml
 # 某些特定格式的文件（如果 Prettier 处理效果不好）
 *.pdf
 *.zip
+
+# 其他
+.trae/
