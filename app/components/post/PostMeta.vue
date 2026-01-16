@@ -19,8 +19,8 @@
 
     <div class="flex items-center gap-1.25 text-dimmed text-sm">
       <ClientOnly>
-        <CommonAnimateNumber :value="postMeta.views" /> 次拾阅
-        <template #fallback> <CommonAnimateNumber :value="0" /> 次拾阅 </template>
+        <CommonAnimateNumber :value="postMeta.views" /> 次围观
+        <template #fallback> <CommonAnimateNumber :value="0" /> 次围观 </template>
       </ClientOnly>
     </div>
   </div>

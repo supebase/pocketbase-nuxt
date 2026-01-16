@@ -8,7 +8,7 @@
       {{ item.cleanContent }}
     </ULink>
 
-    <ULink v-if="item.firstImage" :to="`/${item.id}`" class="group" tabindex="-1">
+    <ULink v-if="item.firstImage" :to="`/${item.id}`" tabindex="-1">
       <div class="my-3.5 rounded-lg overflow-hidden">
         <div class="relative overflow-hidden aspect-video">
           <img
@@ -18,7 +18,7 @@
             :class="[
               'w-full h-full object-cover transition-all duration-700 ease-in-out',
               isLoaded ? 'blur-0 scale-100' : 'blur-xl scale-110',
-              'group-hover:scale-105',
+              'hover:scale-105',
             ]"
           />
 

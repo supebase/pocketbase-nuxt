@@ -10,7 +10,7 @@
 
     <template #content>
       <div class="flex items-center justify-between px-5 pt-4 select-none">
-        <div class="font-semibold text-sm text-muted">用户统计信息</div>
+        <div class="font-semibold text-sm text-muted">用户统计</div>
         <div class="flex items-center gap-1.5">
           <span v-if="isCoolingDown" class="text-xs font-mono tabular-nums text-dimmed animate-pulse">
             {{ cooldown }}s
@@ -36,7 +36,7 @@
             <USkeleton
               v-for="i in 3"
               :key="i"
-              class="h-29 w-34.75 animate-pulse rounded-lg bg-white/90 dark:bg-neutral-900/60 backdrop-blur-sm shadow-xs ring-0"
+              class="h-29 w-34.75 animate-pulse rounded-lg bg-white/90 dark:bg-neutral-950/50 backdrop-blur-sm shadow-xs ring-0"
             />
           </div>
         </template>

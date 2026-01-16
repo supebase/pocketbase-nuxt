@@ -10,7 +10,7 @@
     @compositionstart="isComposing = true"
     @compositionend="onCompositionEnd"
     :ui="{
-      input: '[&>input]:h-14',
+      input: '[&>input]:h-14 ps-2',
       group: 'p-2',
       label: 'px-4 py-2 text-sm text-dimmed/80 font-bold tracking-wider',
     }"

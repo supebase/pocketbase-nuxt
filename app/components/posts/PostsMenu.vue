@@ -8,7 +8,8 @@
 </template>
 
 <script setup lang="ts">
-import { useClipboard } from '@vueuse/core';
+import { useClipboard, useShare } from '@vueuse/core';
+import { isClient } from '@vueuse/shared';
 
 interface Props {
   isLogined: boolean;
@@ -23,7 +24,18 @@ const props = defineProps<Props>();
 const emit = defineEmits(['requestEdit', 'requestDelete']);
 
 const toast = useToast();
-const { copy, copied, isSupported } = useClipboard();
+
+const { copy, isSupported } = useClipboard();
+const { share } = useShare();
+
+const shareButton = (text: string) => {
+  if (isSupported) {
+    return share({
+      text: text,
+      url: isClient ? location.href : '',
+    }).catch((err) => err);
+  }
+};
 
 const showAuthToast = () => {
   toast.add({
@@ -54,13 +66,21 @@ const handleCopy = async () => {
 };
 
 const dropdownItems = computed(() => {
-  const commonSection = [{ label: '复制链接', icon: 'i-hugeicons:link-02', onClick: handleCopy }];
+  const commonSection = [
+    {
+      label: '复制链接',
+      icon: 'i-hugeicons:link-02',
+      onClick: handleCopy,
+    },
+    {
+      label: '发送分享',
+      icon: 'i-hugeicons:share-08',
+      onClick: () => shareButton(props.item.cleanContent || ''),
+    },
+  ];
 
   if (!props.isLogined) {
-    return [
-      commonSection,
-      [{ icon: 'i-hugeicons:lock-key', label: '请先登录', onClick: () => navigateTo('/auth') }],
-    ];
+    return [commonSection, [{ icon: 'i-hugeicons:lock-key', label: '请先登录', onClick: () => navigateTo('/auth') }]];
   }
 
   return [

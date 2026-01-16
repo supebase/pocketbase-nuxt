@@ -28,7 +28,15 @@
       @beforeCreate="onEditorBeforeCreate"
     >
       <template v-if="editor">
-        <UEditorToolbar :editor="editor" :items="toolbarItems" class="pb-3 border-b border-b-muted/60" />
+        <UEditorToolbar :editor="editor" :items="toolbarItems" class="pb-3 border-b border-b-muted/60">
+          <template #image>
+            <EditorImagePopover :editor="editor" />
+          </template>
+          <template #link>
+            <EditorLinkPopover :editor="editor" auto-open />
+          </template>
+        </UEditorToolbar>
+
         <UEditorDragHandle :editor="editor" />
 
         <ClientOnly>

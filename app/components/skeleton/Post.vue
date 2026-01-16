@@ -5,7 +5,7 @@
         <USkeleton class="size-8 rounded-full" />
         <USkeleton class="h-4 w-40" />
       </div>
-      <USkeleton class="size-6" />
+      <USkeleton class="h-4 w-18" />
     </div>
 
     <div class="space-y-6 mt-6">

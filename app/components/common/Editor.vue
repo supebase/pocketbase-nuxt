@@ -13,7 +13,6 @@
             :toolbar-items="items"
             :max-limit="maxLimit"
             :disabled="disabled"
-            :key="editorKey"
           />
 
           <EditorMetaForm v-model:icon="modelValue.icon" v-model:link="modelValue.link" :action="modelValue.action" />
@@ -47,6 +46,7 @@ import { breakpointsTailwind, useBreakpoints } from '@vueuse/core';
 import Placeholder from '@tiptap/extension-placeholder';
 import CharacterCount from '@tiptap/extension-character-count';
 import { CustomCodeBlock } from '~/extensions/CustomCodeBlock';
+import { CustomLinkTarget } from '~/extensions/CustomLinkTarget';
 import { items } from '~/constants/editor';
 import { actionItems } from '~/constants';
 
@@ -58,20 +58,12 @@ const props = defineProps<{
 
 defineEmits(['submit']);
 
-const editorKey = ref(0);
-
-watch(
-  () => props.modelValue.content,
-  (newVal) => {
-    if (newVal === '') editorKey.value++;
-  },
-);
-
 // Tiptap 配置保持在父组件以确保响应 props 变化
 const extensions = [
   Placeholder.configure({ placeholder: '从这里开始写作吧 ...' }),
   CharacterCount.configure({ limit: props.maxLimit }),
   CustomCodeBlock,
+  CustomLinkTarget,
 ];
 
 const editorContent = computed({

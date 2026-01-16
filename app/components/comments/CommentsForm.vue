@@ -14,7 +14,7 @@
         :maxrows="6"
         :padded="false"
         size="xl"
-        class="text-neutral-300 w-full py-2"
+        class="w-full py-2"
         :maxlength="maxLimit"
         :disabled="isSubmitting"
         :placeholder="randomPlaceholder"
@@ -22,10 +22,7 @@
       />
 
       <div class="flex justify-between items-center px-3 py-1">
-        <div
-          class="flex items-center space-x-3"
-          :class="{ 'cursor-not-allowed pointer-events-none': isSubmitting }"
-        >
+        <div class="flex items-center space-x-3" :class="{ 'cursor-not-allowed pointer-events-none': isSubmitting }">
           <CommonEmojiSelector @emoji="onInsertEmoji" />
 
           <UPopover arrow :content="{ align: 'start', side: 'bottom', sideOffset: 6 }">
@@ -60,11 +57,7 @@
         <div class="flex items-center space-x-6">
           <span
             class="text-sm tabular-nums select-none"
-            :class="
-              form.comment.length >= maxLimit
-                ? 'text-red-600'
-                : 'text-neutral-400 dark:text-neutral-600'
-            "
+            :class="form.comment.length >= maxLimit ? 'text-red-600' : 'text-dimmed'"
           >
             {{ form.comment.length }} / {{ maxLimit }}
           </span>
@@ -73,7 +66,7 @@
             color="neutral"
             size="lg"
             variant="ghost"
-            class="hover:bg-transparent! cursor-pointer px-0 text-neutral-500"
+            class="hover:bg-transparent! cursor-pointer px-0 text-muted"
             loading-auto
             :icon="submitIcon"
             :disabled="isSubmitDisabled"

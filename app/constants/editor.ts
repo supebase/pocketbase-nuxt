@@ -66,32 +66,25 @@ export const items: EditorToolbarItem[][] = [
       kind: 'orderedList',
       icon: 'i-hugeicons:left-to-right-list-number',
     },
-  ],
-  [
     {
       kind: 'blockquote',
       icon: 'i-hugeicons:left-to-right-block-quote',
-      label: '引用',
     },
-    // {
-    //   kind: 'link',
-    //   icon: 'i-hugeicons:link-01',
-    // },
   ],
   [
     {
-      kind: 'image',
-      icon: 'i-hugeicons:image-03',
+      slot: 'image' as const,
+    },
+    {
+      slot: 'link' as const,
     },
     {
       kind: 'customCodeBlock',
-      icon: 'i-hugeicons:source-code',
-      label: '代码块',
+      icon: 'i-hugeicons:code',
     },
     {
       kind: 'horizontalRule',
-      icon: 'i-hugeicons:solid-line-01',
-      label: '分隔线',
+      icon: 'i-hugeicons:dashed-line-01',
     },
   ],
 ];
