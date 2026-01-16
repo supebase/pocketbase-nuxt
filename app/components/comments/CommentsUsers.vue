@@ -22,7 +22,7 @@
           variant="soft"
           size="sm"
           color="neutral"
-          class="rounded-xl text-muted text-xs ml-1.5 px-1.5"
+          class="rounded-xl text-muted text-xs ml-1.5"
         >
           +{{ totalCount }}
         </UBadge>

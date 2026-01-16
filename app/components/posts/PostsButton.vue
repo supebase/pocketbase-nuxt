@@ -3,20 +3,33 @@
     v-bind="postButtonConfig"
     tabindex="-1"
     variant="link"
-    color="neutral"
     :ui="{
-      base: 'items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 group relative animate-rainbow cursor-pointer border-0 [background-clip:padding-box,border-box,border-box] [background-origin:border-box] [border:calc(0.08*1rem)_solid_transparent] h-9 pr-3.5 inline-flex \
-      /* 核心背景配置 - 浅色模式 */ \
-      bg-[linear-gradient(#ffffff,#ffffff),linear-gradient(#f5f5f5_50%,rgba(248,250,252,0.6)_80%,rgba(248,250,252,0)),linear-gradient(90deg,hsl(0,100%,63%),hsl(90,100%,63%),hsl(210,100%,63%),hsl(195,100%,63%),hsl(270,100%,63%))] \
-      bg-[length:200%] text-slate-900 \
-      /* 核心背景配置 - 深色模式 */ \
-      dark:bg-[linear-gradient(#171717,#171717),linear-gradient(#202020_50%,rgba(18,18,19,0.6)_80%,rgba(18,18,19,0)),linear-gradient(90deg,hsl(0,100%,63%),hsl(90,100%,63%),hsl(210,100%,63%),hsl(195,100%,63%),hsl(270,100%,63%))] \
-      dark:text-white \
-      /* 底部发光阴影 (Rainbow Glow) */ \
-      before:absolute before:bottom-[-20%] before:left-1/2 before:z-[0] before:h-[20%] before:w-[60%] before:-translate-x-1/2 before:animate-rainbow before:bg-[linear-gradient(90deg,hsl(0,100%,63%),hsl(90,100%,63%),hsl(210,100%,63%),hsl(195,100%,63%),hsl(270,100%,63%))] before:[filter:blur(calc(0.8*1rem))]',
-      leadingIcon: 'size-4.5',
+      base: 'group relative px-5 py-2.5 rounded-xl bg-neutral-100 dark:bg-neutral-950 font-bold tracking-wider uppercase text-sm transition-all! duration-500 hover:scale-105 border border-rose-500/5 dark:border-purple-500/15 hover:border-rose-500/40 dark:hover:border-purple-500/40 overflow-visible items-center justify-center',
+      label: 'contents',
+      leadingIcon: 'hidden',
+      trailingIcon: 'hidden',
     }"
-  />
+  >
+    <template #default>
+      <div class="flex items-center gap-2 relative z-10 text-default">
+        <UIcon :name="postButtonConfig.icon" class="w-5 h-5 transition-transform duration-700 group-hover:scale-125" />
+        {{ postButtonConfig.label }}
+      </div>
+
+      <div
+        class="absolute inset-0 rounded-xl bg-[radial-gradient(circle_at_50%_50%,var(--color-fuchsia-500),transparent_50%)]/10 dark:bg-[radial-gradient(circle_at_50%_50%,var(--color-purple-500),transparent_50%)]/10 opacity-0 group-hover:opacity-100 transition-all duration-500"
+      ></div>
+      <div
+        class="absolute -inset-1 rounded-xl bg-linear-to-br bg-rose-600 via-pink-600 to-fuchsia-600 dark:from-purple-600 dark:via-violet-600 dark:to-indigo-600 opacity-0 group-hover:opacity-20 blur-xl transition-all duration-500"
+      ></div>
+      <div
+        class="absolute bottom-0 left-0 right-0 h-0.5 bg-linear-to-r from-transparent via-pink-500 dark:via-purple-500 to-transparent scale-x-0 group-hover:scale-x-100 transition-transform duration-500"
+      ></div>
+      <div
+        class="absolute top-0 left-0 right-0 h-0.5 bg-linear-to-r from-transparent via-fuchsia-500 dark:via-indigo-500 to-transparent scale-x-0 group-hover:scale-x-100 transition-transform duration-700 delay-100"
+      ></div>
+    </template>
+  </UButton>
 </template>
 
 <script setup lang="ts">

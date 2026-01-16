@@ -1,5 +1,5 @@
 <template>
-  <UPopover v-model:open="open" :ui="{ content: 'p-0.5' }">
+  <UPopover arrow v-model:open="open" :ui="{ content: 'p-0.5' }">
     <UTooltip text="插入链接">
       <UButton
         icon="i-hugeicons:link-01"

@@ -4,12 +4,12 @@
 @plugin "@tailwindcss/typography";
 
 :root {
-  --ui-primary: oklch(70.2% 0.183 293.541);
+  --ui-primary: oklch(65.6% 0.241 354.308);
   --ui-code-bg: rgba(167, 132, 255, 0.11);
 }
 
 .dark {
-  --ui-primary: oklch(90.1% 0.076 70.697);
+  --ui-primary: oklch(60.6% 0.25 292.717);
   --ui-code-bg: oklch(89.987% 0.07619 70.421 / 0.07);
 }
 
@@ -51,6 +51,63 @@ body {
 }
 ::view-transition-old(root) {
   z-index: 1;
+}
+
+header {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+.dark header {
+  background-color: rgba(23, 23, 23, 0.3);
+}
+
+header::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: -1;
+
+  background-image:
+    repeating-linear-gradient(
+      0deg,
+      rgba(255, 255, 255, 0.1) 0px,
+      rgba(255, 255, 255, 0.1) 1px,
+      transparent 1px,
+      transparent 2px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.1) 0px,
+      rgba(255, 255, 255, 0.1) 1px,
+      transparent 1px,
+      transparent 2px
+    );
+
+  mix-blend-mode: overlay;
+  pointer-events: none;
+}
+
+.dark header::before {
+  background-image:
+    repeating-linear-gradient(
+      0deg,
+      rgba(23, 23, 23, 0.6) 0px,
+      rgba(23, 23, 23, 0.6) 1px,
+      transparent 1px,
+      transparent 2px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgba(23, 23, 23, 0.6) 0px,
+      rgba(23, 23, 23, 0.6) 1px,
+      transparent 1px,
+      transparent 2px
+    );
+
+  mix-blend-mode: normal;
 }
 
 /* 基础样式保持并优化 */

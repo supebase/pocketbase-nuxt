@@ -1,7 +1,7 @@
 <template>
   <div ref="timelineContainer" class="relative">
     <div
-      class="absolute top-8 bottom-8 w-0.5 z-0 bg-neutral-100 dark:bg-neutral-800 overflow-hidden"
+      class="absolute top-8 bottom-8 w-0.5 z-0 bg-neutral-100 dark:bg-neutral-800 overflow-hidden mask-b-from-85%"
       :style="{ left: lineOffset }"
     >
       <div
