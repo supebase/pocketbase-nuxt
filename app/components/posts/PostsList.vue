@@ -16,7 +16,7 @@
       variant="soft"
       icon="i-hugeicons:alert-02"
       color="error"
-      class="mt-4"
+      class="mt-6"
     />
 
     <div v-else class="mt-10 space-y-4 w-full">

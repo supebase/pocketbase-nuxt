@@ -13,7 +13,7 @@
       class="relative w-22.25 shrink-0 overflow-hidden border-r border-white dark:border-neutral-900 bg-neutral-200/50 dark:bg-neutral-800/80 backdrop-blur"
     >
       <template v-if="linkImage">
-        <div class="relative w-full h-full bg-neutral-100 dark:bg-neutral-900">
+        <div class="relative w-full h-full">
           <img
             :src="linkImage"
             @load="isLoaded = true"
@@ -25,7 +25,7 @@
             loading="lazy"
           />
           <div v-if="!isLoaded" class="absolute inset-0 flex items-center justify-center">
-            <UIcon name="i-hugeicons:refresh" class="size-5 text-muted/30 animate-spin" />
+            <UIcon name="i-hugeicons:refresh" class="size-5 text-dimmed animate-spin" />
           </div>
         </div>
       </template>

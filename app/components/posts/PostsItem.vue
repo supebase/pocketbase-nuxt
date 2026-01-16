@@ -23,7 +23,7 @@
           />
 
           <div v-if="!isLoaded" class="absolute inset-0 flex items-center justify-center">
-            <UIcon name="i-hugeicons:refresh" class="size-6 text-muted animate-spin" />
+            <UIcon name="i-hugeicons:refresh" class="size-6 text-dimmed animate-spin" />
           </div>
         </div>
       </div>
