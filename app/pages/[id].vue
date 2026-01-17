@@ -19,6 +19,10 @@
       <div v-if="mdcReady" ref="commentTrigger" />
 
       <Transition name="fade">
+        <CommonReactions v-if="commentsVisible" :post-id="postWithRelativeTime.id" />
+      </Transition>
+
+      <Transition name="fade">
         <PostComment
           v-if="commentsVisible"
           :post-id="postWithRelativeTime.id"
@@ -52,7 +56,7 @@ const shouldShowSkeleton = computed(() => {
 const isFirstTimeRender = ref(true);
 useTimeoutFn(() => {
   isFirstTimeRender.value = false;
-}, 1000);
+}, 1500);
 
 const commentTrigger = ref<HTMLElement | null>(null);
 const commentsVisible = ref(false);

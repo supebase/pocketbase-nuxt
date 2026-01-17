@@ -12,6 +12,7 @@ export default defineNuxtConfig({
     pocketbaseBackend: process.env.NUXT_POCKETBASE_URL,
     public: {
       geoLocation: process.env.NUXT_GEOLOCATION_URL,
+      partykitHost: process.env.NUXT_PUBLIC_PARTYKIT_HOST,
     },
   },
   app: {

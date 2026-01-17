@@ -55,3 +55,6 @@ export const actionItems = [
   { label: '贴文', description: '记录观点、动态与生活', value: 'dit' },
   { label: '分享', description: '转发并分享优质内容', value: 'partager' },
 ];
+
+export const COOLDOWN_MS = 30 * 1000;
+export const REACTIONS = ['👍', '👎', '🎉', '❤️', '👀'];

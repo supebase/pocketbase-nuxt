@@ -27,6 +27,8 @@
         </NuxtLayout>
       </UContainer>
     </UMain>
+
+    <StatsOnline />
   </UApp>
 </template>
 

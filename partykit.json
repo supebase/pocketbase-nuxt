@@ -1,0 +1,5 @@
+{
+  "name": "eric-presence",
+  "main": "partykit/server.ts",
+  "compatibilityDate": "2025-01-01"
+}
