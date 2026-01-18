@@ -1,60 +1,40 @@
 <template>
-  <div class="fixed bottom-4 right-4 p-1 bg-white dark:bg-neutral-900 rounded-full overflow-hidden z-10 select-none">
-    <div
-      class="pl-2 pr-2 py-1 rounded-full flex flex-row items-center shadow border text-xs transition-opacity duration-500"
-      :class="colorSet.default.badge"
+  <div class="fixed bottom-6 right-6 z-50 select-none">
+    <Transition
+      enter-active-class="transition duration-300 ease-out"
+      enter-from-class="transform translate-y-4 opacity-0"
+      enter-to-class="transform translate-y-0 opacity-100"
+      leave-active-class="transition duration-200 ease-in"
+      leave-from-class="transform translate-y-0 opacity-100"
+      leave-to-class="transform translate-y-4 opacity-0"
     >
-      <span class="rounded-full inline-block h-2 w-2 animate-pulse shadow" :class="colorSet.default.block" />
-
-      <span class="ml-2 tabular-nums font-medium flex flex-row items-center gap-1 tracking-wider">
-        {{ count || 1 }}
-        <span>人在线</span>
-      </span>
-    </div>
+      <UBadge
+        v-if="count !== null"
+        variant="subtle"
+        color="primary"
+        size="md"
+        class="rounded-full px-3 py-1.5 font-bold ring-1 ring-primary/20 backdrop-blur-md bg-white/80 dark:bg-neutral-900/80"
+      >
+        <span class="relative flex h-2 w-2 mr-2">
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+          <span class="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+        </span>
+        <span class="tabular-nums tracking-tight">{{ count }} 人在线</span>
+      </UBadge>
+    </Transition>
   </div>
 </template>
 
 <script setup lang="ts">
-import PartySocket from 'partysocket';
-
-const colorSet = {
-  default: {
-    badge: 'border-primary opacity-60 hover:opacity-100 dark:border-primary',
-    block: 'bg-primary',
-  },
-};
-
-const status = ref<'live' | 'default'>('default');
 const count = ref<number | null>(null);
 
-if (import.meta.client) {
-  let partySocket: PartySocket;
-
-  const {
-    public: { partykitHost },
-  } = useRuntimeConfig();
-
-  onNuxtReady(() => {
-    partySocket = new PartySocket({
-      host: partykitHost,
-      room: 'site',
-    });
-
-    partySocket.onmessage = (evt) => {
-      const [type, value] = (evt.data as string).split(':');
-      if (!value) return;
-
-      if (type === 'connections') {
-        count.value = parseInt(value);
-      } else if (type === 'status') {
-        if (value === 'live' || value === 'default') {
-          status.value = value;
-        }
-      }
-    };
-  });
-
-  // 组件卸载时断开连接，释放资源
-  onBeforeUnmount(() => partySocket?.close());
-}
+useParty({
+  room: 'site',
+  onMessage: (type, value) => {
+    if (type === 'connections') {
+      const parsed = parseInt(value, 10);
+      if (!isNaN(parsed)) count.value = parsed;
+    }
+  },
+});
 </script>

@@ -57,4 +57,4 @@ export const actionItems = [
 ];
 
 export const COOLDOWN_MS = 30 * 1000;
-export const REACTIONS = ['👍', '👎', '🎉', '❤️', '👀'];
+export const REACTIONS = ['👍', '🤙', '🌮', '🍺', '👀'];

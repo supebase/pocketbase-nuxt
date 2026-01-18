@@ -144,6 +144,7 @@ export default defineNuxtConfig({
   // 颜色模式配置
   colorMode: {
     classSuffix: '',
+    preference: 'dark',
   },
   // CSS配置
   css: ['~/assets/css/app.css'],
