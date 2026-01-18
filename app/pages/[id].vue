@@ -1,10 +1,12 @@
 <template>
   <div class="post-page-wrapper">
-    <div v-if="shouldShowSkeleton" class="flex flex-col gap-6 mt-4">
-      <SkeletonPost class="mask-b-from-10" />
-    </div>
+    <Transition name="fade">
+      <div v-if="shouldShowSkeleton" class="flex flex-col gap-6 mt-4">
+        <SkeletonPost class="mask-b-from-10" />
+      </div>
+    </Transition>
 
-    <div v-if="postWithRelativeTime && !shouldShowSkeleton" :class="contentClass">
+    <div v-if="postWithRelativeTime && mdcReady" :class="contentClass">
       <PostHeader :post="postWithRelativeTime" :mdc-ready="mdcReady" />
 
       <PostContent :post-id="postWithRelativeTime.id" :mdc-ready="mdcReady" :toc="toc" :ast="ast" />
@@ -44,8 +46,14 @@ const { postWithRelativeTime, status, error, refresh, mdcReady, ast, toc, update
   usePostLogic(id);
 
 const isLongLoading = useTimeout(200);
+
+const isFullyReady = computed(() => {
+  return !!postWithRelativeTime.value && mdcReady.value;
+});
+
 const shouldShowSkeleton = computed(() => {
-  return status.value === 'pending' && isLongLoading.value && !postWithRelativeTime.value;
+  const loading = status.value === 'pending' || !mdcReady.value;
+  return loading && isLongLoading.value && !hasAnimated.value;
 });
 
 const commentTrigger = ref<HTMLElement | null>(null);
@@ -62,15 +70,14 @@ const { stop } = useIntersectionObserver(
   { rootMargin: '100px' },
 );
 
-const isFirstMount = ref(true);
 const hasAnimated = ref(false);
 const isAnimating = ref(false);
 
 watch(
-  [() => postWithRelativeTime.value, shouldShowSkeleton],
-  ([newPost, showSkeleton]) => {
-    // 只有当：有了数据，且骨架屏不需要显示（或已经结束显示）时，才开始内容滑入
-    if (newPost && !showSkeleton && !hasAnimated.value) {
+  isFullyReady,
+  (ready) => {
+    // 只有第一次 ready 时触发动画锁
+    if (ready && !hasAnimated.value) {
       isAnimating.value = true;
       hasAnimated.value = true;
     }
@@ -86,17 +93,10 @@ watch(isAnimating, (val) => {
   }
 });
 
-const contentClass = computed(() => {
-  return {
-    // 只有在第一次触发动画且 isAnimating 为 true 时才挂载动画类
-    'slide-up-content': isAnimating.value,
-
-    // 核心修改：
-    // 如果没有数据，且从未播放过动画，则隐藏（防止闪烁）
-    // 一旦 hasAnimated 变成 true，就不再挂载 opacity-0
-    'opacity-0': !postWithRelativeTime.value && !hasAnimated.value,
-  };
-});
+const contentClass = computed(() => ({
+  'slide-up-content': isAnimating.value,
+  'opacity-0': !isFullyReady.value && !hasAnimated.value,
+}));
 
 watch(mdcReady, async (ready) => {
   if (ready) {
@@ -137,9 +137,5 @@ onActivated(async () => {
       console.error('静默刷新失败', e);
     }
   }
-});
-
-onDeactivated(() => {
-  isFirstMount.value = false;
 });
 </script>
