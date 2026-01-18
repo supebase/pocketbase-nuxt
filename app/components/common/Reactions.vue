@@ -1,6 +1,6 @@
 <template>
   <div class="py-2 flex flex-col items-center select-none">
-    <div class="relative w-full max-w-40 flex flex-col items-center">
+    <div class="relative w-full max-w-70 flex flex-col items-center">
       <UProgress
         :ui="{ indicator: 'duration-500 ease-linear', status: 'duration-500 ease-linear' }"
         :model-value="remainingSeconds"

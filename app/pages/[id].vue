@@ -1,41 +1,36 @@
 <template>
-  <div>
-    <div v-if="shouldShowSkeleton" key="loading" class="flex flex-col gap-6 mt-4">
+  <div class="post-page-wrapper">
+    <div v-if="shouldShowSkeleton" class="flex flex-col gap-6 mt-4">
       <SkeletonPost class="mask-b-from-10" />
     </div>
 
-    <div v-else-if="postWithRelativeTime" key="content">
+    <div v-if="postWithRelativeTime && !shouldShowSkeleton" :class="contentClass">
       <PostHeader :post="postWithRelativeTime" :mdc-ready="mdcReady" />
 
-      <PostContent
-        :post-id="postWithRelativeTime.id"
-        :mdc-ready="mdcReady"
-        :toc="toc"
-        :ast="ast"
-        :class="{ 'record-item-animate': isFirstTimeRender && !shouldShowSkeleton }"
-        :style="{ '--delay': `.15s` }"
-      />
+      <PostContent :post-id="postWithRelativeTime.id" :mdc-ready="mdcReady" :toc="toc" :ast="ast" />
 
-      <div v-if="mdcReady" ref="commentTrigger" />
+      <div v-if="mdcReady" :class="['comment-section', commentsVisible ? 'opacity-100' : 'opacity-0']">
+        <div ref="commentTrigger" class="h-1" />
 
-      <Transition name="fade">
-        <CommonReactions v-if="commentsVisible" :post-id="postWithRelativeTime.id" />
-      </Transition>
+        <Transition name="fade">
+          <CommonReactions v-if="commentsVisible" :post-id="postWithRelativeTime.id" />
+        </Transition>
 
-      <Transition name="fade">
-        <PostComment
-          v-if="commentsVisible"
-          :post-id="postWithRelativeTime.id"
-          :allow-comment="postWithRelativeTime.allow_comment"
-          :mdc-ready="mdcReady"
-        />
-      </Transition>
+        <Transition name="fade">
+          <PostComment
+            v-if="commentsVisible"
+            :post-id="postWithRelativeTime.id"
+            :allow-comment="postWithRelativeTime.allow_comment"
+            :mdc-ready="mdcReady"
+          />
+        </Transition>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { useIntersectionObserver, useTimeout, useTimeoutFn } from '@vueuse/core';
+import { useIntersectionObserver, useTimeout } from '@vueuse/core';
 
 const route = useRoute();
 const { id } = route.params as { id: string };
@@ -53,11 +48,6 @@ const shouldShowSkeleton = computed(() => {
   return status.value === 'pending' && isLongLoading.value && !postWithRelativeTime.value;
 });
 
-const isFirstTimeRender = ref(true);
-useTimeoutFn(() => {
-  isFirstTimeRender.value = false;
-}, 1500);
-
 const commentTrigger = ref<HTMLElement | null>(null);
 const commentsVisible = ref(false);
 
@@ -72,15 +62,53 @@ const { stop } = useIntersectionObserver(
   { rootMargin: '100px' },
 );
 
-watch(mdcReady, async (ready) => {
-  if (ready && !commentsVisible.value) {
-    // 等待内容真正渲染到 DOM 产生高度
-    await nextTick();
+const isFirstMount = ref(true);
+const hasAnimated = ref(false);
+const isAnimating = ref(false);
 
-    if (commentTrigger.value) {
+watch(
+  [() => postWithRelativeTime.value, shouldShowSkeleton],
+  ([newPost, showSkeleton]) => {
+    // 只有当：有了数据，且骨架屏不需要显示（或已经结束显示）时，才开始内容滑入
+    if (newPost && !showSkeleton && !hasAnimated.value) {
+      isAnimating.value = true;
+      hasAnimated.value = true;
+    }
+  },
+  { immediate: true },
+);
+
+watch(isAnimating, (val) => {
+  if (val) {
+    setTimeout(() => {
+      isAnimating.value = false;
+    }, 1000); // 时间略大于你的 CSS 动画时长
+  }
+});
+
+const contentClass = computed(() => {
+  return {
+    // 只有在第一次触发动画且 isAnimating 为 true 时才挂载动画类
+    'slide-up-content': isAnimating.value,
+
+    // 核心修改：
+    // 如果没有数据，且从未播放过动画，则隐藏（防止闪烁）
+    // 一旦 hasAnimated 变成 true，就不再挂载 opacity-0
+    'opacity-0': !postWithRelativeTime.value && !hasAnimated.value,
+  };
+});
+
+watch(mdcReady, async (ready) => {
+  if (ready) {
+    // 增加延迟，确保 MDCRenderer 已经完成了初步的 DOM 插入和样式计算
+    await nextTick();
+    // 强制等待 400ms，这通常是 Markdown 渲染 + 内容淡入的时间
+    await new Promise((resolve) => setTimeout(resolve, 400));
+
+    if (!commentsVisible.value && commentTrigger.value) {
       const rect = commentTrigger.value.getBoundingClientRect();
-      // 如果渲染完后，触发器已经在视口内（短文章），则加载评论
-      if (rect.top < window.innerHeight + 100) {
+      // 如果此时已经在视口了，说明是短文章，展示评论
+      if (rect.top < window.innerHeight + 200) {
         commentsVisible.value = true;
         stop();
       }
@@ -110,13 +138,8 @@ onActivated(async () => {
     }
   }
 });
-</script>
 
-<style scoped>
-.fade-enter-active {
-  transition: opacity 0.6s ease-out;
-}
-.fade-enter-from {
-  opacity: 0;
-}
-</style>
+onDeactivated(() => {
+  isFirstMount.value = false;
+});
+</script>

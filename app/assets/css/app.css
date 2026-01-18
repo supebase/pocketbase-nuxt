@@ -205,15 +205,33 @@ header::before {
   transform: translateX(-15px);
 }
 
-/* 初始加载时的波浪入场 */
-.record-item-animate {
-  animation: slide-up 0.6s ease-out var(--delay) backwards;
+.post-page-wrapper {
+  position: relative;
+  min-height: 100vh; /* 建议给个最小高度防止底部内容跳动 */
+}
+
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+.fade-enter-from, .fade-leave-to {
+  opacity: 0;
+}
+
+/* 如果骨架屏需要绝对定位淡出以防抖动 */
+.fade-leave-active {
+  position: absolute;
+  width: 100%;
+}
+
+/* 内容滑入 */
+.slide-up-content {
+  animation: slide-up 0.6s ease-out forwards;
 }
 
 @keyframes slide-up {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(30px);
   }
   to {
     opacity: 1;
@@ -221,32 +239,22 @@ header::before {
   }
 }
 
-/* 新评论发表时的快速弹出 */
-.new-item-animate {
-  animation: scale-in-fade 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
-  will-change: transform, opacity;
+.comment-section {
+  /* 关键：给评论区一个进入延迟，确保它在正文动画开始后才显示 */
+  transition: opacity 0.8s ease cubic-bezier(0.4, 0, 0.2, 1);
+  transition-delay: 0.5s;
 }
 
-@keyframes scale-in-fade {
-  from {
-    opacity: 0;
-    transform: scale(0.9) translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
+.inner-fade-enter-active {
+  transition: opacity 0.6s ease-out;
+}
+.inner-fade-enter-from {
+  opacity: 0;
 }
 
-@keyframes slide-up-fade {
-  from {
-    opacity: 0;
-    transform: translateY(16px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.inner-fade-leave-active {
+  transition: none;
+  position: absolute;
 }
 
 .animate-heart-pop {
