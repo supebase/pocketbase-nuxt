@@ -9,7 +9,7 @@
     </ULink>
 
     <ULink v-if="item.firstImage" :to="`/${item.id}`" tabindex="-1">
-      <div class="my-3.5 rounded-lg overflow-hidden">
+      <div class="my-3.5 rounded-lg overflow-hidden bg-neutral-100 dark:bg-neutral-800">
         <div class="relative overflow-hidden aspect-video">
           <img
             :src="item.firstImage"

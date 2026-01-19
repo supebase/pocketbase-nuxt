@@ -1,6 +1,10 @@
 <template>
   <div class="my-6">
-    <div class="rounded-lg overflow-hidden cursor-zoom-in relative" @click="isExpanded = true">
+    <div
+      class="rounded-lg overflow-hidden cursor-zoom-in relative bg-neutral-100 dark:bg-neutral-800"
+      @click="isExpanded = true"
+      :style="{ aspectRatio: aspectRatio }"
+    >
       <img
         ref="imgRef"
         :src="refinedSrc"
@@ -56,11 +60,26 @@ const props = defineProps({
     type: String,
     default: '',
   },
+  width: {
+    type: [String, Number],
+    default: null,
+  },
+  height: {
+    type: [String, Number],
+    default: null,
+  },
 });
 
 const isLoaded = ref(false);
 const isExpanded = ref(false);
 const imgRef = ref<HTMLImageElement | null>(null);
+
+const aspectRatio = computed(() => {
+  if (props.width && props.height) {
+    return `${props.width} / ${props.height}`;
+  }
+  return '16 / 9';
+});
 
 // 处理 ESC 键关闭
 const handleKeydown = (e: KeyboardEvent) => {

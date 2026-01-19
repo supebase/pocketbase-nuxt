@@ -205,22 +205,65 @@ header::before {
   transform: translateX(-15px);
 }
 
+.post-content-container {
+  contain-intrinsic-size: 0 600px;
+  content-visibility: auto;
+}
+
 .post-page-wrapper {
   position: relative;
   min-height: 100vh; /* 建议给个最小高度防止底部内容跳动 */
+  content-visibility: auto;
 }
 
-.fade-enter-active, .fade-leave-active {
-  transition: opacity 0.3s ease;
+.fade-mdc-enter-active,
+.fade-mdc-leave-active {
+  transition: opacity 0.5s ease;
 }
-.fade-enter-from, .fade-leave-to {
+.fade-mdc-enter-from,
+.fade-mdc-leave-to {
   opacity: 0;
 }
 
-/* 如果骨架屏需要绝对定位淡出以防抖动 */
-.fade-leave-active {
-  position: absolute;
-  width: 100%;
+/* 1. 容器处理：这是让左侧图标平滑移动的关键 */
+.auth-wrapper {
+  display: flex;
+  align-items: center;
+  /* 开启 layout transition，当内容宽度变化时，让 flex 自动平滑过渡 */
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.auth-item {
+  display: flex;
+  align-items: center;
+}
+
+/* 2. 进入动画：登录成功，内容从右侧“顶”进来 */
+.auth-slide-enter-active {
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.auth-slide-enter-from {
+  opacity: 0;
+  transform: translateX(15px); /* 配合位移产生推力 */
+}
+
+/* 3. 离开动画：退出成功，内容顺滑消失 */
+.auth-slide-leave-active {
+  transition: all 0.3s ease-out;
+}
+.auth-slide-leave-to {
+  opacity: 0;
+  transform: translateX(15px);
+}
+
+/* 4. 头像单独的“从小变大”效果，增强质感 */
+.avatar-pop {
+  animation: pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes pop {
+  from { transform: scale(0.4); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
 }
 
 /* 内容滑入 */

@@ -7,6 +7,5 @@
 <script setup lang="ts">
 const props = defineProps<{
   post: any;
-  mdcReady: boolean;
 }>();
 </script>

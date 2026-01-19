@@ -50,7 +50,6 @@ import type { CommentRecord } from '~/types/comments';
 const props = defineProps<{
   postId: string;
   allowComment: boolean;
-  mdcReady: boolean;
 }>();
 
 const { loggedIn, user: currentUser } = useUserSession();

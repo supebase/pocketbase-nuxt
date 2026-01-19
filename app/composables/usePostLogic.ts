@@ -5,63 +5,41 @@ export const usePostLogic = (id: string | string[]) => {
   const { user: currentUser } = useUserSession();
   const { listen, close } = usePocketRealtime();
 
-  // 确保 ID 的响应式引用，支持路由参数切换
   const idRef = computed(() => (isRef(id) ? id.value : Array.isArray(id) ? id[0] : id));
 
-  // 数据抓取：开启 server 端抓取以支持 SSR 和 SEO
   const { data, status, refresh, error } = useFetch<SinglePostResponse>(() => `/api/collections/post/${idRef.value}`, {
     key: `post-detail-${idRef.value}`,
     server: true,
+    lazy: true,
+    immediate: true,
     query: { userId: computed(() => currentUser.value?.id) },
   });
 
-  // 直接关联服务端返回的 AST
   const ast = computed(() => data.value?.data?.mdcAst || null);
   const toc = computed(() => ast.value?.toc || null);
 
-  // 状态判定：只有在 success 且 ast 存在时才算 ready
-  const mdcReady = computed(() => {
-    return status.value === 'success' && !!ast.value;
-  });
-
-  // 实时监听逻辑 (仅在客户端)
   const setupRealtime = () => {
     if (import.meta.server) return;
-
     listen(async ({ collection, action, record }) => {
-      // 只有当集合匹配且 ID 对应时才处理
       const targetId = idRef.value;
       if (collection !== 'posts' || record.id !== targetId) return;
 
       if (action === 'update') {
         if (data.value?.data) {
-          // 浏览量等轻量字段：手动热更新 UI，无需刷新页面
           data.value.data.views = record.views;
-
-          // 内容变化：由于涉及服务端 AST 解析，必须调用 refresh
-          // 这样能确保重新获取服务端生成的最新 mdcAst
           if (record.content !== data.value.data.content) {
-            console.log('[SSE] 内容变化，刷新 AST...');
             await refresh();
           }
         }
       } else if (action === 'delete') {
-        // 如果文章被删除了，可以重定向或修改状态
-        // data.value = null;
         await navigateTo('/');
       }
     });
   };
 
   if (import.meta.client) {
-    onMounted(() => {
-      setupRealtime();
-    });
-
-    // usePocketRealtime 的 close 会精准移除当前 callback
-    onUnmounted(() => {
-      close();
-    });
+    onMounted(() => setupRealtime());
+    onUnmounted(() => close());
   }
 
   return {
@@ -73,7 +51,6 @@ export const usePostLogic = (id: string | string[]) => {
     status,
     error,
     refresh,
-    mdcReady,
     ast,
     toc,
     updatedMarks,

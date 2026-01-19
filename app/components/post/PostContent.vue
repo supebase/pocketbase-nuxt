@@ -1,6 +1,6 @@
 <template>
-  <div class="relative mt-6 min-h-[40vh]">
-    <PostToc :toc="toc" />
+  <div class="post-content-container relative mt-6">
+    <PostToc v-if="toc" :toc="toc" />
 
     <MDCRenderer
       v-if="ast"

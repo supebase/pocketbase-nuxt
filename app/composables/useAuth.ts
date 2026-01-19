@@ -126,6 +126,8 @@ export const useAuth = (isLoginModeArg?: Ref<boolean>) => {
         color: 'info',
       });
 
+      await new Promise((resolve) => setTimeout(resolve, 400));
+
       await navigateTo(
         {
           path: '/auth',
