@@ -7,22 +7,26 @@
         <form @submit.prevent="$emit('submit')" class="space-y-6 select-none">
           <EditorAction v-model="modelValue.action" :items="actionItems" />
 
-          <EditorCanvas
-            v-model="editorContent"
-            :extensions="extensions"
-            :toolbar-items="items"
-            :max-limit="maxLimit"
-            :disabled="disabled"
-          />
+          <div class="p-3 space-y-6 bg-neutral-100 dark:bg-neutral-950/70 rounded-lg">
+            <EditorCanvas
+              v-model="editorContent"
+              :extensions="extensions"
+              :toolbar-items="items"
+              :max-limit="maxLimit"
+              :disabled="disabled"
+            />
 
-          <EditorMetaForm v-model:icon="modelValue.icon" v-model:link="modelValue.link" :action="modelValue.action" />
+            <USeparator label="其他选项" />
 
-          <EditorSettings v-model:published="modelValue.published" v-model:allow-comment="modelValue.allow_comment" />
+            <EditorMetaForm v-model:icon="modelValue.icon" v-model:link="modelValue.link" :action="modelValue.action" />
 
-          <USeparator />
+            <EditorSettings v-model:published="modelValue.published" v-model:allow-comment="modelValue.allow_comment" />
 
-          <div class="flex items-center justify-between">
-            <slot name="actions" />
+            <USeparator />
+
+            <div class="flex items-center justify-between">
+              <slot name="actions" />
+            </div>
           </div>
         </form>
       </template>

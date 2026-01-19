@@ -1,12 +1,12 @@
 /**
  * @file Auth Middleware
- * @description 全局身份认证中间件。负责 PocketBase 实例初始化、用户状态同步及受保护路由的鉴权拦截。
+ * @description 全局身份认证中间件。包含 PocketBase 实例初始化、Token 自动续期及鉴权拦截。
  */
 
 import { getPocketBase } from '../utils/pocketbase';
 
-/** * 受保护路由配置
- * @description 定义需要登录才能访问的 API 路径及对应的方法
+/**
+ * 受保护路由配置
  */
 const protectedRoutes = [
   { path: '/api/collections/posts', method: 'POST' },
@@ -16,17 +16,58 @@ const protectedRoutes = [
   { path: '/api/collections/likes', method: 'POST' },
 ];
 
+/**
+ * 检查是否需要刷新 Token (时间间隔检查)
+ * @description 逻辑：如果 Token 的有效时间已经过去了一半以上，则返回 true
+ */
+function shouldRefreshToken(token: string): boolean {
+  try {
+    // JWT 结构为 [header].[payload].[signature]，我们取中间的 payload
+    const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
+    const now = Math.floor(Date.now() / 1000);
+    const totalDuration = payload.exp - payload.iat; // 总有效期
+    const remaining = payload.exp - now; // 剩余有效期
+
+    // 如果剩余寿命少于总寿命的一半，就触发刷新
+    return remaining < totalDuration / 2;
+  } catch (e) {
+    return false;
+  }
+}
+
 export default defineEventHandler(async (event) => {
-  // 路径标准化：移除尾部斜杠并转为小写，确保匹配一致性
+  // 1. 路径标准化
   const url = getRequestURL(event).pathname.replace(/\/$/, '').toLowerCase() || '/';
   const method = event.method;
 
-  // 实例初始化：将 PocketBase 注入 event.context 供后续 Handler 使用
+  // 2. 实例初始化
   const pb = getPocketBase(event);
   event.context.pb = pb;
 
-  // 状态同步：确保 PocketBase AuthStore 与 Nuxt Session 状态一致
+  // 3. 身份验证与自动续期
   if (pb.authStore.isValid && pb.authStore.record) {
+    // 检查是否需要续期 (避免高频刷新)
+    if (shouldRefreshToken(pb.authStore.token)) {
+      try {
+        // 执行 PocketBase 官方刷新接口
+        await pb.collection('users').authRefresh();
+
+        // 重要：将刷新后的新 Token 同步回浏览器 Cookie
+        const newCookie = pb.authStore.exportToCookie({
+          httpOnly: false, // 允许前端 JS 读取（如果需要）
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax',
+          path: '/',
+        });
+        appendResponseHeader(event, 'set-cookie', newCookie);
+      } catch (e) {
+        // 如果刷新失败（如用户被禁用），清理状态
+        pb.authStore.clear();
+        await clearUserSession(event);
+      }
+    }
+
+    // 同步到 context 供 Handler 使用
     event.context.user = pb.authStore.record;
   } else {
     // 自动降级：若 PB Token 失效则同步清理 Nuxt Session
@@ -36,20 +77,19 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  // 拦截逻辑：检查当前请求是否命中保护路由
+  // 4. 拦截逻辑：检查当前请求是否命中保护路由
   const isProtected = protectedRoutes.some((route) => {
     const methodMatch = Array.isArray(route.method) ? route.method.includes(method) : method === route.method;
 
     if (!methodMatch) return false;
 
-    // 前缀匹配支持（适用于 /api/comment/:id 等动态路由）
     if (route.isPrefix) {
       return url === route.path || url.startsWith(`${route.path}/`);
     }
     return url === route.path;
   });
 
-  // 鉴权判定：若为保护路由且无有效用户，则阻断请求
+  // 5. 鉴权判定
   if (isProtected && !event.context.user) {
     throw createError({
       statusCode: 401,

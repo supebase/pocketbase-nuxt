@@ -32,6 +32,10 @@ export const processMarkdownImages = async (
     // 执行受限并发的下载逻辑
     return limit(async () => {
       try {
+        const head = await $fetch.raw(url, { method: 'HEAD', timeout: 1000 }).catch(() => null);
+        const size = head?.headers.get('content-length');
+        if (size && parseInt(size) > MD_IMAGE_MAX_SIZE) return null;
+
         const response = await $fetch.raw<ArrayBuffer>(url, {
           responseType: 'arrayBuffer',
           timeout: IMAGE_DOWNLOAD_TIMEOUT,

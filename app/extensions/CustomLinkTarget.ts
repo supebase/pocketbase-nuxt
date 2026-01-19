@@ -33,13 +33,13 @@ export const CustomLinkTarget = Extension.create({
                       'inline-flex items-center gap-1 mx-1 px-1.5 text-[11px] font-medium bg-neutral-50 text-muted dark:bg-neutral-400/10 rounded-lg select-none cursor-default';
 
                     // 插入一个图标
-                    const icon = document.createElement('span');
-                    icon.className = 'i-hugeicons:link-square-01 w-3 h-3';
+                    //const icon = document.createElement('span');
+                    //icon.className = 'i-hugeicons:link-square-01 w-3 h-3';
 
                     const text = document.createElement('span');
                     text.innerText = '新窗口';
 
-                    dom.appendChild(icon);
+                    //dom.appendChild(icon);
                     dom.appendChild(text);
                     return dom;
                   }),

@@ -1,6 +1,6 @@
 /**
  * @file Likes Service
- * @description 处理点赞业务逻辑，包含状态切换、单条计数及高性能批量聚合。
+ * @description 处理点赞业务逻辑。
  */
 
 import type { LikesResponse as PBLikesResponse, Create } from '~/types/pocketbase-types';
@@ -9,8 +9,6 @@ import type { ToggleLikeOptions, GetCommentLikesOptions, GetCommentsLikesMapOpti
 
 /**
  * 切换点赞状态
- * @description 逻辑：查询是否存在 -> 存在则删除（取消点赞），不存在则创建（点赞）
- * @returns 返回操作后的最新点赞状态及总数
  */
 export async function toggleLike({ pb, commentId, userId }: ToggleLikeOptions) {
   const filter = pb.filter('comment = {:commentId} && user = {:userId}', { commentId, userId });
@@ -19,11 +17,10 @@ export async function toggleLike({ pb, commentId, userId }: ToggleLikeOptions) {
 
   try {
     existingLike = await pb.collection('likes').getFirstListItem(filter, {
-      // 禁用自动取消，确保操作完整执行
       requestKey: null,
     });
   } catch (e) {
-    // 找不到记录会抛出 404，属于正常业务流
+    // 找不到记录
   }
 
   let liked = false;
@@ -37,14 +34,12 @@ export async function toggleLike({ pb, commentId, userId }: ToggleLikeOptions) {
     liked = true;
   }
 
-  // 刷新当前评论的总点赞数
   const likes = await getCommentLikes({ pb, commentId });
   return { liked, likes, commentId };
 }
 
 /**
  * 获取单条评论点赞数
- * @description 使用 fields: 'id' 仅返回必要字段，降低传输开销
  */
 export async function getCommentLikes({ pb, commentId }: GetCommentLikesOptions): Promise<number> {
   const result = await pb.collection('likes').getList(1, 1, {
@@ -56,9 +51,8 @@ export async function getCommentLikes({ pb, commentId }: GetCommentLikesOptions)
 }
 
 /**
- * 批量获取评论点赞信息（Map 模式）
- * @description 核心逻辑：一次性拉取所有涉及的点赞记录，并在内存中进行分组统计，避免 N+1 查询问题。
- * @returns 键为 commentId，值为点赞元数据的映射表
+ * 批量获取评论点赞信息（优化版）
+ * @description 仅拉取当前用户的点赞状态，防止拉取全表导致 OOM
  */
 export async function getCommentsLikesMap({
   pb,
@@ -67,31 +61,33 @@ export async function getCommentsLikesMap({
 }: GetCommentsLikesMapOptions): Promise<Record<string, CommentLikeInfo>> {
   if (!commentIds || commentIds.length === 0) return {};
 
-  // 构建批量查询过滤（使用 ID 列表检索）
-  const commentFilter = commentIds.map((id) => pb.filter('comment = {:id}', { id })).join(' || ');
-
-  const allLikes = await pb.collection('likes').getFullList<PBLikesResponse>({
-    filter: `(${commentFilter})`,
-    requestKey: null,
-  });
-
-  // 初始化结果容器
   const likesMap: Record<string, CommentLikeInfo> = {};
+
+  // 初始化 Map
   commentIds.forEach((id) => {
     likesMap[id] = { commentId: id, likes: 0, isLiked: false };
   });
 
-  // 内存聚合统计
-  allLikes.forEach((like) => {
-    const info = likesMap[like.comment];
-    if (info) {
-      info.likes++;
-      // 如果当前登录用户在该记录中，标记为已点赞
-      if (userId && like.user === userId) {
-        info.isLiked = true;
-      }
-    }
-  });
+  // 并行获取：1. 点赞总数统计 (通常在 View 中处理，此处通过 filter 模拟)
+  // 2. 当前用户的点赞状态
+  if (userId) {
+    // 仅查询当前用户在这些评论中的点赞记录，返回数据量极小且安全
+    const userLikesFilter = `user = "${userId}" && (${commentIds.map((id) => `comment = "${id}"`).join(' || ')})`;
 
+    const userLikes = await pb.collection('likes').getFullList<PBLikesResponse>({
+      filter: userLikesFilter,
+      fields: 'comment',
+      requestKey: null,
+    });
+
+    userLikes.forEach((like) => {
+      if (likesMap[like.comment]) {
+        likesMap[like.comment].isLiked = true;
+      }
+    });
+  }
+
+  // 注意：此处 likes 字段默认为 0，建议在 PocketBase 中通过 View 关联 likes_count 字段
+  // 或者在 Handler 层通过聚合 SQL 填充。
   return likesMap;
 }

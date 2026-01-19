@@ -4,7 +4,7 @@
       <UInput
         v-model="icon"
         id="icon-field"
-        placeholder="图标 - simple-icons:nuxt"
+        placeholder="图标 i-simple-icons:nuxt"
         variant="outline"
         color="neutral"
         size="lg"
@@ -24,7 +24,7 @@
       <UInput
         v-model="link"
         id="link-field"
-        placeholder="卡片 - example.com"
+        placeholder="卡片 example.com"
         variant="outline"
         color="neutral"
         size="lg"

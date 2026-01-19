@@ -50,21 +50,23 @@ const form = ref({
 });
 
 const maxLimit = CONTENT_MAX_LENGTH;
-const isLoading = ref(false);
 const isSubmitting = ref(false);
 
-const loadPostData = async () => {
-  if (!id) return;
-  isLoading.value = true;
-  try {
-    const response = await $fetch<SinglePostResponse>(`/api/collections/post/${id}`);
-    if (response?.data) {
-      form.value = { ...response.data };
+const { data: response, pending: isLoading } = await useAsyncData(
+  `edit-post-${id}`,
+  () => $fetch<SinglePostResponse>(`/api/collections/post/${id}`),
+  { lazy: true },
+);
+
+watch(
+  response,
+  (newVal) => {
+    if (newVal?.data) {
+      form.value = { ...newVal.data };
     }
-  } finally {
-    isLoading.value = false;
-  }
-};
+  },
+  { immediate: true },
+);
 
 const { allPosts, transformPosts } = usePosts();
 
@@ -105,6 +107,4 @@ const handleSubmit = async () => {
     isSubmitting.value = false;
   }
 };
-
-onMounted(loadPostData);
 </script>

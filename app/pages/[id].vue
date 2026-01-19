@@ -4,34 +4,32 @@
       <SkeletonPost class="mask-b-from-10" />
     </div>
 
-    <ClientOnly>
-      <div v-if="postWithRelativeTime && ast">
-        <PostHeader :post="postWithRelativeTime" />
+    <div v-if="postWithRelativeTime && ast">
+      <PostHeader :post="postWithRelativeTime" />
 
-        <Suspense @resolve="onMdcFinished">
-          <template #default>
-            <PostContent :post-id="postWithRelativeTime.id" :toc="toc" :ast="ast" />
-          </template>
-          <template #fallback>
-            <SkeletonMDC class="mask-b-from-10" />
-          </template>
-        </Suspense>
+      <Suspense @resolve="onMdcFinished">
+        <template #default>
+          <PostContent :post-id="postWithRelativeTime.id" :toc="toc" :ast="ast" />
+        </template>
+        <template #fallback>
+          <SkeletonMDC class="mask-b-from-10" />
+        </template>
+      </Suspense>
 
-        <div
-          ref="commentTrigger"
-          class="comment-wrapper transition-all duration-700 ease-in-out"
-          :class="[commentsVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0']"
-        >
-          <div class="h-1" />
-          <CommonReactions v-if="commentsVisible" :post-id="postWithRelativeTime.id" />
-          <PostComment
-            v-if="commentsVisible"
-            :post-id="postWithRelativeTime.id"
-            :allow-comment="postWithRelativeTime.allow_comment"
-          />
-        </div>
+      <div
+        ref="commentTrigger"
+        class="comment-wrapper transition-all duration-700 ease-in-out"
+        :class="[commentsVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0']"
+      >
+        <div class="h-1" />
+        <CommonReactions v-if="commentsVisible" :post-id="postWithRelativeTime.id" />
+        <PostComment
+          v-if="commentsVisible"
+          :post-id="postWithRelativeTime.id"
+          :allow-comment="postWithRelativeTime.allow_comment"
+        />
       </div>
-    </ClientOnly>
+    </div>
   </div>
 </template>
 

@@ -110,68 +110,50 @@ header::before {
   mix-blend-mode: normal;
 }
 
-/* 基础样式保持并优化 */
 .number-column {
-  display: inline-block;
+  width: 0.65em; /* 根据你的字体微调 */
   height: 1.25em;
-  width: 0.6em; /* 必须有固定宽度 */
   overflow: hidden;
-  position: relative;
-  transition: width 0.5s ease; /* 宽度变化也要平滑 */
+}
+
+.comma-column {
+  width: 0.3em;
+  text-align: center;
+}
+
+.digit-cell {
+  height: 1.25em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* 强制等宽，防止 1 变 8 时产生水平晃动 */
+  font-variant-numeric: tabular-nums;
 }
 
 .number-scroll {
-  /* 垂直滚动动画 */
-  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
   will-change: transform;
+  /* 使用你之前的贝塞尔曲线，它带有回弹效果，看起来很灵动 */
+  transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.number-cell {
-  height: 1.25em;
-  width: 0.6em;
-  text-align: center;
-  line-height: 1.25em;
-}
-
-.comma {
-  display: inline-block;
-  width: 0.3em; /* 给逗号固定宽度 */
-  padding: 0 0.05em;
-  height: 1.25em;
-  line-height: 1.25em;
-  text-align: center;
-  transition: width 0.5s ease;
-}
-
-/* --- 新增：TransitionGroup 动画 --- */
-
-/* 1. 进入动画：新数字从右侧淡入并撑开空间 */
-.digit-enter-from {
-  opacity: 0;
-  width: 0;
-  transform: translateX(10px);
-}
-
-.digit-enter-to {
-  opacity: 1;
-  width: 0.6em; /* 对应 .number-cell 的宽度 */
-  transform: translateX(0);
-}
-
-/* 2. 离开动画：数字消失时平滑收缩（针对数值变小时） */
-.digit-leave-to {
-  opacity: 0;
-  width: 0;
-}
-
+/* TransitionGroup 动画：数值位数的增减 */
 .digit-enter-active,
 .digit-leave-active {
   transition: all 0.5s ease;
 }
 
-/* 特殊处理逗号的进入宽度 */
-.digit-enter-to.comma {
-  width: 0.3em;
+.digit-enter-from {
+  opacity: 0;
+  width: 0;
+  transform: translateY(-0.5em); /* 数字出现时带一点向下的位移 */
+}
+
+.digit-leave-to {
+  opacity: 0;
+  width: 0;
+  transform: translateY(0.5em);
 }
 
 /* 1. 基础配置 */
@@ -214,45 +196,53 @@ header::before {
   opacity: 0;
 }
 
-/* 1. 容器处理：这是让左侧图标平滑移动的关键 */
+/* 1. 容器：这是拉动左侧组件的关键 */
 .auth-wrapper {
   display: flex;
   align-items: center;
-  /* 开启 layout transition，当内容宽度变化时，让 flex 自动平滑过渡 */
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  /* 允许容器宽度收缩，但不允许内容换行 */
+  overflow: visible;
 }
 
+/* 2. 动画活跃状态 */
+.auth-slide-enter-active,
+.auth-slide-leave-active {
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  max-width: 200px; /* 足够容纳头像+按钮的宽度 */
+}
+
+/* 3. 进场与出场状态：控制宽度坍塌，从而实现全员滑动 */
+.auth-slide-enter-from,
+.auth-slide-leave-to {
+  opacity: 0;
+  max-width: 0;
+  transform: translateX(10px);
+}
+
+/* 4. 内部条目：防止宽度变小时内部组件乱跳 */
 .auth-item {
   display: flex;
   align-items: center;
+  gap: 12px;
+  white-space: nowrap;
 }
 
-/* 2. 进入动画：登录成功，内容从右侧“顶”进来 */
-.auth-slide-enter-active {
-  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-.auth-slide-enter-from {
-  opacity: 0;
-  transform: translateX(15px); /* 配合位移产生推力 */
-}
-
-/* 3. 离开动画：退出成功，内容顺滑消失 */
-.auth-slide-leave-active {
-  transition: all 0.3s ease-out;
-}
-.auth-slide-leave-to {
-  opacity: 0;
-  transform: translateX(15px);
-}
-
-/* 4. 头像单独的“从小变大”效果，增强质感 */
+/* 5. 头像弹出：去掉 overflow 限制后更自然 */
 .avatar-pop {
-  animation: pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  transform-origin: center;
+}
+.auth-slide-enter-active .avatar-pop {
+  animation: auth-pop-in 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-@keyframes pop {
-  from { transform: scale(0.4); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
+@keyframes auth-pop-in {
+  0% { transform: scale(0); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* 6. 联动：让左侧所有组件都有位移过渡 */
+.flex.items-center.gap-3 > * {
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* 内容滑入 */

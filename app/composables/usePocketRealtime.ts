@@ -98,6 +98,9 @@ export const usePocketRealtime = () => {
   const listen = (callback: (payload: RealtimePayload) => void) => {
     if (import.meta.server) return;
 
+    // 避免同一个组件的回调被重复添加
+    if (sseManager.subscribers.has(callback)) return;
+
     currentCallback = callback;
     sseManager.subscribers.add(callback);
 

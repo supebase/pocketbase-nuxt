@@ -23,21 +23,38 @@ export async function performMarkdownImageSync({
     return content;
   }
 
-  return await syncMarkdownContent(content, recordId, async (newItems) => {
-    const formData = new FormData();
+  try {
+    return await syncMarkdownContent(content, recordId, async (newItems) => {
+      // 如果没有新图片需要下载（可能全是本地路径或下载失败），直接返回空数组
+      if (newItems.length === 0) return [];
 
-    // 保持持久化：必须将已存在的旧文件名重新 append，否则 PB 默认会将其删除
-    existingImages.forEach((name) => formData.append('markdown_images', name));
+      const formData = new FormData();
 
-    // 批量添加新图片文件
-    newItems.forEach((item) => {
-      formData.append('markdown_images', item.blob, item.fileName);
+      // 1. 核心：保留旧图片（PocketBase 要求重新提交旧文件名以防止被删除）
+      if (Array.isArray(existingImages)) {
+        existingImages.forEach((name) => formData.append('markdown_images', name));
+      }
+
+      // 2. 添加新下载的图片
+      newItems.forEach((item) => {
+        // 确保 blob 存在且合法
+        if (item.blob) {
+          formData.append('markdown_images', item.blob, item.fileName);
+        }
+      });
+
+      // 3. 提交更新
+      const record = await pb.collection(collection).update(recordId, formData);
+
+      // 4. 返回新生成的文件名列表
+      // PB 会将新上传的文件追加入数组，我们只需提取最后 N 个
+      const allImages = (record.markdown_images || []) as string[];
+      return allImages.slice(-newItems.length);
     });
+  } catch (error) {
+    console.error('[ImageSync] 过程中出现异常:', error);
 
-    // 执行更新：将文件上传至对应集合记录
-    const record = await pb.collection(collection).update(recordId, formData);
-
-    // 映射结果：PB 会将新上传的文件追加在数组末尾，截取新生成的文件名返回给 syncMarkdownContent
-    return (record.markdown_images as string[]).slice(-newItems.length);
-  });
+    // 失败时回退到原始内容，保证文章能存下来
+    return content;
+  }
 }

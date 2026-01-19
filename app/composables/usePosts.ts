@@ -31,11 +31,22 @@ export const usePosts = () => {
   /**
    * 优化：单条数据处理逻辑
    */
-  const processPost = (item: PostWithUser): PostWithUser => ({
-    ...item,
-    cleanContent: item.cleanContent || cleanMarkdown(item.content || ''),
-    firstImage: item.firstImage || getFirstImageUrl(item.content),
-  });
+  const processPost = (item: any): PostWithUser => {
+    // 如果已经是处理过的，且内容没变，直接返回，避免重复计算
+    if (item._processed) return item;
+
+    return {
+      ...item,
+      _processed: true,
+      cleanContent: item.cleanContent || cleanMarkdown(item.content || ''),
+      firstImage: item.firstImage || getFirstImageUrl(item.content),
+      ui: {
+        date: useRelativeTime(item.created),
+        userName: item.expand?.user?.name || '未知用户',
+        avatarId: item.expand?.user?.avatar,
+      },
+    };
+  };
 
   /**
    * 工具函数：预处理 Markdown 内容
@@ -53,28 +64,14 @@ export const usePosts = () => {
   const canViewDrafts = computed(() => loggedIn.value && !!user.value?.verified);
   const isResetting = ref(false);
 
-  /**
-   * 优化：这里的 computed 不再执行 Markdown 解析
-   * 只是简单的过滤和浅层对象映射
-   */
   const displayItems = computed(() => {
-    const filtered = canViewDrafts.value ? allPosts.value : allPosts.value.filter((p) => p.published);
+    const items = canViewDrafts.value ? allPosts.value : allPosts.value.filter((p) => p.published);
 
-    return filtered.map((item) => ({
-      id: item.id,
-      title: item.expand?.user?.name || '未知用户',
-      date: useRelativeTime(item.created),
-      cleanContent: item.cleanContent,
-      action: item.action,
-      allow_comment: item.allow_comment,
-      published: item.published,
-      icon: item.icon,
-      avatarId: item.expand?.user?.avatar,
-      firstImage: item.firstImage,
-      link_data: item.link_data,
-      link_image: item.link_image,
-      content: item.content,
-      views: item.views || 0,
+    return items.map((item) => ({
+      ...item,
+      title: item.ui?.userName || item.expand?.user?.name || '未知用户',
+      date: item.ui?.date || '',
+      avatarId: item.ui?.avatarId || item.expand?.user?.avatar,
     }));
   });
 
@@ -111,11 +108,17 @@ export const usePosts = () => {
             totalItems.value--;
           } else {
             const oldItem = allPosts.value[idx];
+            const mergedExpand = {
+              ...oldItem?.expand,
+              ...(processed.expand?.user ? processed.expand : {}),
+            };
+
             allPosts.value.splice(idx, 1, {
               ...oldItem,
               ...processed,
-              expand: { ...(oldItem?.expand || {}), ...(record?.expand || {}) },
-            });
+              expand: mergedExpand,
+              _processed: false,
+            } as PostWithUser);
           }
         } else if (isVisible) {
           allPosts.value.unshift(processed);

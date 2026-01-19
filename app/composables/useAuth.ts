@@ -8,8 +8,8 @@ export const useAuth = (isLoginModeArg?: Ref<boolean>) => {
   const email = ref('');
   const password = ref('');
   const passwordConfirm = ref('');
-  const loading = ref(false); // 用于登录/注册
-  const isLoggingOut = ref(false); // 用于登出
+  const loading = ref(false);
+  const isLoggingOut = ref(false);
 
   const error = ref('');
 
@@ -31,7 +31,7 @@ export const useAuth = (isLoginModeArg?: Ref<boolean>) => {
     error.value = '';
 
     if (!isLoginMode.value && !locationData.value?.location) {
-      await fetchGeo(); // 如果注册时没拿到位置，尝试补抓一次
+      await fetchGeo();
     }
 
     if (isEmptyString(email.value) || isEmptyString(password.value)) {
@@ -99,11 +99,6 @@ export const useAuth = (isLoginModeArg?: Ref<boolean>) => {
       await navigateTo(redirectPath, { replace: true });
     } catch (err: any) {
       error.value = err.data?.message || err.message || '服务器响应异常';
-
-      // 如果你将来想在控制台调试原始字段数据，可以保留这个，但不要赋给 error.value
-      // if (err.data?.data?.fields) {
-      // 	console.warn('[Field Validation Errors]:', err.data.data.fields);
-      // }
     } finally {
       loading.value = false;
     }
@@ -117,6 +112,7 @@ export const useAuth = (isLoginModeArg?: Ref<boolean>) => {
 
     try {
       await $fetch('/api/auth/logout', { method: 'POST' });
+      await new Promise((resolve) => setTimeout(resolve, 500));
       await fetchSession();
 
       toast.add({
@@ -125,8 +121,6 @@ export const useAuth = (isLoginModeArg?: Ref<boolean>) => {
         icon: 'i-hugeicons:checkmark-circle-03',
         color: 'info',
       });
-
-      await new Promise((resolve) => setTimeout(resolve, 400));
 
       await navigateTo(
         {

@@ -144,14 +144,32 @@ export async function updatePost({ pb, postId, body }: UpdatePostOptions): Promi
 
   // 内容更新：仅在内容变化时重新同步图片
   if (body.content !== undefined && body.content !== existing.content) {
-    const cleanContent = await performMarkdownImageSync({
-      pb,
-      collection: 'posts',
-      recordId: postId,
-      content: body.content,
-      existingImages: existing.markdown_images || [],
-    });
-    formData.append('content', cleanContent);
+    // 提取图片 URL 的辅助函数
+    const extractImages = (md: string) => {
+      // 匹配 ![alt](url) 其中的 url 部分
+      const matches = md.matchAll(/!\[.*?\]\((.+?)\)/g);
+      return Array.from(matches, (m) => m[1].split(' ')[0]); // 排除 title 部分
+    };
+
+    const oldImages = extractImages(existing.content);
+    const newImages = extractImages(body.content);
+
+    // 检查图片是否有增减或顺序变化
+    const imagesChanged = JSON.stringify(oldImages) !== JSON.stringify(newImages);
+
+    if (imagesChanged) {
+      const cleanContent = await performMarkdownImageSync({
+        pb,
+        collection: 'posts',
+        recordId: postId,
+        content: body.content,
+        existingImages: existing.markdown_images || [],
+      });
+      formData.append('content', cleanContent);
+    } else {
+      // 图片没变，只更新文字内容
+      formData.append('content', body.content);
+    }
   }
 
   // 基础字段同步

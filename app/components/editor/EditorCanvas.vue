@@ -22,13 +22,17 @@
       class="w-full custom-editor-canvas"
       :ui="{
         content:
-          'w-xl relative left-1/2 right-1/2 -translate-x-1/2 prose dark:prose-invert max-w-none min-h-[400px] focus:outline-none pt-3 pb-16',
+          'w-xl relative left-1/2 right-1/2 -translate-x-1/2 prose dark:prose-invert max-w-none min-h-[400px] focus:outline-none pt-3 pb-10',
       }"
       :handlers="customHandlers"
       @beforeCreate="onEditorBeforeCreate"
     >
       <template v-if="editor">
-        <UEditorToolbar :editor="editor" :items="toolbarItems" class="pb-3 border-b border-b-muted/60">
+        <UEditorToolbar
+          :editor="editor"
+          :items="toolbarItems"
+          class="pb-3 border-b border-b-neutral-200 dark:border-b-neutral-800/80"
+        >
           <template #image>
             <EditorImagePopover :editor="editor" />
           </template>
@@ -45,13 +49,13 @@
               :model-value="editor.storage.characterCount.characters()"
               :max="maxLimit"
               :color="getContentLengthColor(editor.storage.characterCount.characters(), maxLimit)"
-              size="xs"
-              status
+              size="2xs"
+              class="hidden"
             />
-            <span class="text-xs text-dimmed mt-1.5 block text-right">
-              {{ getChineseWordCount(editor) }}
-              个字符（{{ editor.storage.characterCount.characters() }} / {{ maxLimit }}）
-            </span>
+            <div class="flex items-center justify-between text-xs text-dimmed/70">
+              <span>{{ getChineseWordCount(editor) }} 个字符</span>
+              <span>{{ editor.storage.characterCount.characters() }} / {{ maxLimit }}</span>
+            </div>
           </div>
         </ClientOnly>
       </template>
