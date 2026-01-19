@@ -1,5 +1,5 @@
 <template>
-  <div class="post-content-container relative mt-6">
+  <div class="relative mt-6">
     <PostToc v-if="toc" :toc="toc" />
 
     <MDCRenderer

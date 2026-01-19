@@ -205,17 +205,6 @@ header::before {
   transform: translateX(-15px);
 }
 
-.post-content-container {
-  contain-intrinsic-size: 0 600px;
-  content-visibility: auto;
-}
-
-.post-page-wrapper {
-  position: relative;
-  min-height: 100vh; /* 建议给个最小高度防止底部内容跳动 */
-  content-visibility: auto;
-}
-
 .fade-mdc-enter-active,
 .fade-mdc-leave-active {
   transition: opacity 0.5s ease;

@@ -29,6 +29,7 @@
     </UMain>
 
     <StatsOnline />
+    <CommonWeChatGuide />
   </UApp>
 </template>
 

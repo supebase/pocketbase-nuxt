@@ -1,5 +1,5 @@
 <template>
-  <div class="post-page-wrapper">
+  <div>
     <div v-if="status === 'pending' && !postWithRelativeTime && isLongLoading">
       <SkeletonPost class="mask-b-from-10" />
     </div>
@@ -71,11 +71,6 @@ watch(isAnimating, (val) => {
     }, 1000);
 });
 
-// const contentClass = computed(() => ({
-//   'slide-up-content': isAnimating.value,
-//   'opacity-0': !postWithRelativeTime.value && !hasAnimated.value,
-// }));
-
 // 评论区逻辑
 const commentTrigger = ref<HTMLElement | null>(null);
 const commentsVisible = ref(false);
@@ -105,8 +100,6 @@ const onMdcFinished = async () => {
     }
   }
 };
-
-const contentReady = computed(() => status.value === 'success' && !!ast.value);
 
 watch(
   error,
