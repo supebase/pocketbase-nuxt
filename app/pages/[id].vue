@@ -1,13 +1,11 @@
 <template>
   <div class="post-page-wrapper">
-    <Transition name="fade">
-      <div v-if="status === 'pending' && !postWithRelativeTime && isLongLoading" class="flex flex-col gap-6 mt-4">
-        <SkeletonPost class="mask-b-from-10" />
-      </div>
-    </Transition>
+    <div v-if="status === 'pending' && !postWithRelativeTime && isLongLoading">
+      <SkeletonPost class="mask-b-from-10" />
+    </div>
 
     <ClientOnly>
-      <div v-if="postWithRelativeTime && ast" :class="contentClass">
+      <div v-if="postWithRelativeTime && ast">
         <PostHeader :post="postWithRelativeTime" />
 
         <Suspense @resolve="onMdcFinished">
@@ -73,10 +71,10 @@ watch(isAnimating, (val) => {
     }, 1000);
 });
 
-const contentClass = computed(() => ({
-  'slide-up-content': isAnimating.value,
-  'opacity-0': !postWithRelativeTime.value && !hasAnimated.value,
-}));
+// const contentClass = computed(() => ({
+//   'slide-up-content': isAnimating.value,
+//   'opacity-0': !postWithRelativeTime.value && !hasAnimated.value,
+// }));
 
 // 评论区逻辑
 const commentTrigger = ref<HTMLElement | null>(null);

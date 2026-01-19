@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col">
+  <div class="flex flex-col px-2">
     <div class="flex items-center justify-between">
       <div class="flex items-center gap-3">
         <USkeleton class="size-8 rounded-full" />

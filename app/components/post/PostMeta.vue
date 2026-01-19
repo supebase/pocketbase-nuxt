@@ -1,7 +1,7 @@
 <template>
   <div class="flex items-center justify-between gap-2 w-full">
     <div class="flex items-center gap-3 tracking-wide">
-      <UIcon v-if="postMeta.icon" :name="postMeta.icon" class="size-7 text-primary" />
+      <UIcon v-if="postMeta.icon" :name="postMeta.icon" class="size-8 text-primary" />
       <div v-else class="size-8">
         <CommonGravatar :avatar-id="avatarId" :size="64" />
       </div>
