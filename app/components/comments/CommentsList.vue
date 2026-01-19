@@ -6,7 +6,7 @@
 
     <div v-else-if="comments.length > 0">
       <USeparator type="dashed" class="mb-6 select-none">
-        <CommonAnimateNumber :value="totalItems" class="text-dimmed mx-1.5" />
+        <CommonAnimateNumber :value="totalItems" class="text-dimmed mx-1.5 mt-0.5" />
         <div class="text-dimmed">条评论</div>
       </USeparator>
 
