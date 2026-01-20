@@ -44,10 +44,10 @@ const TOCItem = defineComponent({
               emit('scroll', props.link.id);
             },
             class: [
-              'block text-[13px] font-medium leading-relaxed transition-all duration-300 py-0.25 px-2 rounded-md truncate',
+              'block text-[13px] font-medium leading-relaxed transition-all duration-300 px-2 rounded-md truncate',
               // 根据深度动态增加缩进（右对齐时使用 pr）
-              props.link.depth === 3 ? 'pl-6' : '',
-              props.link.depth === 4 ? 'pl-13' : '',
+              props.link.depth === 3 ? 'pl-6 py-0.75' : '',
+              props.link.depth === 4 ? 'pl-13 py-0.75' : '',
               props.activeId === props.link.id
                 ? 'text-primary font-medium translate-x-[8px]'
                 : 'text-dimmed hover:text-primary',

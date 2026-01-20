@@ -10,7 +10,7 @@
     >
       <div class="flex items-center justify-between pb-2">
         <h3 class="text-sm font-medium">{{ item.label }}</h3>
-        <UIcon :name="item.icon" class="size-4.5 text-dimmed/80" />
+        <UIcon :name="item.icon" class="size-4 text-dimmed/80" />
       </div>
 
       <div class="text-2xl font-bold tabular-nums">{{ item.value }}</div>

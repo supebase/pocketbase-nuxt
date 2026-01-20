@@ -298,6 +298,37 @@ header::before {
   }
 }
 
+.timeline-item-wrapper {
+  /* 初始设为透明，防止动画还没开始时突然闪现一下 */
+  opacity: 0;
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+}
+
+/* 绝对定位让两者重叠，消除切换时的空白期 */
+.post-skeleton-wrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.post-content-wrapper.ready-to-animate {
+  position: relative;
+  z-index: 2; /* 确保内容盖在骨架屏上方 */
+  opacity: 0;
+  /* 初始不可见，直到 animateEntrance 改变它 */
+}
+
+.fade-leave-active {
+  transition: opacity 0.5s ease;
+}
+.fade-leave-to {
+  opacity: 0;
+}
+
 .prose {
   /* 告诉浏览器这部分内容渲染相对独立，减少重绘范围 */
   contain: content;
@@ -323,6 +354,18 @@ header::before {
 
 .prose a:hover {
   background-size: 100% 2px;
+}
+
+/* 如果容器内第一个元素不是 h1 而是 h2 */
+.prose h2 {
+  font-size: 1.55rem;
+  margin-top: 1em;
+}
+
+/* 当 h2 是容器内的第一个元素时（即上方没有 h1 或其他内容） */
+.prose h2:first-child {
+  font-size: 1.75rem;    /* 增大字号，模拟 h1 的视觉效果 */
+  margin-top: 0;       /* 颜色加深 */
 }
 
 .prose :where(img):not(:where([class~='not-prose'], [class~='not-prose'] *)) {

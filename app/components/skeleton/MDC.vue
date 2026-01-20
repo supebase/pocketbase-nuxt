@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col px-2 mt-6">
+  <div class="flex flex-col px-2">
     <div class="space-y-6">
       <USkeleton class="h-9 w-2/3" />
 

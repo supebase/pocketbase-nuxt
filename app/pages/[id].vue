@@ -1,20 +1,13 @@
 <template>
   <div>
     <div v-if="status === 'pending' && !postWithRelativeTime && isLongLoading">
-      <SkeletonPost class="mask-b-from-10" />
+      <SkeletonPost class="mask-b-from-10 animate-pulse opacity-50" />
     </div>
 
-    <div v-if="postWithRelativeTime && ast">
+    <div v-if="postWithRelativeTime">
       <PostHeader :post="postWithRelativeTime" />
 
-      <Suspense @resolve="onMdcFinished">
-        <template #default>
-          <PostContent :post-id="postWithRelativeTime.id" :toc="toc" :ast="ast" />
-        </template>
-        <template #fallback>
-          <SkeletonMDC class="mask-b-from-10" />
-        </template>
-      </Suspense>
+      <PostContent :post-id="postWithRelativeTime.id" :toc="toc" :ast="ast" @rendered="onMdcFinished" />
 
       <div
         ref="commentTrigger"
@@ -89,7 +82,7 @@ const { stop } = useIntersectionObserver(
 const onMdcFinished = async () => {
   mdcFinished.value = true;
   await nextTick();
-  // 如果是短文章，自动展开评论
+
   if (commentTrigger.value) {
     const rect = commentTrigger.value.getBoundingClientRect();
     if (rect.top < window.innerHeight + 400) {

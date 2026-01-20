@@ -1,7 +1,7 @@
 <template>
   <div class="mt-8">
     <div v-if="isFirstLoad && loading" class="flex justify-center">
-      <SkeletonComments class="opacity-70 mask-b-from-10" />
+      <SkeletonComments class="mask-b-from-10 animate-pulse" />
     </div>
 
     <div v-else-if="comments.length > 0">

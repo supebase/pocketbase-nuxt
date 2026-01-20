@@ -1,5 +1,5 @@
 <template>
-  <div :key="item.id" :class="[isFirstTimeRender ? 'record-item-animate' : '']" :style="{ '--delay': `${delay}s` }">
+  <div :key="item.id">
     <ULink
       :to="`/${item.id}`"
       class="line-clamp-3 text-default text-pretty md:text-justify hyphens-auto wrap-break-word tracking-wide md:tracking-tight leading-relaxed"

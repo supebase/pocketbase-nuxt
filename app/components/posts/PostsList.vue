@@ -65,7 +65,7 @@
             <template #date="{ item }">
               <div class="flex items-center gap-2.5">
                 <span class="text-dimmed">{{ item.date }}</span>
-                <LazyPostsMenu
+                <PostsMenu
                   :is-logined="loggedIn"
                   :item="item"
                   :can-view-drafts="canViewDrafts ?? false"
@@ -94,24 +94,27 @@
           </ModalDelete>
         </template>
 
-        <div v-if="allPosts.length > 0" class="flex flex-col items-center justify-center mt-8 mb-4">
+        <div v-if="allPosts.length > 0" class="flex flex-col items-center justify-center mb-4 min-h-15">
           <Transition name="fade" mode="out-in">
-            <div v-if="hasMore" key="load-button">
-              <UButton loading-auto variant="soft" color="neutral" class="cursor-pointer px-8" @click="handleLoadMore">
-                {{ isLoadingMore ? '努力加载中...' : '加载更多' }}
+            <div v-if="hasMore && !isLoadingMore" key="load-button mt-8">
+              <UButton variant="soft" color="neutral" class="cursor-pointer px-8" @click="handleLoadMore">
+                加载更多
               </UButton>
             </div>
+
+            <div v-else-if="isLoadingMore" key="loading" class="w-full">
+              <SkeletonPosts :count="1" class="w-full mask-b-from-10" />
+            </div>
+
             <div v-else key="no-more" class="w-full">
               <USeparator label="已经到底了" type="dashed" class="text-dimmed opacity-60" />
             </div>
           </Transition>
-
-          <SkeletonPosts v-if="isLoadingMore" :count="1" class="mt-4 w-full" />
         </div>
 
         <template #fallback>
           <div class="space-y-8 w-full">
-            <SkeletonPosts :count="3" class="mask-b-from-10" />
+            <SkeletonPosts :count="3" class="mask-b-from-10 animate-pulse" />
           </div>
         </template>
       </ClientOnly>

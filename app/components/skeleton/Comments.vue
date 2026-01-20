@@ -7,7 +7,7 @@
     </div>
 
     <div class="flex flex-col gap-10">
-      <div v-for="i in 3" :key="i" class="flex gap-4">
+      <div v-for="i in 2" :key="i" class="flex gap-4">
         <div class="flex-none">
           <div class="size-8 rounded-full bg-neutral-200 dark:bg-neutral-800 animate-pulse" />
         </div>
