@@ -3,13 +3,13 @@
     <div class="mt-1.5">
       <UIcon
         name="i-hugeicons:smile"
-        @click.stop="openPicker"
+        @click.stop="isPickerVisible = true"
         class="size-5 text-muted cursor-pointer hover:text-primary transition-colors"
       />
     </div>
 
     <template #content>
-      <div class="p-2">
+      <div class="p-2 drop-shadow-2xl">
         <NuxtEmojiPicker
           native
           hide-search
@@ -17,9 +17,17 @@
           hide-group-names
           disable-sticky-group-names
           disable-skin-tones
-          :theme="theme"
+          :theme="colorMode.value === 'dark' ? 'dark' : 'light'"
           @select="handleEmojiSelect"
-          :disabled-groups="disabledGroups"
+          :disabled-groups="[
+            'animals_nature',
+            'food_drink',
+            'activities',
+            'travel_places',
+            'objects',
+            'symbols',
+            'flags',
+          ]"
         />
       </div>
     </template>
@@ -28,39 +36,22 @@
 
 <script setup lang="ts">
 const colorMode = useColorMode();
-const theme = computed(() => (colorMode.value === 'dark' ? 'dark' : 'light'));
-
 const isPickerVisible = ref(false);
-
-const openPicker = () => {
-  isPickerVisible.value = true;
-
-  nextTick(() => {
-    // 延迟一点时间，确保组件渲染完毕后移除焦点
-    setTimeout(() => {
-      (document.activeElement as HTMLElement)?.blur();
-    }, 0);
-  });
-};
-
-const disabledGroups = ref([
-  'animals_nature',
-  'food_drink',
-  'activities',
-  'travel_places',
-  'objects',
-  'symbols',
-  'flags',
-]);
-
 const emit = defineEmits(['emoji']);
 
+// 自动处理焦点，防止 Popover 开启时背景闪烁或键盘弹出
+watch(isPickerVisible, (val) => {
+  if (val) {
+    nextTick(() => {
+      (document.activeElement as HTMLElement)?.blur();
+    });
+  }
+});
+
 const handleEmojiSelect = (emoji: { i: string }) => {
-  if (typeof emoji.i === 'string') {
+  if (emoji?.i) {
     emit('emoji', emoji.i);
     isPickerVisible.value = false;
-  } else {
-    console.error('Invalid emoji:', emoji);
   }
 };
 </script>

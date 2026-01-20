@@ -51,12 +51,13 @@ export const useComments = (postId: string) => {
   /**
    * 初始化/获取评论
    */
-  const fetchComments = async (isSilent = false) => {
-    if (lastLoadedPostId.value === postId && comments.value.length > 0) return;
+  const fetchComments = async (isSilent = false, forceRefresh = false) => {
+    // 如果强制刷新或尚未加载过评论，则继续获取
+    if (!forceRefresh && lastLoadedPostId.value === postId && comments.value.length > 0) return;
 
-    // 检查缓存
+    // 检查缓存，但如果是强制刷新则跳过缓存
     const cached = COMMENT_CACHE.get(postId);
-    if (cached && !isSilent) {
+    if (cached && !isSilent && !forceRefresh) {
       resetPagination(cached.items, cached.total);
       lastLoadedPostId.value = postId; // 确保标记已加载
       return;

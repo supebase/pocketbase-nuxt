@@ -13,9 +13,9 @@ export const useCommentEditor = (textareaRef: Ref<any>) => {
     if (textareaElement.value && document.body.contains(textareaElement.value)) {
       return textareaElement.value;
     }
-    const el = textareaRef.value?.$el.querySelector('textarea') as HTMLTextAreaElement | null;
-    if (el) textareaElement.value = el;
-    return el;
+    const el = textareaRef.value?.$el?.querySelector('textarea') || textareaRef.value?.textarea;
+    if (el) textareaElement.value = el as HTMLTextAreaElement;
+    return textareaElement.value;
   };
 
   // 在光标处插入文本
@@ -30,8 +30,7 @@ export const useCommentEditor = (textareaRef: Ref<any>) => {
     }
 
     const { selectionStart, selectionEnd } = textarea;
-    const newText =
-      currentValue.substring(0, selectionStart) + content + currentValue.substring(selectionEnd);
+    const newText = currentValue.substring(0, selectionStart) + content + currentValue.substring(selectionEnd);
 
     // 返回新文本和光标重定位函数
     const moveCursor = () => {
@@ -59,10 +58,9 @@ export const useCommentEditor = (textareaRef: Ref<any>) => {
     if (mentionMatch) {
       const matchString = mentionMatch[0];
       const matchStart = selectionStart - matchString.length;
-
       e.preventDefault();
-      const newText = currentValue.substring(0, matchStart) + currentValue.substring(selectionEnd);
 
+      const newText = currentValue.substring(0, matchStart) + currentValue.substring(selectionEnd);
       nextTick(() => {
         textarea.setSelectionRange(matchStart, matchStart);
         textarea.focus();

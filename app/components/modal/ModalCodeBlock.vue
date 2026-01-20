@@ -8,26 +8,11 @@
     <template #body>
       <div class="flex items-center gap-4 w-full" @keyup.enter="handleConfirm">
         <UFieldGroup label="代码语言" name="language" class="w-full">
-          <UInput
-            v-model="formData.language"
-            variant="outline"
-            color="neutral"
-            size="lg"
-            placeholder="例如: ts, js, vue"
-            autofocus
-            class="w-full"
-          />
+          <UInput v-model="formData.language" size="lg" placeholder="例如: ts, js, vue" autofocus class="w-full" />
         </UFieldGroup>
 
         <UFieldGroup label="文件名" name="filename" class="w-full">
-          <UInput
-            v-model="formData.filename"
-            variant="outline"
-            color="neutral"
-            size="lg"
-            placeholder="例如: index.ts"
-            class="w-full"
-          />
+          <UInput v-model="formData.filename" size="lg" placeholder="例如: index.ts" class="w-full" />
         </UFieldGroup>
       </div>
     </template>

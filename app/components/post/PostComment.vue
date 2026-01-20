@@ -59,6 +59,16 @@ const isListLoading = ref(false);
 const commentListRef = ref();
 const commenters = ref<any[]>([]);
 
+// 监听用户变化，当用户切换时清空评论者列表
+watch(
+  () => currentUser.value?.id,
+  (newId, oldId) => {
+    if (newId !== oldId) {
+      commenters.value = [];
+    }
+  },
+);
+
 const handleUpdateCommenters = (uniqueUsers: CommentRecord[]) => {
   commenters.value = uniqueUsers.filter((u) => u.id !== currentUser.value?.id);
 };

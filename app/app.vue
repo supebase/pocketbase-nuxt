@@ -38,6 +38,7 @@ import { zh_cn } from '@nuxt/ui/locale';
 import { useDocumentVisibility } from '@vueuse/core';
 
 const appConfig = useAppConfig();
+const colorMode = useColorMode();
 const { showHeaderBack } = useHeader();
 const { loggedIn, fetch: fetchSession } = useUserSession();
 
@@ -59,4 +60,14 @@ if (import.meta.client) {
     }
   });
 }
+
+useHead({
+  meta: [
+    {
+      id: 'theme-color',
+      name: 'theme-color',
+      content: () => (colorMode.value === 'dark' ? '#171717' : '#ffffff'),
+    },
+  ],
+});
 </script>

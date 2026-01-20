@@ -29,32 +29,8 @@
 </template>
 
 <script setup lang="ts">
+import { processAnimateDigits } from '~/modules/common/ui-utils';
+
 const props = defineProps<{ value: number }>();
-const formatter = new Intl.NumberFormat('en-US');
-
-const processedDigits = computed(() => {
-  const str = formatter.format(props.value);
-  const chars = str.split('').reverse();
-
-  let digitIndex = 0;
-
-  return chars.map((char) => {
-    const isDigit = /\d/.test(char);
-
-    if (isDigit) {
-      return {
-        id: `d-${digitIndex++}`,
-        digit: char,
-        isComma: false,
-      };
-    } else {
-      // 分隔符绑定在当前的 digitIndex 上，确保当 999 变 1,000 时，逗号是平滑“插入”的
-      return {
-        id: `s-${digitIndex}`,
-        digit: char,
-        isComma: true,
-      };
-    }
-  });
-});
+const processedDigits = computed(() => processAnimateDigits(props.value));
 </script>

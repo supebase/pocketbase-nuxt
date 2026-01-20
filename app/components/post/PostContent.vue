@@ -6,9 +6,9 @@
       <div
         v-if="!animationFinished"
         class="post-skeleton-wrapper"
-        :class="{ 'opacity-0 transition-opacity duration-1000': animationStarted }"
+        :class="{ 'opacity-0 transition-opacity duration-700': animationStarted }"
       >
-        <SkeletonMDC class="mask-b-from-10 animate-pulse opacity-50" />
+        <SkeletonWrapper type="mdc" />
       </div>
 
       <div v-if="ast" ref="contentRef" class="post-content-wrapper ready-to-animate" :key="postId">
@@ -39,7 +39,7 @@ const animateEntrance = (el: HTMLElement) => {
       { opacity: 1, transform: 'translateY(0)', filter: 'blur(0)' },
     ],
     {
-      duration: 800, // 稍微拉长，让过渡更丝滑
+      duration: 700, // 稍微拉长，让过渡更丝滑
       easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
       fill: 'forwards',
     },

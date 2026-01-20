@@ -1,7 +1,7 @@
 <template>
   <div>
     <div v-if="status === 'pending' && !postWithRelativeTime && isLongLoading">
-      <SkeletonPost class="mask-b-from-10 animate-pulse opacity-50" />
+      <SkeletonWrapper type="post" />
     </div>
 
     <div v-if="postWithRelativeTime">

@@ -26,15 +26,6 @@
 </template>
 
 <script setup lang="ts">
-const count = ref<number | null>(null);
-
-useParty({
-  room: 'site',
-  onMessage: (type, value) => {
-    if (type === 'connections') {
-      const parsed = parseInt(value, 10);
-      if (!isNaN(parsed)) count.value = parsed;
-    }
-  },
-});
+import { useOnlineStats } from '~/modules/stats/use-stats-logic';
+const { count } = useOnlineStats();
 </script>

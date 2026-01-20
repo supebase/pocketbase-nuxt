@@ -30,7 +30,7 @@
         </div>
       </div>
 
-      <NuxtIsland ref="statsIsland" lazy name="StatsUsersIsland" @rendered="isCoolingDown = false">
+      <NuxtIsland ref="statsIsland" lazy name="StatsUsersIsland">
         <template #fallback>
           <div class="grid gap-3.5 md:grid-cols-3 p-3.5 select-none">
             <USkeleton
@@ -46,33 +46,8 @@
 </template>
 
 <script setup lang="ts">
+import { useStatsRefresh } from '~/modules/stats/use-stats-logic';
+
 const statsIsland = ref();
-const cooldown = ref(0);
-const isRefreshing = ref(false);
-const isCoolingDown = computed(() => cooldown.value > 0);
-
-const handleUpdate = async () => {
-  if (isCoolingDown.value || isRefreshing.value) return;
-
-  isRefreshing.value = true;
-  try {
-    // 调用 Island 的刷新方法
-    if (statsIsland.value?.refresh) {
-      await statsIsland.value.refresh();
-    }
-
-    // 刷新成功后开启冷却
-    startCooldown();
-  } finally {
-    isRefreshing.value = false;
-  }
-};
-
-const startCooldown = () => {
-  cooldown.value = 10;
-  const timer = setInterval(() => {
-    cooldown.value--;
-    if (cooldown.value <= 0) clearInterval(timer);
-  }, 1000);
-};
+const { cooldown, isRefreshing, isCoolingDown, handleUpdate } = useStatsRefresh(statsIsland);
 </script>

@@ -103,7 +103,7 @@
             </div>
 
             <div v-else-if="isLoadingMore" key="loading" class="w-full">
-              <SkeletonPosts :count="1" class="w-full mask-b-from-10" />
+              <SkeletonWrapper type="posts" :count="1" />
             </div>
 
             <div v-else key="no-more" class="w-full">
@@ -114,7 +114,7 @@
 
         <template #fallback>
           <div class="space-y-8 w-full">
-            <SkeletonPosts :count="3" class="mask-b-from-10 animate-pulse" />
+            <SkeletonWrapper type="posts" :count="3" />
           </div>
         </template>
       </ClientOnly>

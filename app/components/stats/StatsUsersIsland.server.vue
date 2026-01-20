@@ -34,37 +34,8 @@
 </template>
 
 <script setup lang="ts">
-const { data: response } = await useFetch<{ data: any }>(`/api/stats/users`, {
-  query: { t: Date.now() },
-});
+import { transformStatsToDisplay } from '~/modules/stats/stats-service';
 
-const stats = response.value?.data || {};
-
-const growthVal = (() => {
-  const { today_new_users: today = 0, yesterday_new_users: yest = 0 } = stats;
-  if (yest === 0) return today > 0 ? 100 : 0;
-  return Math.round(((today - yest) / yest) * 100);
-})();
-
-const displayStats = [
-  {
-    label: '总用户数',
-    value: stats.total_users,
-    icon: 'i-hugeicons:user-multiple-02',
-    desc: '从创建至今的累积量',
-  },
-  {
-    label: '今日新增',
-    value: stats.today_new_users,
-    icon: 'i-hugeicons:user-add-02',
-    desc: '较昨日',
-    growth: growthVal,
-  },
-  {
-    label: '活跃用户',
-    value: stats.active_users_30d,
-    icon: 'i-hugeicons:chart-up',
-    desc: '近 30 天有登录记录',
-  },
-];
+const { data: response } = await useFetch<{ data: any }>('/api/stats/users', { query: { t: Date.now() } });
+const displayStats = transformStatsToDisplay(response.value?.data || {});
 </script>

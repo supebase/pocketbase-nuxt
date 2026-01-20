@@ -1,42 +1,46 @@
 <template>
   <div class="py-2 flex flex-col items-center select-none">
-    <div class="relative w-full max-w-70 flex flex-col items-center">
+    <div class="h-8 w-full max-w-xs flex items-center justify-center">
       <UProgress
-        :ui="{ indicator: 'duration-500 ease-linear', status: 'duration-500 ease-linear' }"
+        v-if="isCoolingDown"
         :model-value="remainingSeconds"
         :max="30"
         size="2xs"
-        status
         color="primary"
-        :class="isCoolingDown ? 'opacity-100' : 'opacity-0'"
+        status
+        :ui="{
+          indicator: 'transition-all duration-100 ease-linear',
+          status: 'text-xs text-dimmed tabular-nums',
+        }"
       >
         <template #status>
-          <div class="text-xs text-dimmed tabular-nums">{{ Math.ceil(remainingSeconds) }} 秒冷却</div>
+          <span>{{ Math.ceil(remainingSeconds) }} 秒冷却</span>
         </template>
       </UProgress>
     </div>
 
-    <div class="flex items-center gap-3">
+    <div class="flex items-center gap-2">
       <UButton
         v-for="emoji in REACTIONS"
         :key="emoji"
         variant="link"
         color="neutral"
         :disabled="isCoolingDown"
-        class="flex-col items-center gap-3 p-4 rounded-2xl transition-all duration-700"
-        :class="[isCoolingDown ? 'opacity-20 grayscale cursor-not-allowed' : 'group cursor-pointer']"
+        class="flex-col items-center gap-2 p-4 rounded-2xl transition-all duration-300 min-w-16"
+        :class="[
+          isCoolingDown
+            ? 'opacity-20 grayscale cursor-not-allowed'
+            : 'group cursor-pointer hover:bg-neutral-100 dark:hover:bg-neutral-800',
+        ]"
         @click="sendReaction(emoji)"
       >
-        <span
-          class="text-xs tabular-nums transition-colors duration-500"
-          :class="emojiCounts[emoji] ? '' : 'text-dimmed'"
-        >
+        <span class="text-[13px] tabular-nums" :class="emojiCounts[emoji] ? 'text-primary font-medium' : 'text-dimmed'">
           {{ emojiCounts[emoji] || 0 }}
         </span>
 
         <span
-          class="text-2xl transition-all duration-500"
-          :class="[!isCoolingDown && 'group-hover:scale-90', activeEmoji === emoji && 'animate-heart-pop']"
+          class="text-2xl transform-gpu transition-transform duration-300"
+          :class="[!isCoolingDown && 'group-hover:scale-125', activeEmoji === emoji && 'animate-heart-pop']"
           @animationend="activeEmoji = ''"
         >
           {{ emoji }}
@@ -49,53 +53,54 @@
 <script setup lang="ts">
 import { isValidEmoji } from '~~/shared/utils/emoji';
 import { REACTIONS } from '~/constants/index';
+import { parseReactionMessage } from '~/modules/common/ui-utils';
+import { useCooldown } from '~/modules/common/animation-utils';
 
 const props = defineProps<{ postId: string }>();
 
 const emojiCounts = ref<Record<string, number>>(Object.fromEntries(REACTIONS.map((e) => [e, 0])));
 const activeEmoji = ref('');
-const remainingSeconds = ref(0);
-let timer: NodeJS.Timeout | null = null;
+const isLocalAction = ref(false);
 
-const isCoolingDown = computed(() => remainingSeconds.value > 0);
+const { remainingSeconds, isCoolingDown, startCooldown } = useCooldown(30);
 
 const { send, disconnect } = useParty({
   room: `post-${props.postId}`,
   onMessage: (type, content) => {
     if (type === 'all-reactions') {
-      content.split(',').forEach((pair) => {
-        const [emoji, count] = pair.split(':');
-        if (emoji && count) emojiCounts.value[emoji] = parseInt(count);
-      });
+      Object.assign(emojiCounts.value, parseReactionMessage(content));
     } else if (type === 'emoji-count') {
-      const [emoji, count] = content.split(':');
-      if (emoji && count) {
-        emojiCounts.value[emoji] = parseInt(count);
-        triggerAnimation(emoji);
-      }
+      const parsed = parseReactionMessage(content);
+
+      Object.entries(parsed).forEach(([emoji, count]) => {
+        emojiCounts.value[emoji] = count;
+
+        // 只有当不是本地主动触发时，才响应服务器回传的动画
+        if (!isLocalAction.value) {
+          triggerAnimation(emoji);
+        }
+      });
+
+      // 消息处理完，重置本地标记
+      isLocalAction.value = false;
     }
   },
 });
 
 const triggerAnimation = (emoji: string) => {
-  activeEmoji.value = emoji;
+  activeEmoji.value = '';
   nextTick(() => {
-    if (activeEmoji.value === '') activeEmoji.value = emoji;
+    activeEmoji.value = emoji;
   });
 };
 
 const sendReaction = (emoji: string) => {
   if (isCoolingDown.value || !isValidEmoji(emoji)) return;
 
+  isLocalAction.value = true;
   triggerAnimation(emoji);
   send(`react:${emoji}`);
-
-  remainingSeconds.value = 30;
-  if (timer) clearInterval(timer);
-  timer = setInterval(() => {
-    remainingSeconds.value = Math.max(0, remainingSeconds.value - 0.1);
-    if (remainingSeconds.value <= 0) clearInterval(timer!);
-  }, 100);
+  startCooldown();
 };
 
 onDeactivated(disconnect);

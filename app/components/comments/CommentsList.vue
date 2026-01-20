@@ -1,7 +1,7 @@
 <template>
   <div class="mt-8">
     <div v-if="isFirstLoad && loading" class="flex justify-center">
-      <SkeletonComments class="mask-b-from-10 animate-pulse" />
+      <SkeletonWrapper type="comments" />
     </div>
 
     <div v-else-if="comments.length > 0">
@@ -191,6 +191,17 @@ watch(comments, () => emit('update-commenters', getUniqueUsers()), {
 });
 
 watch(loggedIn, (val) => val && fetchComments(true));
+
+// 监听用户变化，当用户切换时重新获取评论数据
+watch(
+  () => user.value?.id,
+  (newId, oldId) => {
+    if (newId !== oldId) {
+      // 用户切换时，使用 forceRefresh=true 强制重新获取评论
+      fetchComments(true, true);
+    }
+  },
+);
 
 watch([loading, isLoadingMore], ([l1, l2]) => emit('loading-change', l1 || l2));
 
