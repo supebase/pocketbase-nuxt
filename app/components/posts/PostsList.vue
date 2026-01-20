@@ -65,7 +65,7 @@
             <template #date="{ item }">
               <div class="flex items-center gap-2.5">
                 <span class="text-dimmed">{{ item.date }}</span>
-                <PostsMenu
+                <LazyPostsMenu
                   :is-logined="loggedIn"
                   :item="item"
                   :can-view-drafts="canViewDrafts ?? false"

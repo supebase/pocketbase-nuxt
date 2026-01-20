@@ -1,6 +1,6 @@
 <template>
   <div class="mt-8">
-    <div v-if="loading && comments.length === 0" class="flex justify-center">
+    <div v-if="isFirstLoad && loading" class="flex justify-center">
       <SkeletonComments class="opacity-70 mask-b-from-10" />
     </div>
 
@@ -82,6 +82,7 @@ const {
   comments,
   totalItems,
   loading,
+  isFirstLoad,
   isLoadingMore,
   hasMore,
   fetchComments,

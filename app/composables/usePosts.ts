@@ -5,23 +5,25 @@ export const usePosts = () => {
   const { listen, close } = usePocketRealtime();
   const { updatedMarks, clearUpdateMark } = usePostUpdateTracker();
 
-  // 状态共享
+  // 1. 全局状态持久化 (SSR 友好)
   const cachedPosts = useState<PostWithUser[]>('global_posts_list', () => []);
-  const cachedTotal = useState<number>('global_posts_total', () => -1);
+  const cachedTotal = useState<number>('global_posts_total', () => 0);
   const isInitialLoaded = useState<boolean>('posts_initial_loaded', () => false);
 
+  // 2. 初始化分页工具
   const {
     allItems: allPosts,
     currentPage,
     totalItems,
     isLoadingMore,
     hasMore,
+    isFirstLoad,
     loadMore: originalLoadMore,
     resetPagination,
   } = usePagination<PostWithUser>(cachedPosts);
 
-  // 同步分页工具的总数到全局状态
-  if (cachedTotal.value !== -1 && totalItems.value === -1) {
+  // 3. 状态同步：如果全局缓存有总数，初始化分页器的总数
+  if (cachedTotal.value > 0 && totalItems.value === 0) {
     totalItems.value = cachedTotal.value;
   }
   watch(totalItems, (val) => {
@@ -29,12 +31,10 @@ export const usePosts = () => {
   });
 
   /**
-   * 优化：单条数据处理逻辑
+   * 单条数据转换逻辑
    */
   const processPost = (item: any): PostWithUser => {
-    // 如果已经是处理过的，且内容没变，直接返回，避免重复计算
     if (item._processed) return item;
-
     return {
       ...item,
       _processed: true,
@@ -48,25 +48,21 @@ export const usePosts = () => {
     };
   };
 
-  /**
-   * 工具函数：预处理 Markdown 内容
-   * 用于封装给 usePagination 使用
-   */
-  const transformPosts = (items: PostWithUser[]) => {
-    return items.map(processPost);
-  };
+  const transformPosts = (items: PostWithUser[]) => items.map(processPost);
 
-  // 包装 loadMore，确保传入 transformPosts
+  /**
+   * 包装后的 loadMore
+   */
   const loadMore = (fetchDataFn: (page: number) => Promise<{ items: PostWithUser[]; total: number } | undefined>) => {
     return originalLoadMore(fetchDataFn, transformPosts);
   };
 
+  // 4. UI 计算逻辑
   const canViewDrafts = computed(() => loggedIn.value && !!user.value?.verified);
   const isResetting = ref(false);
 
   const displayItems = computed(() => {
     const items = canViewDrafts.value ? allPosts.value : allPosts.value.filter((p) => p.published);
-
     return items.map((item) => ({
       ...item,
       title: item.ui?.userName || item.expand?.user?.name || '未知用户',
@@ -75,16 +71,18 @@ export const usePosts = () => {
     }));
   });
 
+  // 5. 实时数据监听
   const isListening = ref(false);
-
   const setupRealtime = () => {
     if (import.meta.server || isListening.value) return;
     isListening.value = true;
 
     listen(({ collection, action, record }) => {
       if (collection !== 'posts') return;
-
       const idx = allPosts.value.findIndex((p) => p.id === record.id);
+
+      const processed = processPost(record as PostWithUser);
+      const isVisible = processed.published || canViewDrafts.value;
 
       if (action === 'delete') {
         if (idx !== -1) {
@@ -93,10 +91,6 @@ export const usePosts = () => {
         }
         return;
       }
-
-      // 关键优化：实时数据进入前也进行预处理
-      const processed = processPost(record as PostWithUser);
-      const isVisible = processed.published || canViewDrafts.value;
 
       if (action === 'create' && isVisible && idx === -1) {
         allPosts.value.unshift(processed);
@@ -108,15 +102,10 @@ export const usePosts = () => {
             totalItems.value--;
           } else {
             const oldItem = allPosts.value[idx];
-            const mergedExpand = {
-              ...oldItem?.expand,
-              ...(processed.expand?.user ? processed.expand : {}),
-            };
-
             allPosts.value.splice(idx, 1, {
               ...oldItem,
               ...processed,
-              expand: mergedExpand,
+              expand: { ...oldItem?.expand, ...(processed.expand?.user ? processed.expand : {}) },
               _processed: false,
             } as PostWithUser);
           }
@@ -133,17 +122,8 @@ export const usePosts = () => {
     close();
   };
 
-  onUnmounted(() => {
-    safeClose();
-  });
-
   onActivated(() => {
-    const updatedIds = Object.keys(updatedMarks.value);
-    if (updatedIds.length > 0) {
-      updatedIds.forEach((id) => {
-        clearUpdateMark(id);
-      });
-    }
+    Object.keys(updatedMarks.value).forEach(clearUpdateMark);
   });
 
   return {
@@ -153,6 +133,7 @@ export const usePosts = () => {
     currentPage,
     isLoadingMore,
     hasMore,
+    isFirstLoad,
     isInitialLoaded,
     isResetting,
     canViewDrafts,

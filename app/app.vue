@@ -28,8 +28,8 @@
       </UContainer>
     </UMain>
 
-    <StatsOnline />
-    <CommonWeChatGuide />
+    <LazyStatsOnline />
+    <LazyCommonWeChatGuide />
   </UApp>
 </template>
 
