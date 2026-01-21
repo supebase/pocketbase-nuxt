@@ -1,4 +1,4 @@
-import type { SkeletonItem } from './skeleton-types';
+import type { SkeletonItem } from '~/types/skeleton-types';
 
 // 1. Comments 骨架配置
 export const SKELETON_COMMENTS: SkeletonItem[] = [

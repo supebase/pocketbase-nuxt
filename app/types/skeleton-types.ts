@@ -7,3 +7,9 @@ export interface SkeletonItem {
   items?: SkeletonItem[];
   hasLine?: boolean;
 }
+
+export interface SkeletonType {
+  type: 'comments' | 'posts' | 'post' | 'mdc';
+  count?: number;
+  containerClass?: string;
+}

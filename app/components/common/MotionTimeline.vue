@@ -28,7 +28,7 @@
 
 <script setup lang="ts">
 import { useElementBounding, useWindowScroll } from '@vueuse/core';
-import { calculateTimelineProgress, playStaggerAnimation } from '~/modules/common/animation-utils';
+import { calculateTimelineProgress, playStaggerAnimation } from '~/utils/common/animation-utils';
 
 interface Props {
   items: any[];

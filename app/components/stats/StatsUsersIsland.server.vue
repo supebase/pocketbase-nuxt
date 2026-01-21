@@ -34,7 +34,7 @@
 </template>
 
 <script setup lang="ts">
-import { transformStatsToDisplay } from '~/modules/stats/stats-service';
+import { transformStatsToDisplay } from '~/utils/stats/stats-service';
 
 const { data: response } = await useFetch<{ data: any }>('/api/stats/users', { query: { t: Date.now() } });
 const displayStats = transformStatsToDisplay(response.value?.data || {});

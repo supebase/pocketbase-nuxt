@@ -16,7 +16,7 @@
 </template>
 
 <script setup lang="ts">
-import { startThemeTransition } from '~/modules/common/animation-utils';
+import { startThemeTransition } from '~/utils/common/animation-utils';
 
 const colorMode = useColorMode();
 const nextTheme = computed(() => (colorMode.value === 'dark' ? 'light' : 'dark'));
@@ -26,6 +26,4 @@ const handleToggle = (event: MouseEvent) => {
     colorMode.preference = nextTheme.value;
   });
 };
-
-// 这里的 theme-color 建议放在全局 app.vue，减少组件级监听
 </script>

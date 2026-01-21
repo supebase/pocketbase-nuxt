@@ -29,7 +29,7 @@
 </template>
 
 <script setup lang="ts">
-import { processAnimateDigits } from '~/modules/common/ui-utils';
+import { processAnimateDigits } from '~/utils/common/ui-utils';
 
 const props = defineProps<{ value: number }>();
 const processedDigits = computed(() => processAnimateDigits(props.value));

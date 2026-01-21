@@ -5,15 +5,10 @@
 </template>
 
 <script setup lang="ts">
-import { SKELETON_COMMENTS, SKELETON_POSTS, SKELETON_ARTICLE } from '~/modules/skeleton/skeleton-generator';
+import { SKELETON_COMMENTS, SKELETON_POSTS, SKELETON_ARTICLE } from '~/utils/skeleton/skeleton-generator';
+import type { SkeletonType } from '~/types/skeleton-types';
 
-interface Props {
-  type: 'comments' | 'posts' | 'post' | 'mdc';
-  count?: number; // 针对列表类型
-  containerClass?: string;
-}
-
-const props = withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<SkeletonType>(), {
   count: 1,
   containerClass: '',
 });

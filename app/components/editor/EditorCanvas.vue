@@ -47,8 +47,8 @@
 </template>
 
 <script setup lang="ts">
-import { EDITOR_STARTER_KIT, EDITOR_UI_CONFIG } from '~/modules/editor/editor-config';
-import { getChineseWordCount, createCustomCodeBlockHandlers } from '~/modules/editor/editor-utils';
+import { EDITOR_STARTER_KIT, EDITOR_UI_CONFIG } from '~/utils/editor/editor-config';
+import { getChineseWordCount, createCustomCodeBlockHandlers } from '~/utils/editor/editor-utils';
 
 const content = defineModel<string | null>();
 const props = defineProps<{

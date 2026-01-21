@@ -46,7 +46,7 @@
 </template>
 
 <script setup lang="ts">
-import { useStatsRefresh } from '~/modules/stats/use-stats-logic';
+import { useStatsRefresh } from '~/utils/stats/use-stats-logic';
 
 const statsIsland = ref();
 const { cooldown, isRefreshing, isCoolingDown, handleUpdate } = useStatsRefresh(statsIsland);

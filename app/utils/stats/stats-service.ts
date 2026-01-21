@@ -1,4 +1,4 @@
-import type { RawUserStats, DisplayStatItem } from './stats-types';
+import type { RawUserStats, DisplayStatItem } from '~/types/stats-types';
 
 /**
  * 核心逻辑：计算增长率

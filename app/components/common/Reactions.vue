@@ -53,8 +53,8 @@
 <script setup lang="ts">
 import { isValidEmoji } from '~~/shared/utils/emoji';
 import { REACTIONS } from '~/constants/index';
-import { parseReactionMessage } from '~/modules/common/ui-utils';
-import { useCooldown } from '~/modules/common/animation-utils';
+import { parseReactionMessage } from '~/utils/common/ui-utils';
+import { useCooldown } from '~/utils/common/animation-utils';
 
 const props = defineProps<{ postId: string }>();
 

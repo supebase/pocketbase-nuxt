@@ -1,22 +1,32 @@
 <template>
   <div
-    class="flex items-center justify-center space-x-1.5"
+    class="flex items-center justify-center space-x-1.5 group select-none"
     :class="isLoading ? 'cursor-wait' : 'cursor-pointer'"
     @click.stop="handleLike"
   >
-    <UIcon v-if="isLoading" name="i-hugeicons:refresh" class="size-5 text-primary animate-spin" />
+    <div class="relative size-5 flex items-center justify-center">
+      <Transition
+        enter-active-class="transition duration-200 ease-out"
+        enter-from-class="opacity-0 scale-50"
+        leave-active-class="transition duration-150 ease-in"
+        leave-to-class="opacity-0 scale-50"
+        mode="out-in"
+      >
+        <UIcon v-if="isLoading" name="i-hugeicons:refresh" class="size-5 text-primary animate-spin" key="loading" />
+        <UIcon
+          v-else
+          :name="liked ? 'i-hugeicons:heart-check' : 'i-hugeicons:favourite'"
+          :class="[
+            'size-5 transition-all duration-300',
+            liked ? 'text-primary scale-110' : 'text-dimmed group-hover:text-neutral-500',
+            liked && isManualClick ? 'animate-heart-pop' : '',
+          ]"
+          :key="liked ? 'liked' : 'unliked'"
+        />
+      </Transition>
+    </div>
 
-    <UIcon
-      v-else
-      :name="liked ? 'i-hugeicons:heart-check' : 'i-hugeicons:favourite'"
-      :class="[
-        'size-5 transition-all duration-300',
-        liked ? 'text-primary scale-110' : 'text-dimmed',
-        liked && isManualClick ? 'animate-heart-pop' : '',
-      ]"
-    />
-
-    <CommonAnimateNumber :value="likesCount" class="tabular-nums text-dimmed font-medium" />
+    <CommonAnimateNumber :value="localLikesCount" class="tabular-nums text-sm text-dimmed font-medium" />
   </div>
 </template>
 
@@ -29,53 +39,68 @@ const props = defineProps<{
   isLiked?: boolean;
 }>();
 
-const emit = defineEmits<{
-  (e: 'likeChange', liked: boolean, likes: number, commentId: string): void;
-}>();
-
+const emit = defineEmits(['likeChange']);
 const { loggedIn } = useUserSession();
 
-const likesCount = computed(() => props.initialLikes || 0);
 const liked = ref(props.isLiked || false);
 const isLoading = ref(false);
 const isManualClick = ref(false);
 
+// 核心修复：使用一个 ref 来管理本地显示，但要监听 props 的变化
+const localLikesCount = ref(props.initialLikes || 0);
+
+// 监听父组件（useComments 缓存或 API）传来的点赞数变化
+watch(
+  () => props.initialLikes,
+  (newCount) => {
+    if (newCount !== undefined) {
+      localLikesCount.value = newCount;
+    }
+  },
+  { immediate: true },
+);
+
+// 监听父组件传来的点赞状态变化
+watch(
+  () => props.isLiked,
+  (val) => {
+    if (val !== undefined) liked.value = val;
+  },
+);
+
 const handleLike = async () => {
-  if (!loggedIn.value) return navigateTo('/auth', { replace: true });
+  if (!loggedIn.value) return navigateTo('/auth');
   if (isLoading.value) return;
 
   isManualClick.value = true;
   isLoading.value = true;
 
-  const previousLiked = liked.value;
-
-  liked.value = !previousLiked;
+  // 1. 乐观更新：先改本地状态，让用户感觉“秒回”
+  const prevLiked = liked.value;
+  liked.value = !prevLiked;
+  localLikesCount.value += liked.value ? 1 : -1;
 
   try {
-    const response = await $fetch<ToggleLikeResponse>('/api/collections/likes', {
+    const res = await $fetch<ToggleLikeResponse>('/api/collections/likes', {
       method: 'POST',
       body: { comment: props.commentId },
     });
 
-    liked.value = response.data.liked;
+    // 2. 写入服务器真实数据
+    liked.value = res.data.liked;
+    localLikesCount.value = res.data.likes;
 
-    emit('likeChange', response.data.liked, response.data.likes, props.commentId);
-  } catch (error: any) {
-    liked.value = previousLiked;
-    console.error('操作失败:', error.data?.message || '网络异常');
+    // 3. 通知父组件更新 useComments 里的缓存
+    emit('likeChange', res.data.liked, res.data.likes, props.commentId);
+  } catch (e) {
+    // 4. 失败回滚：打回原型
+    liked.value = prevLiked;
+    localLikesCount.value = props.initialLikes || 0;
   } finally {
     isLoading.value = false;
-
     setTimeout(() => {
       isManualClick.value = false;
     }, 1000);
   }
 };
-
-watch(
-  () => props.isLiked,
-  (newVal) => {
-    if (newVal !== undefined) liked.value = newVal;
-  },
-);
 </script>

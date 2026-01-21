@@ -29,7 +29,7 @@
 
 <script setup lang="ts">
 import type { Editor } from '@tiptap/vue-3';
-import { useEditorImage } from '~/modules/editor/use-editor-logic';
+import { useEditorImage } from '~/utils/editor/use-editor-logic';
 
 const props = defineProps<{ editor: Editor }>();
 const { url, open, setImage } = useEditorImage(toRef(props, 'editor'));
