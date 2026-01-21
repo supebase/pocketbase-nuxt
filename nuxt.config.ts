@@ -92,6 +92,16 @@ export default defineNuxtConfig({
     imports: {
       dirs: ['./server/services'],
     },
+    routeRules: {
+      '/api/realtime': {
+        cache: false,
+        headers: {
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache, no-transform',
+          Connection: 'keep-alive',
+        },
+      },
+    },
   },
   // UI配置
   ui: {

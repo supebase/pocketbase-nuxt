@@ -54,9 +54,16 @@ watch(loggedIn, (isLogged) => {
 // 标签页可见性监听
 if (import.meta.client) {
   const visibility = useDocumentVisibility();
+  // 增加一个简单的节流或冷却判断
+  const lastFetchTime = ref(0);
   watch(visibility, (state) => {
     if (state === 'visible') {
-      fetchSession();
+      const now = Date.now();
+      // 如果距离上次检查不足 1 分钟，就不重复请求
+      if (now - lastFetchTime.value > 60000) {
+        fetchSession();
+        lastFetchTime.value = now;
+      }
     }
   });
 }

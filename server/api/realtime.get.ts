@@ -53,7 +53,10 @@ export default defineEventHandler(async (event) => {
   // 心跳机制：每 20 秒发送一次注释行，防止连接因闲置被网关断开
   const timer = setInterval(() => {
     if (!event.node.req.destroyed) {
-      eventStream.push(': heartbeat\n\n');
+      eventStream.push({
+        event: 'ping',
+        data: 'heartbeat',
+      });
     }
   }, 20000);
 
@@ -62,27 +65,30 @@ export default defineEventHandler(async (event) => {
    */
   let isCleaned = false;
 
+  // 在 cleanup 中增加超时保护，防止资源释放卡死线程
   const cleanup = async () => {
     if (isCleaned) return;
     isCleaned = true;
 
     clearInterval(timer);
     eventStream.close();
-    console.log(`[SSE 关闭] 释放订阅资源: ${collections.join(', ')}`);
 
-    try {
-      // 批量取消订阅，避免 PocketBase 后端连接堆积
-      await Promise.all(
-        collections.map((col) =>
-          pb
-            .collection(col)
-            .unsubscribe('*')
-            .catch(() => {}),
-        ),
-      );
-    } catch (e) {
-      console.error('[SSE 错误] 清理资源异常:', e);
-    }
+    // 使用 Promise.race 设定清理上限，防止 PB 取消订阅动作卡住服务器
+    const cleanupTasks = Promise.all(
+      collections.map((col) =>
+        pb
+          .collection(col)
+          .unsubscribe('*')
+          .catch(() => {}),
+      ),
+    );
+
+    await Promise.race([
+      cleanupTasks,
+      new Promise((resolve) => setTimeout(resolve, 3000)), // 3秒强制结束
+    ]);
+
+    console.log(`[SSE 关闭] 资源已安全释放`);
   };
 
   // 生命周期监听：捕获客户端断开（如刷新、关闭页面）

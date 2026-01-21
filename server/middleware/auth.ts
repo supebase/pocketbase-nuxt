@@ -60,10 +60,13 @@ export default defineEventHandler(async (event) => {
           path: '/',
         });
         appendResponseHeader(event, 'set-cookie', newCookie);
-      } catch (e) {
-        // 如果刷新失败（如用户被禁用），清理状态
-        pb.authStore.clear();
-        await clearUserSession(event);
+      } catch (e: any) {
+        // 只要 PB 没明确说 Token 无效（比如 401），就不要清理 Session
+        // 只有当刷新接口返回明确的身份错误时才登出
+        if (e.status === 401 || e.status === 403) {
+          pb.authStore.clear();
+          await clearUserSession(event);
+        }
       }
     }
 

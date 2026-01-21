@@ -26,11 +26,17 @@ export function usePagination<T extends { id: string | number }>(initialItems?: 
   const mergeItems = (existing: T[], incoming: T[], transformFn?: TransformFn<T>): T[] => {
     const processedIncoming = transformFn ? transformFn(incoming) : incoming;
 
-    // 使用 Map 进行高效去重
+    // 使用 Map 去重（防止分页拉取到已通过 SSE 插入的数据）
     const map = new Map<T['id'], T>(existing.map((item) => [item.id, item]));
     processedIncoming.forEach((item) => map.set(item.id, item));
 
-    return Array.from(map.values());
+    // 重新排序
+    // 实时系统中，顶部插入会打乱 Offset 分页。合并后强制排序可以纠正 UI。
+    return Array.from(map.values()).sort((a: any, b: any) => {
+      const dateA = new Date(a.created || 0).getTime();
+      const dateB = new Date(b.created || 0).getTime();
+      return dateB - dateA; // 降序：最新的在前
+    });
   };
 
   /**

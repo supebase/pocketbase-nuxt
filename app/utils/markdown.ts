@@ -50,8 +50,11 @@ export const getFirstImageUrl = (content: string): string | null => {
   // 排除掉 URL 里的空格和右括号，支持可选的 title
   const mdImageRegex = /!\[.*?\]\((?<url>[^\s)]+)(?:\s+["'].*?["'])?\)/;
   const mdMatch = cleanContent.match(mdImageRegex);
+  // 增加协议验证
   if (mdMatch?.groups?.url) {
-    return mdMatch.groups.url;
+    const url = mdMatch.groups.url;
+    // 仅允许合法链接，过滤 data: (过大) 或 javascript: (危险)
+    if (url.startsWith('http') || url.startsWith('/')) return url;
   }
 
   // 3. 备选：匹配 HTML img 标签: <img src="url">
