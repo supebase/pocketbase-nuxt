@@ -81,6 +81,8 @@ function startObserving() {
   });
 
   observer.observe(el, { childList: true, subtree: true });
+  // 如果 3 秒后还没渲染出来，强制停止监听并显示，防止内容死锁
+  setTimeout(() => observer.disconnect(), 3000);
 }
 
 onMounted(() => startObserving());

@@ -32,6 +32,13 @@ export const usePostLogic = (id: string | string[]) => {
           }
         }
       } else if (action === 'delete') {
+        if (import.meta.client) {
+          const toast = useToast();
+          toast.add({
+            title: '很遗憾，你访问的内容已被删除。',
+            color: 'error',
+          });
+        }
         await navigateTo('/');
       }
     });

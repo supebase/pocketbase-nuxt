@@ -42,42 +42,31 @@ const props = defineProps<{
 const emit = defineEmits(['likeChange']);
 const { loggedIn } = useUserSession();
 
-const liked = ref(props.isLiked || false);
 const isLoading = ref(false);
 const isManualClick = ref(false);
 
-// 核心修复：使用一个 ref 来管理本地显示，但要监听 props 的变化
-const localLikesCount = ref(props.initialLikes || 0);
+const liked = ref(props.isLiked ?? false);
+const localLikesCount = ref(props.initialLikes ?? 0);
 
-// 监听父组件（useComments 缓存或 API）传来的点赞数变化
-watch(
-  () => props.initialLikes,
-  (newCount) => {
-    if (newCount !== undefined) {
-      localLikesCount.value = newCount;
-    }
-  },
-  { immediate: true },
-);
-
-// 监听父组件传来的点赞状态变化
-watch(
-  () => props.isLiked,
-  (val) => {
-    if (val !== undefined) liked.value = val;
-  },
-);
+// 当父组件的数据发生变动（比如从数据库重新加载了数据）时，同步更新本地状态
+watch([() => props.isLiked, () => props.initialLikes], ([newLiked, newCount]) => {
+  liked.value = newLiked ?? false;
+  localLikesCount.value = newCount ?? 0;
+});
 
 const handleLike = async () => {
   if (!loggedIn.value) return navigateTo('/auth');
   if (isLoading.value) return;
 
-  isManualClick.value = true;
-  isLoading.value = true;
+  // 这里的类型现在是安全的 number
+  const previousState = {
+    liked: liked.value,
+    count: localLikesCount.value,
+  };
 
-  // 1. 乐观更新：先改本地状态，让用户感觉“秒回”
-  const prevLiked = liked.value;
-  liked.value = !prevLiked;
+  // 1. 乐观更新
+  isLoading.value = true;
+  liked.value = !previousState.liked;
   localLikesCount.value += liked.value ? 1 : -1;
 
   try {
@@ -86,16 +75,15 @@ const handleLike = async () => {
       body: { comment: props.commentId },
     });
 
-    // 2. 写入服务器真实数据
+    // 2. 更新为服务器真实数据
     liked.value = res.data.liked;
     localLikesCount.value = res.data.likes;
 
-    // 3. 通知父组件更新 useComments 里的缓存
     emit('likeChange', res.data.liked, res.data.likes, props.commentId);
   } catch (e) {
-    // 4. 失败回滚：打回原型
-    liked.value = prevLiked;
-    localLikesCount.value = props.initialLikes || 0;
+    // 3. 失败回滚
+    liked.value = previousState.liked;
+    localLikesCount.value = previousState.count;
   } finally {
     isLoading.value = false;
     setTimeout(() => {

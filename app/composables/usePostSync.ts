@@ -3,17 +3,15 @@ export const usePostUpdateTracker = () => {
   const updatedMarks = useState<Record<string, boolean>>('updated-posts-map', () => ({}));
 
   const markAsUpdated = (id: string) => {
-    updatedMarks.value = {
-      ...updatedMarks.value,
-      [id]: true,
-    };
+    if (!updatedMarks.value[id]) {
+      updatedMarks.value = { ...updatedMarks.value, [id]: true };
+    }
   };
 
   const clearUpdateMark = (id: string) => {
-    if (updatedMarks.value[id]) {
-      const newMarks = { ...updatedMarks.value };
-      delete newMarks[id];
-      updatedMarks.value = newMarks;
+    if (updatedMarks.value && id in updatedMarks.value) {
+      const { [id]: _, ...rest } = updatedMarks.value;
+      updatedMarks.value = rest;
     }
   };
 

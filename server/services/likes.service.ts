@@ -51,8 +51,8 @@ export async function getCommentLikes({ pb, commentId }: GetCommentLikesOptions)
 }
 
 /**
- * 批量获取评论点赞信息（优化版）
- * @description 仅拉取当前用户的点赞状态，防止拉取全表导致 OOM
+ * 批量获取评论点赞信息（手动统计版）
+ * @description 通过一次性拉取相关点赞记录，在内存中完成计数和状态匹配
  */
 export async function getCommentsLikesMap({
   pb,
@@ -63,31 +63,50 @@ export async function getCommentsLikesMap({
 
   const likesMap: Record<string, CommentLikeInfo> = {};
 
-  // 初始化 Map
+  // 1. 初始化 Map
   commentIds.forEach((id) => {
     likesMap[id] = { commentId: id, likes: 0, isLiked: false };
   });
 
-  // 并行获取：1. 点赞总数统计 (通常在 View 中处理，此处通过 filter 模拟)
-  // 2. 当前用户的点赞状态
-  if (userId) {
-    // 仅查询当前用户在这些评论中的点赞记录，返回数据量极小且安全
-    const userLikesFilter = `user = "${userId}" && (${commentIds.map((id) => `comment = "${id}"`).join(' || ')})`;
+  // 构建针对这些评论的过滤条件
+  const commentFilter = `(${commentIds.map((id) => `comment = "${id}"`).join(' || ')})`;
 
-    const userLikes = await pb.collection('likes').getFullList<PBLikesResponse>({
-      filter: userLikesFilter,
-      fields: 'comment',
-      requestKey: null,
+  try {
+    // 2. 并行获取：1. 所有相关评论的点赞总记录  2. 当前用户的点赞记录
+    const [allLikes, userLikes] = await Promise.all([
+      // 获取这些评论的所有点赞（用于统计总数）
+      // 注意：如果点赞量极大（单篇文章万级点赞），建议还是用 View。
+      pb.collection('likes').getFullList<PBLikesResponse>({
+        filter: commentFilter,
+        fields: 'comment,user', // 只取必要字段
+        requestKey: null,
+      }),
+      // 获取当前用户的点赞（用于判断 isLiked）
+      userId
+        ? pb.collection('likes').getFullList<PBLikesResponse>({
+            filter: `user = "${userId}" && ${commentFilter}`,
+            fields: 'comment',
+            requestKey: null,
+          })
+        : Promise.resolve([]),
+    ]);
+
+    // 3. 在内存中统计总点赞数
+    allLikes.forEach((like) => {
+      if (likesMap[like.comment]) {
+        likesMap[like.comment].likes++;
+      }
     });
 
+    // 4. 标记当前用户是否点赞
     userLikes.forEach((like) => {
       if (likesMap[like.comment]) {
         likesMap[like.comment].isLiked = true;
       }
     });
+  } catch (error) {
+    console.error('获取点赞映射失败:', error);
   }
 
-  // 注意：此处 likes 字段默认为 0，建议在 PocketBase 中通过 View 关联 likes_count 字段
-  // 或者在 Handler 层通过聚合 SQL 填充。
   return likesMap;
 }
