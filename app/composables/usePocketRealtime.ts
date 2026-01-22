@@ -58,13 +58,14 @@ export const usePocketRealtime = () => {
     const startHeartbeat = () => {
       clearInterval(sseManager.heartbeatTimer);
       sseManager.lastActivity = Date.now();
+
+      // 调整为 30 秒检查一次
       sseManager.heartbeatTimer = setInterval(() => {
-        const threshold = 45000; // 45秒
+        const threshold = 60000; // 判定超时阈值延长至 60 秒
         if (Date.now() - sseManager.lastActivity > threshold) {
-          // console.warn('[SSE] 链路僵死，强制重连');
           reconnect();
         }
-      }, 10000);
+      }, 30000);
     };
 
     const reconnect = () => {

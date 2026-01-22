@@ -17,20 +17,31 @@ const protectedRoutes = [
 ];
 
 /**
- * 检查是否需要刷新 Token (时间间隔检查)
- * @description 逻辑：如果 Token 的有效时间已经过去了一半以上，则返回 true
+ * 检查是否需要刷新 Token
+ * @param token JWT 字符串
  */
-function shouldRefreshToken(token: string): boolean {
-  try {
-    // JWT 结构为 [header].[payload].[signature]，我们取中间的 payload
-    const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
-    const now = Math.floor(Date.now() / 1000);
-    const totalDuration = payload.exp - payload.iat; // 总有效期
-    const remaining = payload.exp - now; // 剩余有效期
+function shouldRefreshToken(token: string | null | undefined): boolean {
+  // 如果没有 token，直接返回 false
+  if (!token) return false;
 
-    // 如果剩余寿命少于总寿命的一半，就触发刷新
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return false;
+
+    // 解析 Payload
+    const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString());
+    const now = Math.floor(Date.now() / 1000);
+
+    // 如果已经过期，不在这里处理刷新，交给 PB 的 isValid 判断
+    if (now >= payload.exp) return false;
+
+    const totalDuration = payload.exp - payload.iat;
+    const remaining = payload.exp - now;
+
+    // 剩余时间小于总时长的一半时返回 true
     return remaining < totalDuration / 2;
   } catch (e) {
+    // 解析失败则不触发刷新
     return false;
   }
 }

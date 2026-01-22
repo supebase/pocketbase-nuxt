@@ -33,12 +33,18 @@ function createBaseInstance() {
  * @description 权限受 PocketBase 后端 API Rules 约束。
  */
 export function getPocketBase(event?: H3Event) {
+  // 如果当前请求已经初始化过 PB 实例，直接返回，避免单次请求内重复创建
+  if (event?.context._pb) {
+    return event.context._pb;
+  }
+
   const pb = createBaseInstance();
 
   if (event) {
     const cookieHeader = getHeader(event, 'cookie') || '';
     // 从 Cookie 中还原 authStore (pb_auth 字段)
     pb.authStore.loadFromCookie(cookieHeader, 'pb_auth');
+    event.context._pb = pb; // 缓存到 context
   }
 
   return pb;

@@ -6,7 +6,7 @@
       <div
         v-if="!animationFinished"
         class="post-skeleton-wrapper"
-        :class="{ 'opacity-0 transition-opacity duration-700': animationStarted }"
+        :class="{ 'opacity-0 transition-opacity duration-200': animationStarted }"
       >
         <SkeletonWrapper type="mdc" />
       </div>
@@ -35,12 +35,12 @@ const animateEntrance = (el: HTMLElement) => {
 
   el.animate(
     [
-      { opacity: 0, transform: 'translateY(15px)', filter: 'blur(6px)' }, // 减小位移让衔接更稳
-      { opacity: 1, transform: 'translateY(0)', filter: 'blur(0)' },
+      { opacity: 0, transform: 'translateY(10px)' },
+      { opacity: 1, transform: 'translateY(0)' },
     ],
     {
-      duration: 700, // 稍微拉长，让过渡更丝滑
-      easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
+      duration: 400, // 稍微拉长，让过渡更丝滑
+      //easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
       fill: 'forwards',
     },
   ).finished.then(() => {

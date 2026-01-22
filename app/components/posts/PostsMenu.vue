@@ -1,5 +1,15 @@
 <template>
-  <UDropdownMenu arrow size="lg" :ui="{ item: 'cursor-pointer' }" :items="dropdownItems">
+  <UDropdownMenu
+    arrow
+    size="lg"
+    :ui="{ item: 'cursor-pointer' }"
+    :content="{
+      align: 'start',
+      side: 'bottom',
+      sideOffset: 8,
+    }"
+    :items="dropdownItems"
+  >
     <Icon
       name="i-hugeicons:more-horizontal"
       class="size-5 text-dimmed cursor-pointer hover:text-primary transition-colors"
@@ -60,7 +70,7 @@ const dropdownItems = computed(() => {
       authItem({
         label: '重新编辑',
         icon: 'i-hugeicons:edit-04',
-        onClick: () => navigateTo(`/edit/${props.item.id}`),
+        onClick: () => setTimeout(() => navigateTo(`/edit/${props.item.id}`), 300),
       }),
       authItem({
         label: '永久删除',

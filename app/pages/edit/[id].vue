@@ -33,7 +33,6 @@ import { CONTENT_MAX_LENGTH } from '~/constants';
 
 definePageMeta({
   hideHeaderBack: false,
-  keepalive: false,
 });
 
 const { markAsUpdated } = usePostUpdateTracker();
