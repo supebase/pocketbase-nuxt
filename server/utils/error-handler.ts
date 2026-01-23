@@ -13,7 +13,7 @@ import { GLOBAL_ERROR_CODE_MAP, FIELD_ERROR_CODE_MAP } from '~/constants/pocketb
  */
 export function handlePocketBaseError(error: unknown, defaultMessage: string = '请求失败，请稍后再试'): never {
   let friendlyMessage = defaultMessage;
-  let statusCode = 500;
+  let status = 500;
   let technicalMessage = 'Internal Server Error';
 
   // 网络层异常：处理后端服务宕机或请求被拦截（Status 0）
@@ -23,9 +23,9 @@ export function handlePocketBaseError(error: unknown, defaultMessage: string = '
 
   if (isNetworkError) {
     throw createError({
-      statusCode: 503,
+      status: 503,
       message: '无法连接到后端服务，请检查网络或稍后重试。',
-      statusMessage: 'Service Unavailable',
+      statusText: 'Service Unavailable',
       data: { _isNetworkError: true },
     });
   }
@@ -34,15 +34,15 @@ export function handlePocketBaseError(error: unknown, defaultMessage: string = '
   if (!(error instanceof ClientResponseError)) {
     console.error('[Internal Error]:', error);
     throw createError({
-      statusCode,
+      status,
       message: defaultMessage,
-      statusMessage: 'Internal System Error',
+      statusText: 'Internal System Error',
       fatal: false,
     });
   }
 
   // 提取 PB 原始错误数据
-  statusCode = error.status;
+  status = error.status;
   const errorData = error.data || {};
   technicalMessage = error.message;
 
@@ -66,14 +66,14 @@ export function handlePocketBaseError(error: unknown, defaultMessage: string = '
 
   // 抛出格式化的 Nuxt 错误，便于前端 useFetch 的 error.data 获取
   throw createError({
-    statusCode,
+    status,
     message: friendlyMessage,
-    statusMessage: technicalMessage.substring(0, 50),
+    statusText: technicalMessage.substring(0, 50),
     data: {
       _isPocketBaseError: true,
       fields: errorData.data || {}, // 透传原始字段结构，供前端表单高亮使用
       originalMessage: technicalMessage,
     },
-    fatal: statusCode >= 500,
+    fatal: status >= 500,
   });
 }

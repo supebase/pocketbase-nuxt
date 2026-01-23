@@ -25,7 +25,7 @@
 
 <script setup lang="ts">
 import type { Editor } from '@tiptap/vue-3';
-import { useEditorLink } from '~/utils/editor/use-editor-logic';
+import { useEditorLink } from '~/utils/editor/editor-logic';
 
 const props = defineProps<{ editor: Editor; autoOpen?: boolean }>();
 const { url, open, active, setLink, removeLink } = useEditorLink(toRef(props, 'editor'), props.autoOpen);

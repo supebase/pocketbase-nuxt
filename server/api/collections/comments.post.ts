@@ -2,8 +2,6 @@
  * @file API Route: /api/collections/comments [POST]
  * @description 发表评论。集成 XSS 内容清洗、多重业务校验及 Service 层持久化。
  */
-
-import { defineApiHandler } from '~~/server/utils/api-wrapper';
 import type { Create } from '~/types/pocketbase-types';
 import type { CreateCommentRequest } from '~/types/comments';
 import { COMMENT_MAX_LENGTH } from '~/constants';
@@ -31,22 +29,25 @@ export default defineApiHandler(async (event) => {
   // 业务逻辑校验
   if (!post) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: '关联的内容 ID 不能为空',
+      statusText: 'Bad Request',
     });
   }
 
   if (!cleanComment) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: '评论内容不能为空',
+      statusText: 'Bad Request',
     });
   }
 
   if (cleanComment.length > COMMENT_MAX_LENGTH) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: '字数超出上限，请精简内容',
+      statusText: 'Bad Request',
     });
   }
 

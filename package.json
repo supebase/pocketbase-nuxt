@@ -17,7 +17,7 @@
     "@nuxtjs/mdc": "0.20.0",
     "@tiptap/extension-character-count": "^3.16.0",
     "eventsource": "^4.1.0",
-    "nuxt": "^4.2.2",
+    "nuxt": "^4.3.0",
     "nuxt-auth-utils": "0.5.27",
     "nuxt-emoji-picker": "^1.2.2",
     "open-graph-scraper": "^6.11.0",
@@ -48,5 +48,6 @@
       "esbuild": "0.25.0",
       "@esbuild/darwin-x64": "0.25.0"
     }
-  }
+  },
+  "packageManager": "pnpm@10.28.1+sha512.7d7dbbca9e99447b7c3bf7a73286afaaf6be99251eb9498baefa7d406892f67b879adb3a1d7e687fc4ccc1a388c7175fbaae567a26ab44d1067b54fcb0d6a316"
 }

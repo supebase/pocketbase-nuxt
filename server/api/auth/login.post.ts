@@ -2,10 +2,6 @@
  * @file API Route: /api/auth/login [POST]
  * @description 用户登录。验证凭证并同步 PocketBase 认证状态至 Nuxt Session。
  */
-
-import { getPocketBase } from '../../utils/pocketbase';
-import { handleAuthSuccess } from '../../utils/auth-helpers';
-import { defineApiHandler } from '~~/server/utils/api-wrapper';
 import type { LoginRequest, AuthResponse } from '~/types/auth';
 
 export default defineApiHandler(async (event): Promise<AuthResponse> => {
@@ -15,8 +11,9 @@ export default defineApiHandler(async (event): Promise<AuthResponse> => {
 
   if (!email || !password) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: '请输入电子邮件和登录密码',
+      statusText: 'Bad Request',
     });
   }
 

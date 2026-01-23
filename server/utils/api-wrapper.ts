@@ -28,12 +28,17 @@ export const defineApiHandler = <T extends EventHandlerRequest, D>(handler: Even
             // 严格一致性校验：阻止任何第三方域名的跨站调用
             if (originHost !== host) {
               throw createError({
-                statusCode: 403,
+                status: 403,
                 message: '跨站请求校验失败 (CSRF Protection)',
+                statusText: 'Forbidden',
               });
             }
           } catch (e) {
-            throw createError({ statusCode: 403, message: '无效的请求来源 (Invalid Origin)' });
+            throw createError({
+              status: 403,
+              message: '无效的请求来源 (Invalid Origin)',
+              statusText: 'Forbidden',
+            });
           }
         }
       }

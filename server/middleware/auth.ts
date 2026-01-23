@@ -3,8 +3,6 @@
  * @description 全局身份认证中间件。包含 PocketBase 实例初始化、Token 自动续期及鉴权拦截。
  */
 
-import { getPocketBase } from '../utils/pocketbase';
-
 /**
  * 受保护路由配置
  */
@@ -29,7 +27,7 @@ function shouldRefreshToken(token: string | null | undefined): boolean {
     if (parts.length !== 3) return false;
 
     // 解析 Payload
-    const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString());
+    const payload = JSON.parse(Buffer.from(parts[1] || '', 'base64').toString());
     const now = Math.floor(Date.now() / 1000);
 
     // 如果已经过期，不在这里处理刷新，交给 PB 的 isValid 判断
@@ -106,9 +104,9 @@ export default defineEventHandler(async (event) => {
   // 5. 鉴权判定
   if (isProtected && !event.context.user) {
     throw createError({
-      statusCode: 401,
-      statusMessage: 'Unauthorized',
+      status: 401,
       message: '此操作需要登录',
+      statusText: 'Unauthorized',
     });
   }
 });

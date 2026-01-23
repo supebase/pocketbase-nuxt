@@ -1,5 +1,5 @@
 <template>
-  <CommonEditor :model-value="form" :max-limit="maxLimit" :disabled="isSubmitting" @submit="handleSubmit">
+  <Editor :model-value="form" :max-limit="maxLimit" :disabled="isSubmitting" @submit="handleSubmit">
     <template #actions>
       <UButton type="button" color="warning" variant="soft" @click="useRouter().back()"> 取消发布 </UButton>
       <UButton
@@ -11,7 +11,7 @@
         发布
       </UButton>
     </template>
-  </CommonEditor>
+  </Editor>
 </template>
 
 <script setup lang="ts">

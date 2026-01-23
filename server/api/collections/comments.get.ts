@@ -2,10 +2,6 @@
  * @file API Route: /api/collections/comments [GET]
  * @description 获取评论列表。在 Handler 层聚合评论内容与点赞状态（应用层解耦模式）。
  */
-import { getPaginationParams } from '../../utils/pagination';
-import { defineApiHandler } from '~~/server/utils/api-wrapper';
-import { getCommentsList } from '~~/server/services/comments.service';
-import { getCommentsLikesMap } from '~~/server/services/likes.service';
 import type { CommentsListResponse, CommentRecord } from '~/types/comments';
 
 export default defineApiHandler(async (event): Promise<CommentsListResponse> => {

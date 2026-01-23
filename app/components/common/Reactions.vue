@@ -51,7 +51,7 @@
 </template>
 
 <script setup lang="ts">
-import { isValidEmoji } from '~~/shared/utils/emoji';
+import { isValidEmoji } from '#shared/utils/emoji';
 import { REACTIONS } from '~/constants/index';
 import { parseReactionMessage } from '~/utils/common/ui-utils';
 import { useCooldown } from '~/utils/common/animation-utils';

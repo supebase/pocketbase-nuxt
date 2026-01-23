@@ -9,10 +9,7 @@
       <div
         class="relative overflow-hidden rounded-full size-full flex items-center justify-center bg-neutral-100 dark:bg-neutral-800 group"
       >
-        <div
-          v-if="isLoading"
-          class="absolute inset-0 z-30 flex items-center justify-center bg-inherit"
-        >
+        <div v-if="isLoading" class="absolute inset-0 z-30 flex items-center justify-center bg-inherit">
           <UIcon name="i-hugeicons:refresh" class="size-4 text-dimmed animate-spin" />
         </div>
 
@@ -28,10 +25,7 @@
           ]"
         />
 
-        <div
-          v-if="hasError || (!avatarId && !isLoading)"
-          class="flex items-center justify-center w-full h-full"
-        >
+        <div v-if="hasError || (!avatarId && !isLoading)" class="flex items-center justify-center w-full h-full">
           <UIcon name="i-hugeicons:image-02" class="text-dimmed size-4.5" />
         </div>
       </div>
@@ -48,10 +42,10 @@ const props = defineProps<{
 
 const imgRef = ref<HTMLImageElement | null>(null);
 
-const { avatarUrl, isLoading, hasError, handleLoad, handleError } = useGravatar(
-  () => props.avatarId,
-  { size: props.size, rank: props.rank },
-);
+const { avatarUrl, isLoading, hasError, handleLoad, handleError } = useGravatar(() => props.avatarId, {
+  size: props.size,
+  rank: props.rank,
+});
 
 /**
  * 核心：处理浏览器缓存

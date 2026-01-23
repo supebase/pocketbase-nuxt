@@ -2,10 +2,6 @@
  * @file API Route: /api/auth/register [POST]
  * @description 用户注册接口。实现新用户创建、自动身份验证同步及会话持久化。
  */
-
-import { getPocketBase } from '../../utils/pocketbase';
-import { handleAuthSuccess } from '../../utils/auth-helpers';
-import { defineApiHandler } from '~~/server/utils/api-wrapper';
 import type { RegisterRequest, AuthResponse } from '~/types/auth';
 
 export default defineApiHandler(async (event): Promise<AuthResponse> => {
@@ -16,16 +12,17 @@ export default defineApiHandler(async (event): Promise<AuthResponse> => {
   // 基础业务规则校验 (卫语句)
   if (!email || !password || !passwordConfirm) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: '请填写完整的注册信息',
+      statusText: 'Bad Request',
     });
   }
 
   if (password !== passwordConfirm) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: '两次输入的密码不一致',
-      statusMessage: 'Validation Error',
+      statusText: 'Bad Request',
     });
   }
 

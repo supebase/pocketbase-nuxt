@@ -23,7 +23,7 @@ export const processMarkdownImages = async (
 
   // 构造下载任务序列
   const tasks = matches.map((match) => {
-    const url = match[1];
+    const url = match[1] || '';
 
     // 过滤重复链接或已本地化的内部链接
     if (seen.has(url) || url.includes('/api/images/')) return null;

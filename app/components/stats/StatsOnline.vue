@@ -26,6 +26,6 @@
 </template>
 
 <script setup lang="ts">
-import { useOnlineStats } from '~/utils/stats/use-stats-logic';
+import { useOnlineStats } from '~/utils/stats/stats-logic';
 const { count } = useOnlineStats();
 </script>

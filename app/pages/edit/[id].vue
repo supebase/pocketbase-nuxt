@@ -1,11 +1,5 @@
 <template>
-  <CommonEditor
-    v-if="!isLoading"
-    :model-value="form"
-    :max-limit="maxLimit"
-    :disabled="isSubmitting"
-    @submit="handleSubmit"
-  >
+  <Editor v-if="!isLoading" :model-value="form" :max-limit="maxLimit" :disabled="isSubmitting" @submit="handleSubmit">
     <template #actions>
       <UButton type="button" color="warning" variant="soft" @click="$router.back()"> 取消编辑 </UButton>
       <UButton
@@ -17,7 +11,7 @@
         更新内容
       </UButton>
     </template>
-  </CommonEditor>
+  </Editor>
 
   <div
     v-else

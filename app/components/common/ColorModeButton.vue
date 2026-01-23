@@ -8,8 +8,8 @@
       @click="handleToggle"
     />
     <template #fallback>
-      <div class="size-9 flex items-center justify-center">
-        <UIcon name="i-hugeicons:refresh" class="size-5 text-muted animate-spin" />
+      <div class="size-8 flex items-center justify-center">
+        <UIcon name="i-hugeicons:refresh" class="size-4.5 text-muted animate-spin" />
       </div>
     </template>
   </ClientOnly>

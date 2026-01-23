@@ -2,8 +2,6 @@
  * @file Image Sync Service
  * @description 专门用于解析 Markdown 内容，自动下载其中的远程图片并转存至 PocketBase 存储。
  */
-
-import { syncMarkdownContent } from '~~/server/utils/markdown-sync';
 import type { SyncOptions } from '~/types/server';
 
 /**

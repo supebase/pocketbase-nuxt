@@ -2,7 +2,6 @@
  * @file API Route: /api/collections/likes [GET]
  * @description 批量查询点赞状态。支持一次性获取多个评论的点赞计数及当前用户的交互状态。
  */
-import { defineApiHandler } from '~~/server/utils/api-wrapper';
 import type { CommentLikesResponse } from '~/types/likes';
 
 export default defineApiHandler(async (event): Promise<CommentLikesResponse> => {
@@ -15,8 +14,9 @@ export default defineApiHandler(async (event): Promise<CommentLikesResponse> => 
 
   if (!commentIdsStr) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: '参数缺失：未提供评论 ID 列表',
+      statusText: 'Bad Request',
     });
   }
 
@@ -31,8 +31,9 @@ export default defineApiHandler(async (event): Promise<CommentLikesResponse> => 
   } catch (error) {
     // 如果 JSON 解析失败或后续处理出错，返回 400 Bad Request。
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: '格式错误：评论 ID 列表应为标准的 JSON 字符串数组',
+      statusText: 'Bad Request',
     });
   }
 

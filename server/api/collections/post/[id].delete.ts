@@ -2,9 +2,6 @@
  * @file API Route: /api/collections/post/:id [DELETE]
  * @description 删除指定文章。集成所有权鉴权拦截，确保操作安全性。
  */
-
-import { defineApiHandler } from '~~/server/utils/api-wrapper';
-
 export default defineApiHandler(async (event): Promise<{ message: string; data: any }> => {
   const pb = event.context.pb;
 
@@ -13,8 +10,9 @@ export default defineApiHandler(async (event): Promise<{ message: string; data: 
 
   if (!postId) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: '操作失败：删除目标 ID 缺失',
+      statusText: 'Bad Request',
     });
   }
 

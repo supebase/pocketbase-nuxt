@@ -93,15 +93,17 @@ export async function getCommentsLikesMap({
 
     // 3. 在内存中统计总点赞数
     allLikes.forEach((like) => {
-      if (likesMap[like.comment]) {
-        likesMap[like.comment].likes++;
+      const item = likesMap[like.comment];
+      if (item) {
+        item.likes++;
       }
     });
 
     // 4. 标记当前用户是否点赞
     userLikes.forEach((like) => {
-      if (likesMap[like.comment]) {
-        likesMap[like.comment].isLiked = true;
+      const item = likesMap[like.comment];
+      if (item) {
+        item.isLiked = true;
       }
     });
   } catch (error) {

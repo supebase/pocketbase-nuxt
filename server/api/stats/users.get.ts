@@ -2,9 +2,6 @@
  * @file API Route: /api/stats/users [GET]
  * @description 获取全站用户统计指标，包括总数、新增及活跃度。
  */
-
-import { defineApiHandler } from '~~/server/utils/api-wrapper';
-
 export default defineApiHandler(async (event) => {
   // 直接从 Context 中获取中间件已初始化的 PB 实例
   const pb = event.context.pb;

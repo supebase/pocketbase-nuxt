@@ -2,8 +2,6 @@
  * @file Auth Service
  * @description 封装用户认证逻辑（登录、注册、登出），解耦 API handler 与 PocketBase SDK 操作。
  */
-
-import { getMd5Hash } from '../utils/md5-hash';
 import { normalizeEmail, formatDefaultName } from '~/utils/index';
 import type { UsersResponse, Create } from '~/types/pocketbase-types';
 import type { LoginOptions, RegisterOptions, LogoutOptions } from '~/types/server';
@@ -32,7 +30,7 @@ export async function registerService({
 }: RegisterOptions): Promise<UsersResponse> {
   const cleanEmail = normalizeEmail(email);
   const md5Hash = getMd5Hash(cleanEmail);
-  const rawName = cleanEmail.split('@')[0];
+  const rawName = cleanEmail.split('@')[0] || '';
   const defaultName = formatDefaultName(rawName);
 
   const newUser: Omit<Create<'users'>, 'tokenKey'> = {

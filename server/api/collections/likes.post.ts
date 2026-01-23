@@ -2,8 +2,6 @@
  * @file API Route: /api/collections/likes [POST]
  * @description 评论点赞切换接口。实现“原子化”的点赞与取消点赞逻辑。
  */
-
-import { defineApiHandler } from '~~/server/utils/api-wrapper';
 import type { ToggleLikeRequest, ToggleLikeResponse } from '~/types/likes';
 
 export default defineApiHandler(async (event): Promise<ToggleLikeResponse> => {
@@ -18,8 +16,9 @@ export default defineApiHandler(async (event): Promise<ToggleLikeResponse> => {
 
   if (!commentId || typeof commentId !== 'string') {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: '操作失败：无效的评论 ID',
+      statusText: 'Bad Request',
     });
   }
 

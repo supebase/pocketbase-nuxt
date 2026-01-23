@@ -2,9 +2,6 @@
  * @file API Route: /api/collections/comment/:id [GET]
  * @description 获取指定内容的评论聚合统计（如评论总数、参与者头像列表等）。
  */
-
-import { defineApiHandler } from '~~/server/utils/api-wrapper';
-
 export default defineApiHandler(async (event) => {
   const pb = event.context.pb;
 
@@ -13,8 +10,9 @@ export default defineApiHandler(async (event) => {
 
   if (!id) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: '参数缺失：必须提供目标内容 ID',
+      statusText: 'Bad Request',
     });
   }
 

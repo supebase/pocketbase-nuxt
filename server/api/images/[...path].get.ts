@@ -9,13 +9,15 @@ export default defineEventHandler(async (event) => {
   // 安全前置检查：防止路径穿越攻击 (Directory Traversal)
   if (!path)
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: '路径不能为空',
+      statusText: 'Bad Request',
     });
   if (path.includes('..')) {
     throw createError({
-      statusCode: 403,
+      status: 403,
       message: 'Forbidden',
+      statusText: 'Forbidden',
     });
   }
 
@@ -38,7 +40,11 @@ export default defineEventHandler(async (event) => {
     }
 
     if (!response.ok) {
-      throw createError({ statusCode: response.status, message: '资源不存在' });
+      throw createError({
+        status: response.status,
+        message: '资源不存在',
+        statusText: 'Not Found',
+      });
     }
 
     // 透传响应头：保持 ETag、Last-Modified 和 Content-Type 一致
@@ -60,6 +66,10 @@ export default defineEventHandler(async (event) => {
     return response.body;
   } catch (error) {
     console.error('[ImageProxy] 错误:', error);
-    throw createError({ statusCode: 404, message: '无法加载图片' });
+    throw createError({
+      status: 404,
+      message: '无法加载图片',
+      statusText: 'Not Found',
+    });
   }
 });

@@ -2,9 +2,6 @@
  * @file API Route: /api/collections/posts [POST]
  * @description 创建新文章。集成 LinkCard 自动抓取、图片本地化以及 Markdown 内容同步。
  */
-
-import { getLinkPreview } from '~~/server/utils/graph-scraper';
-import { defineApiHandler } from '~~/server/utils/api-wrapper';
 import type { CreatePostRequest, SinglePostResponse } from '~/types/posts';
 import { CONTENT_MAX_LENGTH } from '~/constants';
 
@@ -18,14 +15,16 @@ export default defineApiHandler(async (event): Promise<SinglePostResponse> => {
   // 前置业务校验
   if (!content)
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: '内容不能为空',
+      statusText: 'Bad Request',
     });
 
   if (content.length > CONTENT_MAX_LENGTH) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: '内容长度超出限制',
+      statusText: 'Bad Request',
     });
   }
 

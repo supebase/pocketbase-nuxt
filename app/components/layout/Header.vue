@@ -10,7 +10,15 @@
           <UButton to="/auth" color="neutral" variant="link" icon="i-hugeicons:lock-key" class="rounded-full" />
         </div>
         <div v-else key="user" class="auth-item">
-          <AuthLogoutButton />
+          <UButton
+            @click="handleLogout"
+            :loading="isLoggingOut"
+            color="neutral"
+            variant="link"
+            icon="i-hugeicons:door-01"
+            tabindex="-1"
+            class="rounded-full cursor-pointer"
+          />
           <div class="avatar-pop">
             <UUser size="sm">
               <template #avatar>
@@ -28,4 +36,5 @@
 
 <script setup lang="ts">
 const { user, loggedIn } = useUserSession();
+const { handleLogout, isLoggingOut } = useAuth();
 </script>

@@ -3,8 +3,6 @@
  * @description 协调 Markdown 内容中的图片下载、存储与链接替换逻辑。
  */
 
-import { processMarkdownImages } from './markdown';
-
 /**
  * 同步 Markdown 内容
  * @description 流程：并发下载图片 -> 执行存储回调 -> 替换 Markdown 链接 -> 注入状态提示

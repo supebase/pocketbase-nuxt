@@ -2,9 +2,6 @@
  * @file API Route: /api/auth/logout [POST]
  * @description 用户登出。清理认证持久化状态（Session/Cookie）并重置 PocketBase 内存实例。
  */
-import { getPocketBase } from '../../utils/pocketbase';
-import { defineApiHandler } from '~~/server/utils/api-wrapper';
-
 export default defineApiHandler(async (event) => {
   // 初始化当前请求的 PocketBase 实例
   const pb = getPocketBase(event);

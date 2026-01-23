@@ -2,8 +2,6 @@
  * @file Posts Service
  * @description 处理文章的 CRUD，包含自动图片同步、链接预览抓取及复杂的可见性过滤。
  */
-
-import { ensureOwnership } from '~~/server/utils/validate-owner';
 import type { PostsResponse as PBPostsResponse, TypedPocketBase } from '~/types/pocketbase-types';
 import type { PostExpand, PostRecord } from '~/types/posts';
 import type {
@@ -13,7 +11,6 @@ import type {
   UpdatePostOptions,
   DeletePostOptions,
 } from '~/types/server';
-import { getLinkPreview } from '~~/server/utils/graph-scraper';
 
 /**
  * 获取文章列表
@@ -63,8 +60,9 @@ export async function getPostById({ pb, postId }: GetPostByIdOptions) {
     });
   } catch (error: any) {
     throw createError({
-      statusCode: 404,
+      status: 404,
       message: '文章不存在或您没有权限查看',
+      statusText: 'Not Found',
     });
   }
 }
@@ -103,8 +101,9 @@ export async function createPost({ pb, initialData, rawContent }: CreatePostOpti
   } catch (error) {
     console.error(`[CreatePost] 同步失败: ${post.id}`, error);
     throw createError({
-      statusCode: 202,
+      status: 202,
       message: '内容已保存，但图片同步失败。',
+      statusText: 'Accepted',
       data: { postId: post.id },
     });
   }
@@ -148,7 +147,7 @@ export async function updatePost({ pb, postId, body }: UpdatePostOptions): Promi
     const extractImages = (md: string) => {
       // 匹配 ![alt](url) 其中的 url 部分
       const matches = md.matchAll(/!\[.*?\]\((.+?)\)/g);
-      return Array.from(matches, (m) => m[1].split(' ')[0]); // 排除 title 部分
+      return Array.from(matches, (m) => m[1]?.split(' ')[0]); // 排除 title 部分
     };
 
     const oldImages = extractImages(existing.content);

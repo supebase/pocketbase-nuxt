@@ -17,7 +17,7 @@
           </span>
 
           <UIcon
-            class="size-4 transition-all duration-300"
+            class="size-4.25 transition-all duration-300"
             :class="[
               isCoolingDown || isRefreshing
                 ? 'text-dimmed opacity-40 cursor-not-allowed rotate-180'
@@ -46,7 +46,7 @@
 </template>
 
 <script setup lang="ts">
-import { useStatsRefresh } from '~/utils/stats/use-stats-logic';
+import { useStatsRefresh } from '~/utils/stats/stats-logic';
 
 const statsIsland = ref();
 const { cooldown, isRefreshing, isCoolingDown, handleUpdate } = useStatsRefresh(statsIsland);

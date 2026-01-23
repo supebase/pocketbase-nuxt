@@ -2,8 +2,6 @@
  * @file Real-time SSE Handler
  * @description 提供 Server-Sent Events 流式推送，监听 PocketBase 数据库变动并同步至前端。
  */
-import { getPocketBase } from '../utils/pocketbase';
-
 export default defineEventHandler(async (event) => {
   // 1. 设置响应头
   setHeaders(event, {

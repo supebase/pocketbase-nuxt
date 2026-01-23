@@ -34,8 +34,9 @@ export async function ensureOwnership<T extends keyof CollectionResponses>(
   if (!(userField in record)) {
     console.error(`[Guard Error]: 字段 '${String(userField)}' 不存在于集合 '${collectionName}'`);
     throw createError({
-      statusCode: 500,
+      status: 500,
       message: '系统配置异常：校验字段缺失',
+      statusText: 'Internal Server Error',
     });
   }
 
@@ -43,8 +44,9 @@ export async function ensureOwnership<T extends keyof CollectionResponses>(
   // 比较记录中的关联 ID 与当前用户 ID 是否一致
   if (!currentUser || String(record[userField]) !== currentUser.id) {
     throw createError({
-      statusCode: 403,
+      status: 403,
       message: '无权操作：您不是该内容的所有者',
+      statusText: 'Forbidden',
     });
   }
 
