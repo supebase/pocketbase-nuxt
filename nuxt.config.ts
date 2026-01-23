@@ -1,7 +1,7 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
-  devtools: { enabled: true },
+  devtools: { enabled: false },
   modules: ['nuxt-auth-utils', '@nuxt/ui', '@nuxtjs/mdc', 'nuxt-emoji-picker'],
   runtimeConfig: {
     session: {
@@ -34,11 +34,9 @@ export default defineNuxtConfig({
     },
   },
   experimental: {
-    // 启用路由预获取，当鼠标悬停在链接上时提前下载数据
-    payloadExtraction: true, // 开启它，有助于快速导航
+    payloadExtraction: false,
     renderJsonPayloads: true,
-    typedPages: true, // 提升开发和构建时的路由分析速度
-    // 💡 建议开启：支持在异步逻辑中更稳定地使用全局状态，对你的更新追踪器很有帮助
+    typedPages: true,
     asyncContext: true,
     componentIslands: true,
   },
@@ -50,7 +48,6 @@ export default defineNuxtConfig({
       cssMinify: 'lightningcss',
       sourcemap: false,
       target: 'esnext',
-      minify: 'terser',
       terserOptions: {
         compress: {
           drop_console: true,

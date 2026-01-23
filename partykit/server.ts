@@ -12,9 +12,9 @@ export default {
     if (splitIndex === -1) return;
 
     const type = data.slice(0, splitIndex);
-    const emoji = data.slice(splitIndex + 1);
+    const payload = data.slice(splitIndex + 1);
 
-    if (type === 'react' && isValidEmoji(emoji)) {
+    if (type === 'react' && isValidEmoji(payload)) {
       const now = Date.now();
       const lastAction = throttleMap.get(ws) || 0;
 
@@ -24,7 +24,7 @@ export default {
       }
       throttleMap.set(ws, now);
 
-      const storageKey = `post:${party.id}:emoji:${emoji}`;
+      const storageKey = `post:${party.id}:emoji:${payload}`;
       const nextCount = await party.storage.transaction(async (tx) => {
         const count = (await tx.get<number>(storageKey)) || 0;
         const updated = count + 1;
@@ -33,8 +33,23 @@ export default {
         return updated;
       });
 
-      party.broadcast(`new-reaction:${emoji}`);
-      party.broadcast(`emoji-count:${emoji}:${nextCount}`);
+      party.broadcast(`new-reaction:${payload}`);
+      party.broadcast(`emoji-count:${payload}:${nextCount}`);
+    }
+
+    // --- 新增：投票 PK 逻辑 ---
+    if (type === 'vote' && (payload === 'red' || payload === 'blue')) {
+      const storageKey = `poll:${party.id}:vote:${payload}`;
+
+      const nextCount = await party.storage.transaction(async (tx) => {
+        const count = (await tx.get<number>(storageKey)) || 0;
+        const updated = count + 1;
+        await tx.put(storageKey, updated);
+        return updated;
+      });
+
+      // 广播：谁投了票，以及该颜色的最新总数
+      party.broadcast(`vote-update:${payload}:${nextCount}`);
     }
   },
 
@@ -50,6 +65,11 @@ export default {
       .join(',');
 
     if (initialReactions) ws.send(`all-reactions:${initialReactions}`);
+
+    // 新增：投票 PK 数据初始化
+    const redCount = (await party.storage.get<number>(`poll:${party.id}:vote:red`)) || 0;
+    const blueCount = (await party.storage.get<number>(`poll:${party.id}:vote:blue`)) || 0;
+    ws.send(`poll-init:${redCount}:${blueCount}`);
 
     const status = (await party.storage.get<string>(`status:${party.id}`)) || 'default';
     ws.send(`status:${status}`);

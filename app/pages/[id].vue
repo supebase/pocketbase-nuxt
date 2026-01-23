@@ -15,7 +15,10 @@
         :class="[commentsVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0']"
       >
         <div class="h-1" />
-        <CommonReactions v-if="commentsVisible" :post-id="postWithRelativeTime.id" />
+
+        <CommonPoll v-if="commentsVisible && postWithRelativeTime.poll" :room="postWithRelativeTime.id" />
+        <CommonReactions v-if="commentsVisible && postWithRelativeTime.reactions" :post-id="postWithRelativeTime.id" />
+
         <PostComment
           v-if="commentsVisible"
           :post-id="postWithRelativeTime.id"

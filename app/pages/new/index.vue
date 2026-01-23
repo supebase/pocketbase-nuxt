@@ -25,6 +25,8 @@ const getInitialForm = () => ({
   content: '',
   allow_comment: true,
   published: true,
+  poll: false,
+  reactions: false,
   icon: '',
   action: 'dit',
   link: '',

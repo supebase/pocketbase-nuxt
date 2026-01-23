@@ -27,7 +27,16 @@ export const usePostLogic = (id: string | string[]) => {
 
       if (action === 'update') {
         if (data.value?.data) {
-          data.value.data.views = record.views;
+          data.value = {
+            ...data.value,
+            data: {
+              ...data.value.data,
+              views: record.views,
+              poll: !!record.poll,
+              reactions: !!record.reactions,
+              allow_comment: !!record.allow_comment,
+            },
+          };
           if (record.content !== data.value.data.content) {
             await refresh();
           }

@@ -50,7 +50,17 @@ export interface SinglePostResponse {
 
 export type CreatePostRequest = Pick<
   PBPostResponse,
-  'content' | 'allow_comment' | 'published' | 'icon' | 'action' | 'link' | 'link_data' | 'link_image' | 'views'
+  | 'content'
+  | 'allow_comment'
+  | 'published'
+  | 'poll'
+  | 'reactions'
+  | 'icon'
+  | 'action'
+  | 'link'
+  | 'link_data'
+  | 'link_image'
+  | 'views'
 >;
 
 export interface LinkPreviewData {

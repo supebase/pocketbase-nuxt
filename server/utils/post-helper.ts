@@ -23,28 +23,35 @@ export const handlePostViewTracking = async (event: H3Event, post: any) => {
   if (!post) return 0;
 
   const postId = post.id;
-  const ip = getRequestIP(event, { xForwardedFor: true }) || 'unknown';
-  // 移除 IP 中的特殊字符作为 Cookie Key
-  const viewKey = `pv_${postId}_${ip.replace(/[^a-zA-Z0-9]/g, '')}`;
-  const hasViewed = getCookie(event, viewKey);
+  const VIEW_LIST_KEY = 'v_list';
+
+  // 获取并清洗数据：filter(Boolean) 移除 split 产生的空字符串项
+  const viewListStr = getCookie(event, VIEW_LIST_KEY) || '';
+  const viewedIds = viewListStr.split(',').filter(Boolean);
 
   let currentViews = Number(post.views || 0);
 
-  if (!hasViewed) {
-    // 1. 非阻塞后台更新
-    incrementPostViews({ pb: event.context.pb, postId }).catch((err) => {
-      console.error(`[Views] 自增失败 (ID: ${postId}):`, err);
-    });
+  // 检查是否包含当前 ID
+  if (!viewedIds.includes(postId)) {
+    // 压入新 ID
+    viewedIds.push(postId);
 
-    // 2. 设置 24h 防刷 Cookie
-    setCookie(event, viewKey, '1', {
+    // 滚动窗口：限制存储最近的 20 条记录，防止 Cookie 过大
+    const updatedIds = viewedIds.slice(-20);
+
+    // 写回 Cookie
+    setCookie(event, VIEW_LIST_KEY, updatedIds.join(','), {
       maxAge: MAX_VIEW_COOKIE_AGE,
       httpOnly: true,
       sameSite: 'lax',
       path: '/',
     });
 
-    // 3. 内存数据即时响应
+    // 异步自增（非阻塞）
+    incrementPostViews({ pb: event.context.pb, postId }).catch((err) => {
+      console.error(`[Views] 自增失败 (ID: ${postId}):`, err);
+    });
+
     currentViews += 1;
   }
 

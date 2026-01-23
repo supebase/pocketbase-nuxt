@@ -20,7 +20,12 @@
 
             <EditorMetaForm v-model:icon="model.icon" v-model:link="model.link" :action="model.action" />
 
-            <EditorSettings v-model:published="model.published" v-model:allow-comment="model.allow_comment" />
+            <EditorSettings
+              v-model:published="model.published"
+              v-model:poll="model.poll"
+              v-model:reactions="model.reactions"
+              v-model:allow-comment="model.allow_comment"
+            />
 
             <USeparator />
 

@@ -19,10 +19,32 @@
       </div>
       <USwitch v-model="allowComment" color="neutral" />
     </div>
+
+    <div class="flex items-center justify-between">
+      <div class="text-sm">
+        <span class="font-semibold">{{ poll ? '开启投票 PK' : '关闭投票 PK' }}</span>
+        <p class="text-muted/70">
+          {{ poll ? '用户可以对该内容进行投票' : '用户将会无法对该内容进行投票' }}
+        </p>
+      </div>
+      <USwitch v-model="poll" color="neutral" />
+    </div>
+
+    <div class="flex items-center justify-between">
+      <div class="text-sm">
+        <span class="font-semibold">{{ reactions ? '开启反应表情' : '关闭反应表情' }}</span>
+        <p class="text-muted/70">
+          {{ reactions ? '用户可以对该内容发送反应表情' : '用户将会无法对该内容发送反应表情' }}
+        </p>
+      </div>
+      <USwitch v-model="reactions" color="neutral" />
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 const published = defineModel<boolean>('published');
+const poll = defineModel<boolean>('poll');
+const reactions = defineModel<boolean>('reactions');
 const allowComment = defineModel<boolean>('allowComment');
 </script>

@@ -172,7 +172,7 @@ export async function updatePost({ pb, postId, body }: UpdatePostOptions): Promi
   }
 
   // 基础字段同步
-  const syncFields = ['allow_comment', 'published', 'icon', 'action', 'link'];
+  const syncFields = ['allow_comment', 'published', 'poll', 'reactions', 'icon', 'action', 'link'];
   syncFields.forEach((field) => {
     if (body[field] !== undefined) formData.append(field, String(body[field]));
   });

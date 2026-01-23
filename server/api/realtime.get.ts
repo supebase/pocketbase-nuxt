@@ -51,6 +51,8 @@ export default defineEventHandler(async (event) => {
     }
   }
 
+  eventStream.push({ event: 'connected', data: new Date().toISOString() });
+
   // 4. 心跳机制：频率调整至 30s (根据前文建议)
   const timer = setInterval(() => {
     if (event.node.req.destroyed) {
@@ -94,7 +96,6 @@ export default defineEventHandler(async (event) => {
 
   // 5. 事件绑定
   event.node.req.on('close', cleanup);
-  event.node.req.on('end', cleanup); // 增加结束事件监听
   eventStream.onClosed(cleanup);
 
   return eventStream.send();

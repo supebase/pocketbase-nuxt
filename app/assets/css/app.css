@@ -528,6 +528,83 @@ html:not(.dark) .tiptap pre > code {
   height: 400px;
 }
 
+.glare {
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  animation: flare 4s infinite;
+}
+
+@keyframes flare {
+  0% {
+    left: -150%;
+  }
+  40% {
+    left: 150%;
+  }
+  100% {
+    left: 150%;
+  }
+}
+
+.shake-red {
+  transform: scale(1.02) rotate(-1deg);
+}
+.shake-blue {
+  transform: scale(1.02) rotate(1deg);
+}
+
+/* 点击反馈 */
+.side:active {
+  opacity: 0.9;
+}
+
+/* 红方：心跳放大动画 */
+.animate-favourite {
+  animation: icon-pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes icon-pop {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.5) rotate(-15deg);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* 蓝方：破碎抖动动画 */
+.animate-crack {
+  animation: icon-crack 0.4s ease-in-out;
+}
+
+@keyframes icon-crack {
+  0% {
+    transform: translate(0);
+  }
+  20% {
+    transform: translate(-2px, 2px);
+  }
+  40% {
+    transform: translate(2px, -2px);
+  }
+  60% {
+    transform: translate(-2px, -2px);
+  }
+  80% {
+    transform: translate(2px, 2px);
+  }
+  100% {
+    transform: translate(0);
+  }
+}
+
 .logo-wrapper path {
   stroke-dasharray: none;
   stroke-dashoffset: 0;

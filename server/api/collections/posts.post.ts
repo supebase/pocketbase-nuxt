@@ -10,7 +10,7 @@ export default defineApiHandler(async (event): Promise<SinglePostResponse> => {
 
   // 获取并清洗请求体
   const body = await readBody<CreatePostRequest>(event);
-  const { content, allow_comment, published, icon, action, link } = body;
+  const { content, allow_comment, published, poll, reactions, icon, action, link } = body;
 
   // 前置业务校验
   if (!content)
@@ -33,6 +33,8 @@ export default defineApiHandler(async (event): Promise<SinglePostResponse> => {
   formData.append('user', user.id);
   formData.append('allow_comment', String(allow_comment ?? true));
   formData.append('published', String(published ?? true));
+  formData.append('poll', String(poll ?? false));
+  formData.append('reactions', String(reactions ?? false));
 
   if (icon) formData.append('icon', icon);
   if (action) formData.append('action', action);
