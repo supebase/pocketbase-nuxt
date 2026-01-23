@@ -67,7 +67,7 @@ const dropdownItems = computed(() => {
         {
           icon: 'i-hugeicons:lock-key',
           label: '请先登录',
-          onClick: () => navigateTo('/auth'),
+          onClick: () => setTimeout(() => navigateTo('/auth'), 300),
         },
       ],
     ];
