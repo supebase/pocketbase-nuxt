@@ -49,7 +49,7 @@ export function usePostsActions(refreshCallback: () => Promise<void> | void) {
       // 延迟清理数据，以适配 Modal 关闭动画的平滑度
       setTimeout(() => {
         pendingDeleteItem.value = null;
-      }, 200);
+      }, 300);
     }
   };
 

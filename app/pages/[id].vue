@@ -75,7 +75,7 @@ const { stop } = useIntersectionObserver(
       stop();
     }
   },
-  { rootMargin: '100px' },
+  { rootMargin: '200px' },
 );
 
 // 当 Suspense 内部渲染彻底完成
@@ -99,7 +99,12 @@ watch(
   },
   { immediate: true },
 );
-watch(loggedIn, () => refresh());
+
+if (import.meta.client) {
+  watch(loggedIn, (val) => {
+    refresh();
+  });
+}
 
 onActivated(async () => {
   if (id && updatedMarks.value[id]) {

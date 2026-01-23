@@ -4,6 +4,7 @@ export const usePostLogic = (id: string | string[]) => {
   const { updatedMarks, clearUpdateMark } = usePostUpdateTracker();
   const { user: currentUser } = useUserSession();
   const { listen, close } = usePocketRealtime();
+  const toast = useToast();
 
   const idRef = computed(() => (isRef(id) ? id.value : Array.isArray(id) ? id[0] : id));
 
@@ -32,14 +33,14 @@ export const usePostLogic = (id: string | string[]) => {
           }
         }
       } else if (action === 'delete') {
+        await navigateTo('/', { replace: true });
+
         if (import.meta.client) {
-          const toast = useToast();
           toast.add({
             title: '很遗憾，你访问的内容已被删除。',
             color: 'error',
           });
         }
-        await navigateTo('/');
       }
     });
   };

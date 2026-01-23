@@ -25,10 +25,11 @@ defineProps<{
   loading?: boolean;
 }>();
 
-const emit = defineEmits(['confirm']);
+const emit = defineEmits<{
+  confirm: [];
+}>();
 
 const handleConfirm = () => {
   emit('confirm');
-  open.value = false;
 };
 </script>

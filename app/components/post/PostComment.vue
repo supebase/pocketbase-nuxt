@@ -45,7 +45,9 @@
 </template>
 
 <script setup lang="ts">
-import type { CommentRecord } from '~/types/comments';
+interface CommentListInstance {
+  handleCommentCreated: (comment: any) => void;
+}
 
 const props = defineProps<{
   postId: string;
@@ -56,7 +58,7 @@ const { loggedIn, user: currentUser } = useUserSession();
 const currentUserId = computed(() => currentUser.value?.id);
 
 const isListLoading = ref(false);
-const commentListRef = ref();
+const commentListRef = ref<CommentListInstance | null>(null);
 const commenters = ref<any[]>([]);
 
 // 监听用户变化，当用户切换时清空评论者列表
@@ -69,8 +71,8 @@ watch(
   },
 );
 
-const handleUpdateCommenters = (uniqueUsers: CommentRecord[]) => {
-  commenters.value = uniqueUsers.filter((u) => u.id !== currentUser.value?.id);
+const handleUpdateCommenters = (users: any[]) => {
+  commenters.value = users.filter((u) => u.id !== currentUser.value?.id);
 };
 
 const onCommentSuccess = (newComment: any) => {

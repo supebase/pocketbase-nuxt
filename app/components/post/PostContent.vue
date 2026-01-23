@@ -24,7 +24,11 @@
 
 <script setup lang="ts">
 const props = defineProps<{ postId: string; toc: any; ast: any }>();
-const emit = defineEmits(['rendered']);
+
+const emit = defineEmits<{
+  rendered: [];
+}>();
+
 const contentRef = ref<HTMLElement | null>(null);
 const animationStarted = ref(false);
 const animationFinished = ref(false);

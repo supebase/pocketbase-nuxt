@@ -27,8 +27,17 @@ interface Props {
   canViewDrafts: boolean;
 }
 
+interface Item {
+  id: string;
+  cleanContent?: string;
+}
+
 const props = defineProps<Props>();
-const emit = defineEmits(['requestDelete']);
+
+const emit = defineEmits<{
+  requestDelete: [item: Item];
+}>();
+
 const { handleCopy, handleShare, showAuthToast } = usePostsMenu(props.item);
 
 const authItem = (config: any) => ({

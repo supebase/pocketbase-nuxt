@@ -4,7 +4,7 @@ import { CONTENT_COLOR_MAP } from '~/constants/editor';
 /**
  * 统计逻辑：匹配汉字 + 英文/数字单词
  */
-export const getChineseWordCount = (editor: any): number => {
+export const getChineseWordCount = (editor: Editor | null): number => {
   if (!editor) return 0;
   const text = editor.getText() || '';
   const words = text.match(/[\u4e00-\u9fa5]|[a-zA-Z0-9_]+/g);

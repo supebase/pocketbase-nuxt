@@ -10,8 +10,8 @@ export default defineNuxtConfig({
       maxAge: 60 * 60 * 24 * 7,
     },
     pocketbaseBackend: process.env.NUXT_POCKETBASE_URL,
+    geoLocation: process.env.NUXT_GEOLOCATION_URL,
     public: {
-      geoLocation: process.env.NUXT_GEOLOCATION_URL,
       partykitHost: process.env.NUXT_PUBLIC_PARTYKIT_HOST,
     },
   },

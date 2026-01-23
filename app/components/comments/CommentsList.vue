@@ -39,7 +39,7 @@
                 :comment-id="item.id"
                 :initial-likes="item.likes"
                 :is-liked="item.isLiked"
-                @like-change="(liked, lks) => handleLikeChange(liked, lks, item.id, false)"
+                @like-change="(liked, lks, id) => handleLikeChange(liked, lks, id, false)"
               />
             </div>
           </div>
@@ -74,7 +74,11 @@ import type { CommentRecord } from '~/types/comments';
 import { MENTION_REGEX } from '~/constants';
 
 const props = defineProps<{ postId: string; allowComment: boolean }>();
-const emit = defineEmits(['loading-change', 'update-commenters']);
+
+const emit = defineEmits<{
+  'loading-change': [isLoading: boolean];
+  'update-commenters': [users: any[]];
+}>();
 
 const { user, loggedIn } = useUserSession();
 
@@ -112,9 +116,13 @@ const confirmDelete = async () => {
     await $fetch(`/api/collections/comment/${selectedComment.value.id}`, {
       method: 'DELETE',
     });
+    syncSingleComment(selectedComment.value, 'delete');
     isModalOpen.value = false;
   } finally {
     isDeleting.value = false;
+    setTimeout(() => {
+      selectedComment.value = null;
+    }, 300);
   }
 };
 
@@ -152,24 +160,13 @@ const setupRealtime = () => {
       const target = comments.value.find((c) => c.id === targetCommentId);
 
       // 关键修正：增加防御性判断，只有找到目标评论才处理
-      if (!target) {
-        // 如果当前列表里没有这条评论，直接跳过，不做任何操作
-        return;
-      }
+      if (!target) return;
 
-      // 此时 target 已经被 TS 推断为 CommentRecord (非 undefined)
-      const currentLikes = typeof target.likes === 'number' ? target.likes : 0;
-
-      // 根据 action 计算新的点赞数
+      const currentLikes = target.likes || 0;
       const newLikes = action === 'create' ? currentLikes + 1 : Math.max(0, currentLikes - 1);
 
-      // 调用同步逻辑
-      handleLikeChange(
-        target.isLiked ?? false,
-        newLikes,
-        targetCommentId,
-        true, // 标记为远程同步，不触发 API 请求
-      );
+      // 此时调用 handleLikeChange，最后一个参数 true 表示这是来自服务器的同步，不需要再发 API
+      handleLikeChange(target.isLiked ?? false, newLikes, targetCommentId, true);
     }
   });
 };

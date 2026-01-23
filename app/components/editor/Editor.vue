@@ -5,7 +5,7 @@
     <ClientOnly>
       <template v-if="isDesktop">
         <form @submit.prevent="$emit('submit')" class="space-y-6 select-none">
-          <EditorAction v-model="modelValue.action" :items="actionItems" />
+          <EditorAction v-model="model.action" :items="actionItems" />
 
           <div class="p-3 space-y-6 bg-neutral-100 dark:bg-neutral-950/70 rounded-lg">
             <EditorCanvas
@@ -18,9 +18,9 @@
 
             <USeparator label="其他选项" />
 
-            <EditorMetaForm v-model:icon="modelValue.icon" v-model:link="modelValue.link" :action="modelValue.action" />
+            <EditorMetaForm v-model:icon="model.icon" v-model:link="model.link" :action="model.action" />
 
-            <EditorSettings v-model:published="modelValue.published" v-model:allow-comment="modelValue.allow_comment" />
+            <EditorSettings v-model:published="model.published" v-model:allow-comment="model.allow_comment" />
 
             <USeparator />
 
@@ -53,27 +53,31 @@ import { CustomCodeBlock } from '~/extensions/CustomCodeBlock';
 import { CustomLinkTarget } from '~/extensions/CustomLinkTarget';
 import { items } from '~/constants/editor';
 import { actionItems } from '~/constants';
+import type { EditorModel } from '~/types/common';
 
 const props = defineProps<{
-  modelValue: any;
   maxLimit: number;
   disabled?: boolean;
 }>();
 
-defineEmits(['submit']);
+const model = defineModel<EditorModel>({ required: true });
+
+const emit = defineEmits<{
+  submit: [];
+}>();
 
 // Tiptap 配置保持在父组件以确保响应 props 变化
-const extensions = [
+const extensions = computed(() => [
   Placeholder.configure({ placeholder: '从这里开始写作吧 ...' }),
   CharacterCount.configure({ limit: props.maxLimit }),
   CustomCodeBlock,
   CustomLinkTarget,
-];
+]);
 
 const editorContent = computed({
-  get: () => (props.modelValue.content === '' ? null : props.modelValue.content),
+  get: () => (model.value.content === '' ? null : model.value.content),
   set: (val) => {
-    props.modelValue.content = val ?? '';
+    model.value.content = val ?? '';
   },
 });
 

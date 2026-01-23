@@ -196,6 +196,54 @@ header::before {
   opacity: 0;
 }
 
+/* 定义统一的优雅曲线：指数减速曲线 */
+.slide-right-fancy-enter-active,
+.slide-left-fancy-enter-active {
+  transition: all 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* 左侧：从左侧稍远一点滑入，带一点点缩小 */
+.slide-right-fancy-enter-from {
+  opacity: 0;
+  transform: translateX(-40px) scale(0.95);
+}
+
+/* 右侧：增加 transition-delay 产生交错感 */
+.slide-left-fancy-enter-active {
+  transition-delay: 0.12s; /* 关键：延迟 120ms 触发 */
+}
+
+.slide-left-fancy-enter-from {
+  opacity: 0;
+  transform: translateX(40px) scale(0.95);
+}
+
+/* 果冻回弹动画定义 */
+.jelly-pop-enter-active {
+  /* 使用自定义贝塞尔曲线实现回弹效果 */
+  /* 这个曲线在结束前会稍微超过 1.0 然后弹回 */
+  transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.jelly-pop-enter-from {
+  opacity: 0;
+  transform: scale(0.5); /* 从更小开始缩放 */
+}
+
+.jelly-pop-enter-to {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* 离开时的效果（可选，保持平滑） */
+.jelly-pop-leave-active {
+  transition: all 0.3s ease-in;
+}
+.jelly-pop-leave-to {
+  opacity: 0;
+  transform: scale(0.5);
+}
+
 /* 1. 容器：这是拉动左侧组件的关键 */
 .auth-wrapper {
   display: flex;

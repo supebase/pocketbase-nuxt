@@ -105,7 +105,9 @@ const props = defineProps<{
   isLoginMode: boolean;
 }>();
 
-const emit = defineEmits(['update:error']);
+const emit = defineEmits<{
+  'update:error': [val: string | null];
+}>();
 
 // 1. 引入 Auth 逻辑
 const { email, password, passwordConfirm, loading, error, strength, color, handleAuth, fetchGeo } = useAuth(
@@ -129,17 +131,13 @@ const buttonLabel = computed(() => {
   return props.isLoginMode ? '登录账户' : '创建新账户';
 });
 
-watch(
-  error,
-  (newVal) => {
-    emit('update:error', newVal);
-  },
-  { immediate: true },
-);
+watch(error, (newVal) => {
+  emit('update:error', newVal || null);
+});
 
 defineExpose({
   clearError: () => {
-    error.value = '';
+    error.value = null;
   },
 });
 
@@ -154,9 +152,7 @@ const resetForm = () => {
   email.value = '';
   password.value = '';
   passwordConfirm.value = '';
-
-  if (error) error.value = '';
-  emit('update:error', '');
+  error.value = null;
 };
 
 onDeactivated(() => {

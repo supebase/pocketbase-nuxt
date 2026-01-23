@@ -8,6 +8,7 @@ export const COMMENT_MAX_LENGTH = 300; // 评论最大长度
 export const MD_IMAGE_MAX_SIZE = 2 * 1024 * 1024; // 限制最大 2MB
 export const DEFAULT_IMAGE_CONCURRENCY = 3; // 默认并发数
 export const IMAGE_DOWNLOAD_TIMEOUT = 8000; // 超时时间
+export const INTERNAL_IP_PATTERN = /^(127\.|10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[0-1])\.|::1)/;
 
 export const timeMap: Record<string, string> = {
   '1 天': '昨天',

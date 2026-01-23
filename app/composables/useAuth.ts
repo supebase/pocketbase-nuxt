@@ -11,12 +11,12 @@ export const useAuth = (isLoginModeArg?: Ref<boolean>) => {
   const loading = ref(false);
   const isLoggingOut = ref(false);
 
-  const error = ref('');
+  const error = ref<string | null>(null);
 
   const isLoginMode = isLoginModeArg || ref(true);
 
   watch(isLoginMode, () => {
-    error.value = '';
+    error.value = null;
     passwordConfirm.value = '';
   });
 
@@ -28,7 +28,7 @@ export const useAuth = (isLoginModeArg?: Ref<boolean>) => {
   // --- 3. 登录与注册逻辑 ---
   const handleAuth = async () => {
     loading.value = true;
-    error.value = '';
+    error.value = null;
 
     if (!isLoginMode.value && !locationData.value?.location) {
       await fetchGeo();

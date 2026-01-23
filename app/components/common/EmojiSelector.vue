@@ -37,11 +37,13 @@
 <script setup lang="ts">
 const colorMode = useColorMode();
 const isPickerVisible = ref(false);
-const emit = defineEmits(['emoji']);
+const emit = defineEmits<{
+  emoji: [val: string];
+}>();
 
 // 自动处理焦点，防止 Popover 开启时背景闪烁或键盘弹出
 watch(isPickerVisible, (val) => {
-  if (val) {
+  if (val && import.meta.client) {
     nextTick(() => {
       (document.activeElement as HTMLElement)?.blur();
     });

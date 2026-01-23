@@ -39,7 +39,10 @@ const props = defineProps<{
   isLiked?: boolean;
 }>();
 
-const emit = defineEmits(['likeChange']);
+const emit = defineEmits<{
+  likeChange: [isLiked: boolean, count: number, commentId: string];
+}>();
+
 const { loggedIn } = useUserSession();
 
 const isLoading = ref(false);
@@ -63,6 +66,8 @@ const handleLike = async () => {
     liked: liked.value,
     count: localLikesCount.value,
   };
+
+  isManualClick.value = true;
 
   // 1. 乐观更新
   isLoading.value = true;
