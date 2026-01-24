@@ -9,6 +9,7 @@
       leadingIcon: 'hidden',
       trailingIcon: 'hidden',
     }"
+    :class="[postButtonConfig.disabled ? 'grayscale' : '']"
   >
     <template #default>
       <div class="flex items-center gap-2 relative z-10 text-default">

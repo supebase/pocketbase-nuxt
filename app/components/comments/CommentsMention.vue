@@ -3,9 +3,7 @@
     <div v-if="loading" class="p-2 text-center">
       <UIcon name="i-hugeicons:refresh" class="animate-spin size-4" />
     </div>
-    <div v-else-if="suggestions.length === 0" class="p-2 text-sm text-center text-dimmed">
-      暂无可提及的用户
-    </div>
+    <div v-else-if="suggestions.length === 0" class="p-2 text-sm text-center text-dimmed">暂无可提及用户</div>
     <div v-else>
       <div
         v-for="user in suggestions"

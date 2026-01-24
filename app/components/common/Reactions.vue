@@ -26,12 +26,8 @@
         variant="link"
         color="neutral"
         :disabled="isCoolingDown"
-        class="flex-col items-center gap-2 p-4 rounded-2xl transition-all duration-300 min-w-16"
-        :class="[
-          isCoolingDown
-            ? 'opacity-20 grayscale cursor-not-allowed'
-            : 'group cursor-pointer hover:bg-neutral-100 dark:hover:bg-neutral-800',
-        ]"
+        class="flex-col items-center gap-2 p-4 rounded-2xl transition-all duration-600 min-w-16"
+        :class="[isCoolingDown ? 'opacity-20 grayscale cursor-not-allowed' : 'group cursor-pointer']"
         @click="sendReaction(emoji)"
       >
         <span class="text-[13px] tabular-nums" :class="emojiCounts[emoji] ? 'text-primary font-medium' : 'text-dimmed'">
@@ -39,7 +35,7 @@
         </span>
 
         <span
-          class="text-2xl transform-gpu transition-transform duration-300"
+          class="text-2xl transform-gpu transition-transform duration-600"
           :class="[!isCoolingDown && 'group-hover:scale-125', activeEmoji === emoji && 'animate-heart-pop']"
           @animationend="activeEmoji = ''"
         >

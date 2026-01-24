@@ -4,7 +4,7 @@
       <UEmpty
         v-if="!allowComment || !loggedIn"
         size="lg"
-        variant="soft"
+        variant="outline"
         :title="!allowComment ? '评论已关闭' : '参与评论需要登录'"
         :description="!allowComment ? '评论区暂停开放，感谢关注，敬请谅解！' : '登录后即可在评论区发布你的观点与见解'"
         :actions="

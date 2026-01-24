@@ -15,6 +15,7 @@ export default defineAppConfig({
       tip: 'i-hugeicons:bulb',
       warning: 'i-hugeicons:alert-01',
       caution: 'i-hugeicons:alert-circle',
+      drag: 'i-hugeicons:drag-drop-vertical',
     },
     header: {
       slots: {
@@ -55,7 +56,7 @@ export default defineAppConfig({
     },
     empty: {
       slots: {
-        root: 'bg-neutral-200/30! dark:bg-neutral-950/30! backdrop-blur-md',
+        root: 'bg-white! dark:bg-neutral-900! backdrop-blur-md',
         title: 'text-dimmed',
         description: 'text-dimmed/80!',
       },

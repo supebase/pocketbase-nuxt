@@ -1,8 +1,6 @@
 <template>
   <form @submit.prevent="handleSubmit">
-    <div
-      class="bg-neutral-50 dark:bg-neutral-950/50 border border-neutral-200/90 dark:border-neutral-800/70 rounded-lg p-1"
-    >
+    <div class="bg-white dark:bg-neutral-900 border border-neutral-200/90 dark:border-neutral-800/90 rounded-lg p-1">
       <UTextarea
         ref="textareaRef"
         v-model="form.comment"
@@ -57,7 +55,7 @@
         <div class="flex items-center space-x-6">
           <span
             class="text-sm tabular-nums select-none"
-            :class="form.comment.length >= maxLimit ? 'text-red-600' : 'text-dimmed'"
+            :class="form.comment.length >= maxLimit ? 'text-red-500' : 'text-dimmed'"
           >
             {{ form.comment.length }} / {{ maxLimit }}
           </span>

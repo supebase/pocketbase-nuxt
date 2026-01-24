@@ -1,7 +1,7 @@
 <template>
   <div class="w-full py-8 px-4 select-none">
     <div
-      class="relative transition-transform duration-100 ease-in-out"
+      class="relative transition-transform duration-500 ease-in-out"
       :class="{ 'shake-red': lastWinner === 'red', 'shake-blue': lastWinner === 'blue' }"
     >
       <div class="flex h-11.5 rounded-xl overflow-hidden relative -skew-x-12 bg-neutral-900 shadow-lg">
@@ -29,7 +29,7 @@
           :style="{ left: redPercent + '%' }"
         >
           <div
-            class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 skew-x-12 bg-white dark:bg-neutral-100 text-neutral-900 font-black text-[10px] px-1.5 py-0.5 rounded shadow-md italic"
+            class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 skew-x-0 tabular-nums bg-white dark:bg-neutral-900 font-black text-[10px] px-1.5 py-0.5 rounded shadow-md italic"
           >
             {{ isCoolingDown ? `${Math.ceil(remainingSeconds)}s` : 'VS' }}
           </div>
