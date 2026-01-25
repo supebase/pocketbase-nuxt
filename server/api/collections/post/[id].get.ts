@@ -2,7 +2,7 @@
  * @file API Route: /api/collections/post/:id [GET]
  * @description 获取文章详情。集成服务端 MDC 解析、阅读量防刷统计及阅读量异步自增。
  */
-import type { SinglePostResponse } from '~/types/posts';
+import type { SinglePostResponse } from '~/types';
 
 export default defineApiHandler(async (event): Promise<SinglePostResponse> => {
   const { pb } = event.context;

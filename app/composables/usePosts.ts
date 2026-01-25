@@ -1,4 +1,4 @@
-import type { PostWithUser } from '~/types/posts';
+import type { PostWithUser } from '~/types';
 
 export const usePosts = () => {
   const { loggedIn, user } = useUserSession();
@@ -34,18 +34,20 @@ export const usePosts = () => {
    * 单条数据转换逻辑
    */
   const processPost = (item: any): PostWithUser => {
-    if (item._processed) return item;
+    if (item._processed) return item as PostWithUser;
+
     return {
       ...item,
       _processed: true,
-      cleanContent: item.cleanContent || cleanMarkdown(item.content || ''),
-      firstImage: item.firstImage || getFirstImageUrl(item.content),
+      cleanContent: item.cleanContent || (item.content ? cleanMarkdown(item.content) : ''),
+      firstImage: item.firstImage || (item.content ? getFirstImageUrl(item.content) : null),
       ui: {
-        date: useRelativeTime(item.created),
+        date: item.created ? useRelativeTime(item.created) : '',
         userName: item.expand?.user?.name || '未知用户',
-        avatarId: item.expand?.user?.avatar,
+        avatarId: item.expand?.user?.avatar || undefined,
       },
-    };
+      expand: item.expand || {},
+    } as PostWithUser;
   };
 
   const transformPosts = (items: PostWithUser[]) => items.map(processPost);
@@ -105,8 +107,11 @@ export const usePosts = () => {
             allPosts.value.splice(idx, 1, {
               ...oldItem,
               ...processed,
-              expand: { ...oldItem?.expand, ...(processed.expand?.user ? processed.expand : {}) },
-              _processed: false,
+              expand: {
+                ...oldItem?.expand,
+                ...processed.expand,
+              },
+              _processed: true,
             } as PostWithUser);
           }
         } else if (isVisible) {

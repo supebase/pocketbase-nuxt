@@ -31,7 +31,7 @@
 </template>
 
 <script setup lang="ts">
-import type { ToggleLikeResponse } from '~/types/likes';
+import type { ToggleLikeResponse } from '~/types';
 
 const props = defineProps<{
   commentId: string;

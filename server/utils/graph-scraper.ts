@@ -4,7 +4,7 @@
  */
 
 import ogs from 'open-graph-scraper';
-import type { LinkPreviewData } from '~/types/posts';
+import type { LinkPreviewData } from '~/types';
 
 /**
  * 确保 URL 为绝对路径

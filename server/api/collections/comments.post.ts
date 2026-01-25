@@ -2,8 +2,7 @@
  * @file API Route: /api/collections/comments [POST]
  * @description 发表评论。集成 XSS 内容清洗、多重业务校验及 Service 层持久化。
  */
-import type { Create } from '~/types/pocketbase-types';
-import type { CreateCommentRequest } from '~/types/comments';
+import type { Create, CreateCommentRequest } from '~/types';
 import { COMMENT_MAX_LENGTH } from '~/constants';
 import sanitizeHtml from 'sanitize-html';
 

@@ -54,7 +54,7 @@
 </template>
 
 <script setup lang="ts">
-import type { LinkPreviewData } from '~/types/posts';
+import type { LinkPreviewData } from '~/types';
 
 const props = defineProps<{
   data: LinkPreviewData;

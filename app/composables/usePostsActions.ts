@@ -1,7 +1,4 @@
-interface PostItem {
-  id: string | number;
-  [key: string]: any;
-}
+import type { PostItem } from '~/types';
 
 export function usePostsActions(refreshCallback: () => Promise<void> | void) {
   const isDeleteModalOpen = ref(false);

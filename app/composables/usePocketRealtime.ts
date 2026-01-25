@@ -1,4 +1,4 @@
-import type { RealtimePayload } from '~/types/common';
+import type { RealtimePayload } from '~/types';
 
 const sseManager = {
   instance: null as EventSource | null,

@@ -2,7 +2,7 @@
  * @file API Route: /api/collections/likes [GET]
  * @description 批量查询点赞状态。支持一次性获取多个评论的点赞计数及当前用户的交互状态。
  */
-import type { CommentLikesResponse } from '~/types/likes';
+import type { CommentLikesResponse } from '~/types';
 
 export default defineApiHandler(async (event): Promise<CommentLikesResponse> => {
   const pb = event.context.pb;

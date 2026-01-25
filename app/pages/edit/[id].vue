@@ -22,7 +22,7 @@
 </template>
 
 <script setup lang="ts">
-import type { SinglePostResponse, PostWithUser } from '~/types/posts';
+import type { SinglePostResponse, PostWithUser } from '~/types';
 import { CONTENT_MAX_LENGTH } from '~/constants';
 
 definePageMeta({

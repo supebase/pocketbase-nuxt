@@ -2,7 +2,7 @@
  * @file API Route: /api/collections/posts [POST]
  * @description 创建新文章。集成 LinkCard 自动抓取、图片本地化以及 Markdown 内容同步。
  */
-import type { CreatePostRequest, SinglePostResponse } from '~/types/posts';
+import type { CreatePostRequest, SinglePostResponse } from '~/types';
 import { CONTENT_MAX_LENGTH } from '~/constants';
 
 export default defineApiHandler(async (event): Promise<SinglePostResponse> => {

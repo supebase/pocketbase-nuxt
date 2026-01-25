@@ -1,14 +1,6 @@
 <template>
   <UCard variant="subtle" class="select-none backdrop-blur ring-0">
-    <UTabs
-      v-model="activeTab"
-      :items="TABS"
-      :content="false"
-      :ui="{ trigger: 'grow cursor-pointer' }"
-      variant="link"
-      color="primary"
-      class="w-full gap-4"
-    />
+    <UTabs v-model="activeTab" :items="TABS" :content="false" color="primary" class="w-full gap-4" />
 
     <div class="mt-4 space-y-4">
       <UAlert

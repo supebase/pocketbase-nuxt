@@ -58,7 +58,7 @@ import { CustomCodeBlock } from '~/extensions/CustomCodeBlock';
 import { CustomLinkTarget } from '~/extensions/CustomLinkTarget';
 import { items } from '~/constants/editor';
 import { actionItems } from '~/constants';
-import type { EditorModel } from '~/types/common';
+import type { EditorModel } from '~/types';
 
 const props = defineProps<{
   maxLimit: number;

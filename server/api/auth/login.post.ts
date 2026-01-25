@@ -2,7 +2,7 @@
  * @file API Route: /api/auth/login [POST]
  * @description 用户登录。验证凭证并同步 PocketBase 认证状态至 Nuxt Session。
  */
-import type { LoginRequest, AuthResponse } from '~/types/auth';
+import type { LoginRequest, AuthResponse } from '~/types';
 
 export default defineApiHandler(async (event): Promise<AuthResponse> => {
   // 请求体解析与初步校验

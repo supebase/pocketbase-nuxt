@@ -3,9 +3,14 @@
  * @description 处理点赞业务逻辑。
  */
 
-import type { LikesResponse as PBLikesResponse, Create } from '~/types/pocketbase-types';
-import type { CommentLikeInfo } from '~/types/likes';
-import type { ToggleLikeOptions, GetCommentLikesOptions, GetCommentsLikesMapOptions } from '~/types/server';
+import type {
+  LikesResponse as PBLikesResponse,
+  Create,
+  CommentLikeInfo,
+  ToggleLikeOptions,
+  GetCommentLikesOptions,
+  GetCommentsLikesMapOptions,
+} from '~/types';
 
 /**
  * 切换点赞状态

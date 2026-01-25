@@ -4,7 +4,7 @@
  */
 
 import PocketBase from 'pocketbase';
-import type { TypedPocketBase } from '~/types/pocketbase-types';
+import type { TypedPocketBase } from '~/types';
 import type { H3Event } from 'h3';
 import { EventSource } from 'eventsource';
 

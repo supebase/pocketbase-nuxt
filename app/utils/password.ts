@@ -1,10 +1,4 @@
-/**
- * 密码强度要求接口
- */
-export interface PasswordRequirement {
-  met: boolean;
-  text: string;
-}
+import type { PasswordRequirement } from '~/types';
 
 /**
  * 检查密码强度
@@ -36,9 +30,7 @@ export function calculatePasswordScore(requirements: PasswordRequirement[]): num
  * @param score 密码强度分数（0-4）
  * @returns 对应的颜色字符串
  */
-export function getPasswordStrengthColor(
-  score: number,
-): 'error' | 'success' | 'warning' | 'neutral' {
+export function getPasswordStrengthColor(score: number): 'error' | 'success' | 'warning' | 'neutral' {
   switch (true) {
     case score === 0:
       return 'neutral';

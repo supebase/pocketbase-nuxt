@@ -123,7 +123,7 @@
 </template>
 
 <script setup lang="ts">
-import type { PostWithUser, PostsListResponse } from '~/types/posts';
+import type { PostWithUser, PostsListResponse } from '~/types';
 
 // 1. 获取核心状态
 const {

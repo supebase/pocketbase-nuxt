@@ -1,5 +1,4 @@
-import type { Create, TypedPocketBase } from './pocketbase-types';
-import type { CreatePostRequest } from './posts';
+import type { Create, TypedPocketBase, CreatePostRequest } from './index';
 import type { H3Event } from 'h3';
 
 /**

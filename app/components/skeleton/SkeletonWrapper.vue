@@ -6,7 +6,7 @@
 
 <script setup lang="ts">
 import { SKELETON_COMMENTS, SKELETON_POSTS, SKELETON_ARTICLE } from '~/utils/skeleton/skeleton-generator';
-import type { SkeletonType } from '~/types/skeleton-types';
+import type { SkeletonType } from '~/types';
 
 const props = withDefaults(defineProps<SkeletonType>(), {
   count: 1,

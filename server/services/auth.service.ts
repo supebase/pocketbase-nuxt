@@ -3,8 +3,7 @@
  * @description 封装用户认证逻辑（登录、注册、登出），解耦 API handler 与 PocketBase SDK 操作。
  */
 import { normalizeEmail, formatDefaultName } from '~/utils/index';
-import type { UsersResponse, Create } from '~/types/pocketbase-types';
-import type { LoginOptions, RegisterOptions, LogoutOptions } from '~/types/server';
+import type { UsersResponse, Create, LoginOptions, RegisterOptions, LogoutOptions } from '~/types';
 
 /**
  * 用户登录

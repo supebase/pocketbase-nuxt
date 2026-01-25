@@ -35,6 +35,9 @@ export interface PostRecord extends PBPostResponse<PostExpand>, PostUIExtension 
 export type PostWithUser = PBPostResponse<{ user: UsersResponse }> &
   PostUIExtension & {
     link_data?: LinkPreviewData | null;
+    expand?: {
+      user?: UsersResponse;
+    };
   };
 
 // --- 其他保持不变 ---
@@ -69,4 +72,9 @@ export interface LinkPreviewData {
   description: string;
   image: string;
   siteName: string;
+}
+
+export interface PostItem {
+  id: string | number;
+  [key: string]: any;
 }

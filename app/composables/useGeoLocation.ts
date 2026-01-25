@@ -2,7 +2,7 @@
  * useGeoLocation
  * 获取用户地理位置信息的组合式函数
  */
-import type { LocationData, UseGeoLocationReturn } from '~/types/common';
+import type { LocationData, UseGeoLocationReturn } from '~/types';
 
 export const useGeoLocation = (): UseGeoLocationReturn => {
   // 使用 useState 确保 SSR 状态同步

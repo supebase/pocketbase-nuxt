@@ -2,7 +2,7 @@
  * @file API Route: /api/auth/register [POST]
  * @description 用户注册接口。实现新用户创建、自动身份验证同步及会话持久化。
  */
-import type { RegisterRequest, AuthResponse } from '~/types/auth';
+import type { RegisterRequest, AuthResponse } from '~/types';
 
 export default defineApiHandler(async (event): Promise<AuthResponse> => {
   // 请求体解构

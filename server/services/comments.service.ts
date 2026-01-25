@@ -3,9 +3,14 @@
  * @description 处理评论的增删查改。
  * @note 已移除点赞聚合逻辑，遵循单一职责原则。
  */
-import type { CommentsResponse as PBCommentsResponse } from '~/types/pocketbase-types';
-import type { CommentExpand } from '~/types/comments';
-import { GetCommentsOptions, GetCommentByIdOptions, CreateCommentOptions, DeleteCommentOptions } from '~/types/server';
+import type {
+  CommentsResponse as PBCommentsResponse,
+  CommentExpand,
+  GetCommentsOptions,
+  GetCommentByIdOptions,
+  CreateCommentOptions,
+  DeleteCommentOptions,
+} from '~/types';
 
 /**
  * 分页获取评论列表

@@ -2,7 +2,7 @@
  * @file API Route: /api/collections/posts [GET]
  * @description 获取文章列表。集成自动化分页解析、关键词搜索以及 Service 层聚合查询。
  */
-import type { PostsListResponse } from '~/types/posts';
+import type { PostsListResponse } from '~/types';
 
 export default defineApiHandler(async (event): Promise<PostsListResponse> => {
   const pb = event.context.pb;

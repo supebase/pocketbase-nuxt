@@ -94,7 +94,7 @@
 </template>
 
 <script setup lang="ts">
-import type { CommentRecord } from '~/types/comments';
+import type { CommentRecord } from '~/types';
 import { placeholders, COMMENT_MAX_LENGTH } from '~/constants';
 
 const props = defineProps({

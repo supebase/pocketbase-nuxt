@@ -2,15 +2,17 @@
  * @file Posts Service
  * @description 处理文章的 CRUD，包含自动图片同步、链接预览抓取及复杂的可见性过滤。
  */
-import type { PostsResponse as PBPostsResponse, TypedPocketBase } from '~/types/pocketbase-types';
-import type { PostExpand, PostRecord } from '~/types/posts';
 import type {
+  PostsResponse as PBPostsResponse,
+  TypedPocketBase,
+  PostExpand,
+  PostRecord,
   GetPostsOptions,
   GetPostByIdOptions,
   CreatePostOptions,
   UpdatePostOptions,
   DeletePostOptions,
-} from '~/types/server';
+} from '~/types';
 
 /**
  * 获取文章列表

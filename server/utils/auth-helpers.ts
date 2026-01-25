@@ -4,8 +4,7 @@
  */
 
 import type { H3Event } from 'h3';
-import type { TypedPocketBase } from '~/types/pocketbase-types';
-import type { UserRecord, AuthResponse } from '~/types/auth';
+import type { TypedPocketBase, UserRecord, AuthResponse } from '~/types';
 import { MAX_COOKIE_AGE } from '~/constants';
 
 /**

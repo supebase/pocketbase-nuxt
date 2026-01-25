@@ -3,7 +3,7 @@
  * @description 统一 API 处理器包装函数。集成 CSRF 安全校验、异常捕获以及 PocketBase 错误格式化。
  */
 
-import type { EventHandler, EventHandlerRequest } from 'h3';
+import type { H3Event, EventHandlerRequest } from 'h3';
 import { handlePocketBaseError } from './error-handler';
 
 /**
@@ -13,7 +13,10 @@ import { handlePocketBaseError } from './error-handler';
  * 1. [安全] 针对写操作执行 Origin 校验，防止 CSRF 攻击。
  * 2. [异常] 统一捕获业务错误，并将 PB SDK 错误转换为标准 API 响应。
  */
-export const defineApiHandler = <T extends EventHandlerRequest, D>(handler: EventHandler<T, D>): EventHandler<T, D> => {
+export const defineApiHandler = <D>(
+  // 关键改动：给 H3Event 加上泛型参数，或者直接使用最基础的 H3Event 类型
+  handler: (event: H3Event<any>) => Promise<D> | D,
+) => {
   return defineEventHandler(async (event) => {
     try {
       // CSRF 安全校验 (仅限生产环境的写操作)
@@ -56,5 +59,5 @@ export const defineApiHandler = <T extends EventHandlerRequest, D>(handler: Even
       // 确保返回给前端的错误结构统一（如 400 校验错误、404 未找到等）
       return handlePocketBaseError(error, '服务器响应异常');
     }
-  }) as EventHandler<T, D>;
+  });
 };

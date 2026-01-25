@@ -70,7 +70,7 @@
 </template>
 
 <script setup lang="ts">
-import type { CommentRecord } from '~/types/comments';
+import type { CommentRecord } from '~/types';
 import { MENTION_REGEX } from '~/constants';
 
 const props = defineProps<{ postId: string; allowComment: boolean }>();

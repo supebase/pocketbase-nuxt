@@ -3,7 +3,7 @@
  * @description 资源所有权校验工具，确保当前登录用户仅能操作属于自己的数据。
  */
 
-import type { TypedPocketBase, CollectionResponses } from '~/types/pocketbase-types';
+import type { TypedPocketBase, CollectionResponses } from '~/types';
 
 /**
  * 强类型所有权校验

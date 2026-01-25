@@ -25,6 +25,6 @@
 </template>
 
 <script setup lang="ts">
-import type { SkeletonItem } from '~/types/skeleton-types';
+import type { SkeletonItem } from '~/types';
 defineProps<{ config: SkeletonItem[] }>();
 </script>

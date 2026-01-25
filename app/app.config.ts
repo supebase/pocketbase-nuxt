@@ -43,10 +43,17 @@ export default defineAppConfig({
       slots: {
         leadingIcon: 'size-5! ml-1!',
       },
+      compoundVariants: [
+        {
+          class:
+            'ring-default focus-visible:ring-black/10 dark:focus-visible:ring-white/10 transition-all duration-300',
+        },
+      ],
     },
     tabs: {
       slots: {
         label: 'text-[15px]!',
+        trigger: ['cursor-pointer dark:data-[state=active]:text-white!'],
       },
     },
     chip: {

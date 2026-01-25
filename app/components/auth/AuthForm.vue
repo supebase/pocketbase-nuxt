@@ -16,7 +16,6 @@
         v-model="password"
         id="password"
         placeholder="登录密码"
-        :color="isLoginMode ? 'neutral' : color"
         :disabled="loading"
         icon="i-hugeicons:lock-key"
         size="xl"
@@ -27,7 +26,7 @@
         <template #trailing>
           <UButton
             tabindex="-1"
-            color="neutral"
+            :color="isLoginMode ? 'neutral' : color"
             variant="link"
             class="cursor-pointer"
             :icon="showPassword ? 'i-hugeicons:view' : 'i-hugeicons:view-off'"

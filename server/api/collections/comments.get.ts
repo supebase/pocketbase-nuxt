@@ -2,7 +2,7 @@
  * @file API Route: /api/collections/comments [GET]
  * @description 获取评论列表。在 Handler 层聚合评论内容与点赞状态（应用层解耦模式）。
  */
-import type { CommentsListResponse, CommentRecord } from '~/types/comments';
+import type { CommentsListResponse, CommentRecord } from '~/types';
 
 export default defineApiHandler(async (event): Promise<CommentsListResponse> => {
   const { pb, user } = event.context;

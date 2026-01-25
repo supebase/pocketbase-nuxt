@@ -1,4 +1,4 @@
-import type { SinglePostResponse } from '~/types/posts';
+import type { SinglePostResponse } from '~/types';
 
 export const usePostLogic = (id: string | string[]) => {
   const { updatedMarks, clearUpdateMark } = usePostUpdateTracker();

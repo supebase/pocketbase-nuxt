@@ -1,8 +1,5 @@
-import type {
-  CommentsResponse as PBCommentResponse,
-  UsersResponse,
-  PostsResponse,
-} from './pocketbase-types';
+import type { CommentsResponse as PBCommentResponse, UsersResponse, PostsResponse } from './index';
+import type { ComputedRef } from 'vue';
 
 export interface CommentExpand {
   user?: Pick<UsersResponse, 'id' | 'name' | 'verified' | 'avatar' | 'location'>;

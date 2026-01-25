@@ -13,12 +13,7 @@
 </template>
 
 <script setup lang="ts">
-interface TocLink {
-  id: string;
-  text: string;
-  depth?: number;
-  children?: TocLink[];
-}
+import type { TocLink } from '~/types';
 
 defineProps<{
   toc?: {

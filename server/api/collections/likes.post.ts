@@ -2,7 +2,7 @@
  * @file API Route: /api/collections/likes [POST]
  * @description 评论点赞切换接口。实现“原子化”的点赞与取消点赞逻辑。
  */
-import type { ToggleLikeRequest, ToggleLikeResponse } from '~/types/likes';
+import type { ToggleLikeRequest, ToggleLikeResponse } from '~/types';
 
 export default defineApiHandler(async (event): Promise<ToggleLikeResponse> => {
   // 获取上下文环境

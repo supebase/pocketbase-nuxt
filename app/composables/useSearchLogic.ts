@@ -1,6 +1,6 @@
 import { useDebounceFn } from '@vueuse/core';
 import { MIN_SEARCH_LENGTH } from '~/constants';
-import type { PostRecord, PostsListResponse } from '~/types/posts';
+import type { PostRecord, PostsListResponse } from '~/types';
 
 export const useSearchLogic = () => {
   const searchQuery = ref('');

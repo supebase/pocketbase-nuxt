@@ -1,6 +1,10 @@
+import type { TypedPocketBase } from './types';
+
 declare module 'h3' {
   interface H3EventContext {
-    user: UsersResponse | null;
     pb: TypedPocketBase;
+    user?: any;
   }
 }
+
+export {};
