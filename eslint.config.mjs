@@ -17,18 +17,21 @@ export default withNuxt(
   {
     files: ['**/*.ts', '**/*.vue', '**/*.mts'],
     rules: {
-      'max-len': ['error', {
-        code: 100,
-        tabWidth: 2,
-        ignoreUrls: true,
-        ignoreStrings: true,
-        ignoreTemplateLiterals: true
-      }],
+      'max-len': [
+        'error',
+        {
+          code: 120,
+          tabWidth: 2,
+          ignoreUrls: true,
+          ignoreStrings: true,
+          ignoreTemplateLiterals: true,
+        },
+      ],
       'vue/multi-word-component-names': 'off',
       'vue/html-indent': ['error', 2],
 
       // 这里的配置会覆盖上面 pluginVue 带来的冲突
       ...skipFormatting.rules,
     },
-  }
+  },
 );

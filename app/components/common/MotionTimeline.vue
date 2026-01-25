@@ -5,7 +5,7 @@
       :style="{ left: lineOffset }"
     >
       <div
-        class="absolute top-0 w-full bg-primary rounded-full will-change-[height]"
+        class="absolute top-0 w-full bg-primary rounded-full timeline-progress-bar"
         :class="{
           'transition-[height] duration-500 ease-out': !isLocked && !loadingMore && !isResetting,
           'transition-none': isLocked || loadingMore || isResetting,

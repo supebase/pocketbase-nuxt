@@ -28,7 +28,7 @@ export function handlePocketBaseError(error: unknown, defaultMessage: string = '
 
   // 2. 非 PB 异常处理（如代码运行时抛出的 ReferenceError 等）
   if (!(error instanceof ClientResponseError)) {
-    console.error('[Internal Error]:', error);
+    // console.error('[Internal Error]:', error);
     throw createError({
       status: 500,
       message: defaultMessage,
@@ -66,12 +66,12 @@ export function handlePocketBaseError(error: unknown, defaultMessage: string = '
   throw createError({
     status,
     message: friendlyMessage,
-    // 修正：statusText 应该简短且符合标准，详细信息放 data 里
-    statusText: status >= 500 ? 'Internal Server Error' : 'Bad Request',
+    // 使用标准的 HTTP 状态描述，或者根据状态码动态生成
+    statusText: error.response?.statusText || (status >= 500 ? 'Server Error' : 'Client Error'),
     data: {
       _isPocketBaseError: true,
       fields: errorData.data || {},
-      originalMessage: technicalMessage,
+      originalMessage: import.meta.dev ? technicalMessage : undefined,
     },
     // 修正：在 API Handler 中，绝大多数情况 fatal 应为 false
     // 只有在渲染页面必不可少的数据报错时，由开发者在页面层决定是否 fatal

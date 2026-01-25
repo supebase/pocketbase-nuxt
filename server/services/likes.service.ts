@@ -56,7 +56,7 @@ export async function getCommentLikes({ pb, commentId }: GetCommentLikesOptions)
 }
 
 /**
- * 批量获取评论点赞信息（手动统计版）
+ * 批量获取评论点赞信息
  * @description 通过一次性拉取相关点赞记录，在内存中完成计数和状态匹配
  */
 export async function getCommentsLikesMap({
@@ -67,36 +67,42 @@ export async function getCommentsLikesMap({
   if (!commentIds || commentIds.length === 0) return {};
 
   const likesMap: Record<string, CommentLikeInfo> = {};
-
-  // 1. 初始化 Map
   commentIds.forEach((id) => {
     likesMap[id] = { commentId: id, likes: 0, isLiked: false };
   });
 
-  // 构建针对这些评论的过滤条件
-  const commentFilter = `(${commentIds.map((id) => `comment = "${id}"`).join(' || ')})`;
-
   try {
-    // 2. 并行获取：1. 所有相关评论的点赞总记录  2. 当前用户的点赞记录
+    // 1. 构建参数化过滤
+    const filterParams: Record<string, string> = {};
+    const filterString = commentIds
+      .map((id, index) => {
+        const key = `id${index}`;
+        filterParams[key] = id;
+        return `comment = {:${key}}`;
+      })
+      .join(' || ');
+
+    // 2. 并行请求
     const [allLikes, userLikes] = await Promise.all([
-      // 获取这些评论的所有点赞（用于统计总数）
-      // 注意：如果点赞量极大（单篇文章万级点赞），建议还是用 View。
       pb.collection('likes').getFullList<PBLikesResponse>({
-        filter: commentFilter,
-        fields: 'comment,user', // 只取必要字段
+        filter: pb.filter(filterString, filterParams),
+        fields: 'comment',
         requestKey: null,
       }),
-      // 获取当前用户的点赞（用于判断 isLiked）
       userId
         ? pb.collection('likes').getFullList<PBLikesResponse>({
-            filter: `user = "${userId}" && ${commentFilter}`,
+            filter: pb.filter(`user = {:userId} && (${filterString})`, {
+              userId,
+              ...filterParams,
+            }),
             fields: 'comment',
             requestKey: null,
           })
         : Promise.resolve([]),
     ]);
 
-    // 3. 在内存中统计总点赞数
+    // 3. 内存统计 (去重并修复 TS 报错)
+    // 统计总点赞数
     allLikes.forEach((like) => {
       const item = likesMap[like.comment];
       if (item) {
@@ -104,7 +110,7 @@ export async function getCommentsLikesMap({
       }
     });
 
-    // 4. 标记当前用户是否点赞
+    // 标记当前用户点赞状态 (之前你漏掉了这一块)
     userLikes.forEach((like) => {
       const item = likesMap[like.comment];
       if (item) {
@@ -112,7 +118,7 @@ export async function getCommentsLikesMap({
       }
     });
   } catch (error) {
-    console.error('获取点赞映射失败:', error);
+    // console.error('获取点赞映射失败:', error);
   }
 
   return likesMap;

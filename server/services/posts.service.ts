@@ -21,26 +21,24 @@ import type {
 export async function getPostsList({ pb, page = 1, perPage = 10, query }: GetPostsOptions) {
   const currentUser = pb.authStore.record;
 
-  // 基础权限过滤
-  let filterString = '(published = true';
+  // 使用数组和 pb.filter 构建，结构更清晰，防止注入
+  const filters = [`published = true`];
   if (currentUser) {
-    filterString += ` || (published = false && user = "${currentUser.id}")`;
+    filters.push(pb.filter('user = {:userId} && published = false', { userId: currentUser.id }));
   }
-  filterString += ')';
 
-  // 附加搜索过滤
+  // 最终用 || 连接权限逻辑，用 && 连接搜索逻辑
+  let finalFilter = `(${filters.join(' || ')})`;
+
   if (query) {
-    const searchQuery = pb.filter('content ~ {:q}', { q: query });
-    filterString = `(${filterString} && ${searchQuery})`;
+    finalFilter = `(${finalFilter} && ${pb.filter('content ~ {:q}', { q: query })})`;
   }
 
-  const options: any = {
+  return await pb.collection('posts').getList<PBPostsResponse<PostExpand>>(page, perPage, {
     sort: '-created',
     expand: 'user',
-    filter: filterString,
-  };
-
-  return await pb.collection('posts').getList<PBPostsResponse<PostExpand>>(page, perPage, options);
+    filter: finalFilter,
+  });
 }
 
 /**
@@ -101,7 +99,7 @@ export async function createPost({ pb, initialData, rawContent }: CreatePostOpti
       { expand: 'user' },
     )) as PostRecord;
   } catch (error) {
-    console.error(`[CreatePost] 同步失败: ${post.id}`, error);
+    // console.error(`[CreatePost] 同步失败: ${post.id}`, error);
     throw createError({
       status: 202,
       message: '内容已保存，但图片同步失败。',
@@ -136,7 +134,7 @@ export async function updatePost({ pb, postId, body }: UpdatePostOptions): Promi
           // 图片已转存，清除原始 URL
           preview.image = '';
         } catch (e) {
-          console.error('预览图抓取失败', e);
+          // console.error('预览图抓取失败', e);
         }
       }
       formData.append('link_data', JSON.stringify(preview));
@@ -202,6 +200,6 @@ export async function incrementPostViews({ pb, postId }: { pb: TypedPocketBase; 
     // 使用 PocketBase 的原子加法操作
     await pb.collection('posts').update(postId, { 'views+': 1 });
   } catch (error) {
-    console.error(`无法更新浏览量:`, error);
+    // console.error(`无法更新浏览量:`, error);
   }
 }

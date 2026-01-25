@@ -74,3 +74,14 @@ export interface TocLink {
   depth?: number;
   children?: TocLink[];
 }
+
+export interface CleanRule {
+  name: string;
+  pattern: RegExp;
+  replacement: string;
+}
+
+export interface CacheEntry {
+  value: string;
+  expiry: number;
+}

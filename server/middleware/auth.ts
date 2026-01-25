@@ -1,7 +1,14 @@
 /**
  * @file Auth Middleware
- * @description 全局身份认证中间件。包含 PocketBase 实例初始化、Token 自动续期及鉴权拦截。
+ * @description 全局身份认证中间件。包含 PocketBase 实例初始化、Token 自动续期（防竞态）及鉴权拦截。
  */
+import { Buffer } from 'node:buffer';
+
+/**
+ * 内存锁：用于合并并发的刷新请求
+ * Key 为用户 ID，Value 为正在进行的刷新 Promise
+ */
+const refreshRequests = new Map<string, Promise<any>>();
 
 /**
  * 受保护路由配置
@@ -16,21 +23,17 @@ const protectedRoutes = [
 
 /**
  * 检查是否需要刷新 Token
- * @param token JWT 字符串
  */
 function shouldRefreshToken(token: string | null | undefined): boolean {
-  // 如果没有 token，直接返回 false
   if (!token) return false;
-
   try {
     const parts = token.split('.');
     if (parts.length !== 3) return false;
 
-    // 解析 Payload
     const payload = JSON.parse(Buffer.from(parts[1] || '', 'base64').toString());
     const now = Math.floor(Date.now() / 1000);
 
-    // 如果已经过期，不在这里处理刷新，交给 PB 的 isValid 判断
+    // 如果已过期，交由 PocketBase SDK 的 isValid 处理，此处不触发刷新
     if (now >= payload.exp) return false;
 
     const totalDuration = payload.exp - payload.iat;
@@ -38,8 +41,7 @@ function shouldRefreshToken(token: string | null | undefined): boolean {
 
     // 剩余时间小于总时长的一半时返回 true
     return remaining < totalDuration / 2;
-  } catch (e) {
-    // 解析失败则不触发刷新
+  } catch {
     return false;
   }
 }
@@ -53,25 +55,38 @@ export default defineEventHandler(async (event) => {
   const pb = getPocketBase(event);
   event.context.pb = pb;
 
-  // 3. 身份验证与自动续期
+  // 3. 身份验证与自动续期（核心修复逻辑）
   if (pb.authStore.isValid && pb.authStore.record) {
-    // 检查是否需要续期 (避免高频刷新)
     if (shouldRefreshToken(pb.authStore.token)) {
-      try {
-        // 执行 PocketBase 官方刷新接口
-        await pb.collection('users').authRefresh();
+      const userId = pb.authStore.record.id;
 
-        // 重要：将刷新后的新 Token 同步回浏览器 Cookie
+      try {
+        // 检查是否有该用户的刷新任务正在进行
+        if (!refreshRequests.has(userId)) {
+          // 创建刷新任务并存入 Map
+          const refreshTask = pb
+            .collection('users')
+            .authRefresh()
+            .finally(() => {
+              // 无论成功失败，短暂延迟后移除锁（给并发请求留出同步时间）
+              setTimeout(() => refreshRequests.delete(userId), 1000);
+            });
+          refreshRequests.set(userId, refreshTask);
+        }
+
+        // 所有并发请求都会在此处阻塞，直到同一个刷新任务完成
+        await refreshRequests.get(userId);
+
+        // 重要：刷新成功后，同步最新的 Auth 状态到当前请求的 Cookie
         const newCookie = pb.authStore.exportToCookie({
-          httpOnly: false, // 允许前端 JS 读取（如果需要）
+          httpOnly: true,
           secure: process.env.NODE_ENV === 'production',
           sameSite: 'lax',
           path: '/',
         });
         appendResponseHeader(event, 'set-cookie', newCookie);
       } catch (e: any) {
-        // 只要 PB 没明确说 Token 无效（比如 401），就不要清理 Session
-        // 只有当刷新接口返回明确的身份错误时才登出
+        // 只有当刷新接口明确返回身份错误（401/403）时才强制登出
         if (e.status === 401 || e.status === 403) {
           pb.authStore.clear();
           await clearUserSession(event);
@@ -79,7 +94,7 @@ export default defineEventHandler(async (event) => {
       }
     }
 
-    // 同步到 context 供 Handler 使用
+    // 将最新的用户信息注入 context
     event.context.user = pb.authStore.record;
   } else {
     // 自动降级：若 PB Token 失效则同步清理 Nuxt Session

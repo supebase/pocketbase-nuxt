@@ -22,8 +22,8 @@ export const timeMap: Record<string, string> = {
  * 阅读速度配置常量
  */
 export const READ_SPEED_CONFIG = {
-  WORDS_PER_MINUTE: 200, // 英文：约 200 词/分
-  CHINESE_CHARS_PER_MINUTE: 300, // 中文：约 300 字/分
+  WORDS_PER_MINUTE: 180, // 英文：约 180 词/分
+  CHINESE_CHARS_PER_MINUTE: 350, // 中文：约 350 字/分
   IMAGE_TIME: 0.2, // 每张图约 12 秒
   CAROUSEL_BASE_TIME: 0.2, // 图片渲染/切换基础耗时
   CODE_BLOCK_BASE_TIME: 0.2, // 进入代码阅读状态的心理切换时间

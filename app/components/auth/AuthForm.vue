@@ -9,6 +9,7 @@
         :disabled="loading"
         icon="i-hugeicons:at"
         size="xl"
+        :maxlength="100"
         class="w-full"
       />
 
@@ -19,6 +20,7 @@
         :disabled="loading"
         icon="i-hugeicons:lock-key"
         size="xl"
+        :maxlength="50"
         class="w-full"
         :type="showPassword ? 'text' : 'password'"
         :ui="{ trailing: 'pe-1' }"
@@ -63,6 +65,7 @@
         :disabled="loading"
         icon="i-hugeicons:square-lock-check-01"
         size="xl"
+        :maxlength="50"
         class="w-full"
         :type="showPasswordConfirm ? 'text' : 'password'"
         :ui="{ trailing: 'pe-1' }"

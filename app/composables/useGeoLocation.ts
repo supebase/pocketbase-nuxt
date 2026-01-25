@@ -29,7 +29,7 @@ export const useGeoLocation = (): UseGeoLocationReturn => {
         location: data.location || data.ip,
       };
     } catch (error) {
-      console.error('[GeoLocation Error]:', error);
+      // console.error('[GeoLocation Error]:', error);
       // 极端情况下的最终兜底
       locationData.value.location = '未知地址';
     } finally {

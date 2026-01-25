@@ -72,7 +72,7 @@ export const getLinkPreview = async (url: string): Promise<LinkPreviewData | nul
       };
     }
   } catch (e) {
-    console.error('[OGS Error] 抓取失败:', url, e);
+    // console.error('[OGS Error] 抓取失败:', url, e);
   }
   return null;
 };

@@ -40,7 +40,7 @@ export default defineEventHandler(async (event) => {
     }
   } catch (error) {
     // 4. 报错降级：console 记录错误，但返回给前端基本 IP 信息
-    console.error('[Server Geo Error]:', error);
+    // console.error('[Server Geo Error]:', error);
   }
 
   return result;

@@ -1,5 +1,5 @@
 <template>
-  <div class="gravatar-wrapper size-full">
+  <div>
     <slot
       :src="avatarUrl"
       :is-loaded="!isLoading && !hasError && !!avatarId"

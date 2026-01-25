@@ -50,7 +50,7 @@ export async function performMarkdownImageSync({
       return allImages.slice(-newItems.length);
     });
   } catch (error) {
-    console.error('[ImageSync] 过程中出现异常:', error);
+    // console.error('[ImageSync] 过程中出现异常:', error);
 
     // 失败时回退到原始内容，保证文章能存下来
     return content;

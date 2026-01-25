@@ -32,7 +32,7 @@ export async function ensureOwnership<T extends keyof CollectionResponses>(
   // 字段存在性防御检查
   // 确保 userField 确实存在于数据库返回的对象中，避免逻辑穿透
   if (!(userField in record)) {
-    console.error(`[Guard Error]: 字段 '${String(userField)}' 不存在于集合 '${collectionName}'`);
+    // console.error(`[Guard Error]: 字段 '${String(userField)}' 不存在于集合 '${collectionName}'`);
     throw createError({
       status: 500,
       message: '系统配置异常：校验字段缺失',

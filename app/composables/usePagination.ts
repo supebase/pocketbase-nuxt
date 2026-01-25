@@ -62,7 +62,7 @@ export function usePagination<T extends { id: string | number }>(initialItems?: 
       }
     } catch (err) {
       // 专业的错误处理：不仅 console，还应该抛出或标记错误状态
-      console.error('[Pagination] Failed to fetch more items:', err);
+      // console.error('[Pagination] Failed to fetch more items:', err);
       throw err; // 抛出错误让调用者决定是否显示 Toast
     } finally {
       isLoadingMore.value = false;

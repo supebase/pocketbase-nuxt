@@ -1,8 +1,6 @@
-interface CleanRule {
-  name: string;
-  pattern: RegExp;
-  replacement: string;
-}
+import type { CleanRule } from '~/types';
+
+export const CACHE_TTL = 1000 * 60 * 30; // 缓存有效期 30 分钟
 
 export const MARKDOWN_CLEAN_RULES: CleanRule[] = [
   { name: 'images', pattern: /!\[.*?\]\(.*?\)/g, replacement: '' },

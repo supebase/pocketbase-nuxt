@@ -118,7 +118,7 @@ export const usePocketRealtime = () => {
           };
           sseManager.subscribers.forEach((cb) => cb(payload));
         } catch (e) {
-          console.error('[SSE] Parse error', e);
+          // console.error('[SSE] Parse error', e);
         }
       });
     });

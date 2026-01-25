@@ -49,7 +49,7 @@ export const handlePostViewTracking = async (event: H3Event, post: any) => {
 
     // 异步自增（非阻塞）
     incrementPostViews({ pb: event.context.pb, postId }).catch((err) => {
-      console.error(`[Views] 自增失败 (ID: ${postId}):`, err);
+      // console.error(`[Views] 自增失败 (ID: ${postId}):`, err);
     });
 
     currentViews += 1;
@@ -68,7 +68,7 @@ export const getProcessedAst = async (content: string, id: string) => {
     });
     return simplifyAst(result);
   } catch (e) {
-    console.error(`[MDC Error] ID: ${id}`, e);
+    // console.error(`[MDC Error] ID: ${id}`, e);
     return null;
   }
 };

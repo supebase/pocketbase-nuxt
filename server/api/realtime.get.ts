@@ -47,7 +47,7 @@ export default defineEventHandler(async (event) => {
       );
       activeSubscriptions.add(col);
     } catch (err) {
-      console.error(`[SSE 订阅失败] ${col}:`, err);
+      // console.error(`[SSE 订阅失败] ${col}:`, err);
     }
   }
 

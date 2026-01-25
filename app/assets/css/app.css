@@ -110,6 +110,15 @@ header::before {
   mix-blend-mode: normal;
 }
 
+.timeline-progress-bar {
+  transform-origin: top;
+  /* 增加 translateZ(0) 是移动端开启硬件加速的“老偏方”，非常管用 */
+  transform: translateZ(0);
+  will-change: transform;
+  /* 去掉 transition，或者给一个极短的时间(0.1s)，让它更有“跟手”感 */
+  transition: transform 0.1s linear;
+}
+
 .number-column {
   width: 0.65em; /* 根据你的字体微调 */
   height: 1.25em;

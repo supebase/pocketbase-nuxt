@@ -60,7 +60,7 @@ export const processMarkdownImages = async (
         if (e.message === 'FILE_TOO_LARGE') {
           console.warn(`[Image Sync] 跳过超大文件: ${url}`);
         } else {
-          console.error(`[Image Sync] 下载异常: ${url}`, e.message);
+          // console.error(`[Image Sync] 下载异常: ${url}`, e.message);
         }
         return null;
       }

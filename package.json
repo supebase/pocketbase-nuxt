@@ -15,7 +15,7 @@
   "dependencies": {
     "@nuxt/ui": "^4.4.0",
     "@nuxtjs/mdc": "0.20.0",
-    "@tiptap/extension-character-count": "^3.16.0",
+    "@tiptap/extension-character-count": "^3.17.1",
     "eventsource": "^4.1.0",
     "nuxt": "^4.3.0",
     "nuxt-auth-utils": "0.5.27",
