@@ -26,7 +26,7 @@ export default defineApiHandler(async (event): Promise<AuthResponse> => {
    * loginService 内部应调用 pb.collection('users').authWithPassword()
    * 成功后，pb 实例的 authStore 将自动填充 Token 和用户信息
    */
-  await loginService({ pb, email, password });
+  await loginService({ pb, email, password, event });
 
   /**
    * 认证后续处理与响应

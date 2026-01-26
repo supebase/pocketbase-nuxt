@@ -84,7 +84,12 @@
             </template>
           </CommonMotionTimeline>
 
-          <ModalDelete v-model:open="isDeleteModalOpen" :loading="isDeleting" @confirm="confirmDelete">
+          <ModalDelete
+            v-model:open="isDeleteModalOpen"
+            :loading="isDeleting"
+            @confirm="confirmDelete"
+            @after-leave="onModalTransitionEnd"
+          >
             <div v-if="pendingDeleteItem" class="flex flex-col gap-2">
               <div class="text-sm text-primary font-semibold tracking-wider">即将消失的数据</div>
               <div class="text-sm text-muted line-clamp-2">
@@ -160,7 +165,7 @@ const {
 });
 
 // 3. 抽离的 Action 逻辑
-const { isDeleteModalOpen, isDeleting, pendingDeleteItem, handleRequestDelete, confirmDelete } =
+const { isDeleteModalOpen, isDeleting, pendingDeleteItem, handleRequestDelete, confirmDelete, onModalTransitionEnd } =
   usePostsActions(refresh);
 
 // 4. 私有 UI 状态

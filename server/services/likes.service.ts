@@ -56,8 +56,8 @@ export async function getCommentLikes({ pb, commentId }: GetCommentLikesOptions)
 }
 
 /**
- * 批量获取评论点赞信息
- * @description 通过一次性拉取相关点赞记录，在内存中完成计数和状态匹配
+ * 批量获取评论点赞信息（极致优化版）
+ * @description 利用数据库视图进行聚合计算，彻底解决海量数据下的 OOM 风险
  */
 export async function getCommentsLikesMap({
   pb,
@@ -66,60 +66,51 @@ export async function getCommentsLikesMap({
 }: GetCommentsLikesMapOptions): Promise<Record<string, CommentLikeInfo>> {
   if (!commentIds || commentIds.length === 0) return {};
 
-  const likesMap: Record<string, CommentLikeInfo> = {};
+  // 1. 使用 Map 来存储中间结果，彻底避开 Record 的索引检查问题
+  const likesMapData = new Map<string, CommentLikeInfo>();
+
   commentIds.forEach((id) => {
-    likesMap[id] = { commentId: id, likes: 0, isLiked: false };
+    likesMapData.set(id, { commentId: id, likes: 0, isLiked: false });
   });
 
   try {
-    // 1. 构建参数化过滤
-    const filterParams: Record<string, string> = {};
-    const filterString = commentIds
-      .map((id, index) => {
-        const key = `id${index}`;
-        filterParams[key] = id;
-        return `comment = {:${key}}`;
-      })
-      .join(' || ');
+    const viewFilter = commentIds.map((id) => `id = "${id}"`).join(' || ');
+    const likesFilter = commentIds.map((id) => `comment = "${id}"`).join(' || ');
 
-    // 2. 并行请求
-    const [allLikes, userLikes] = await Promise.all([
-      pb.collection('likes').getFullList<PBLikesResponse>({
-        filter: pb.filter(filterString, filterParams),
-        fields: 'comment',
+    const [likeCounts, userLikes] = await Promise.all([
+      pb.collection('comment_like_counts').getFullList<{ id: string; likes: number }>({
+        filter: viewFilter,
+        fields: 'id,likes',
         requestKey: null,
       }),
       userId
         ? pb.collection('likes').getFullList<PBLikesResponse>({
-            filter: pb.filter(`user = {:userId} && (${filterString})`, {
-              userId,
-              ...filterParams,
-            }),
+            filter: `user = "${userId}" && (${likesFilter})`,
             fields: 'comment',
             requestKey: null,
           })
         : Promise.resolve([]),
     ]);
 
-    // 3. 内存统计 (去重并修复 TS 报错)
-    // 统计总点赞数
-    allLikes.forEach((like) => {
-      const item = likesMap[like.comment];
-      if (item) {
-        item.likes++;
+    // 2. 统计逻辑：使用 Map 的 get/set，TS 能够完美识别
+    likeCounts.forEach((item) => {
+      const target = likesMapData.get(item.id);
+      if (target) {
+        target.likes = item.likes;
       }
     });
 
-    // 标记当前用户点赞状态 (之前你漏掉了这一块)
+    // 3. 状态标记
     userLikes.forEach((like) => {
-      const item = likesMap[like.comment];
-      if (item) {
-        item.isLiked = true;
+      const target = likesMapData.get(like.comment);
+      if (target) {
+        target.isLiked = true;
       }
     });
   } catch (error) {
-    // console.error('获取点赞映射失败:', error);
+    // 静默处理
   }
 
-  return likesMap;
+  // 4. 将 Map 转换为最终要求的 Record 格式返回
+  return Object.fromEntries(likesMapData);
 }

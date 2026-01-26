@@ -43,11 +43,11 @@ export function usePostsActions(refreshCallback: () => Promise<void> | void) {
     } finally {
       // 5. 状态清理
       isDeleting.value = false;
-      // 延迟清理数据，以适配 Modal 关闭动画的平滑度
-      setTimeout(() => {
-        pendingDeleteItem.value = null;
-      }, 300);
     }
+  };
+
+  const onModalTransitionEnd = () => {
+    pendingDeleteItem.value = null;
   };
 
   return {
@@ -56,5 +56,6 @@ export function usePostsActions(refreshCallback: () => Promise<void> | void) {
     pendingDeleteItem,
     handleRequestDelete,
     confirmDelete,
+    onModalTransitionEnd,
   };
 }

@@ -31,8 +31,11 @@
               <UIcon
                 v-if="item.expand?.user?.id === user?.id"
                 name="i-hugeicons:delete-01"
-                @click="openDeleteModal(item)"
-                class="size-5 text-dimmed cursor-pointer hover:text-error transition-colors"
+                @click="!isDeleting && openDeleteModal(item)"
+                :class="[
+                  'size-5 text-dimmed transition-colors',
+                  isDeleting ? 'cursor-not-allowed' : 'cursor-pointer hover:text-error',
+                ]"
               />
               <CommonLikeButton
                 :key="item.id"
@@ -108,21 +111,32 @@ const openDeleteModal = (item: CommentRecord) => {
 };
 
 const confirmDelete = async () => {
-  if (!selectedComment.value) return;
+  if (!selectedComment.value || isDeleting.value) return; // 1. 防止重复点击
 
   isDeleting.value = true;
+  const targetToDelete = selectedComment.value; // 2. 局部变量锁定当前要删除的对象
 
   try {
-    await $fetch(`/api/collections/comment/${selectedComment.value.id}`, {
+    await $fetch(`/api/collections/comment/${targetToDelete.id}`, {
       method: 'DELETE',
     });
-    syncSingleComment(selectedComment.value, 'delete');
+
+    // 动画协调：先关弹窗
     isModalOpen.value = false;
+
+    // 弹窗关闭动画后再清理数据
+    setTimeout(() => {
+      syncSingleComment(targetToDelete, 'delete');
+      // 只有在当前选中的还是这个评论时才重置，防止误删新选中的对象
+      if (selectedComment.value?.id === targetToDelete.id) {
+        selectedComment.value = null;
+      }
+    }, 300);
+  } catch (err) {
+    // 逻辑失败，恢复状态
+    // console.error('Delete failed:', err);
   } finally {
     isDeleting.value = false;
-    setTimeout(() => {
-      selectedComment.value = null;
-    }, 300);
   }
 };
 

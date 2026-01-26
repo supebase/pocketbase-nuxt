@@ -1,11 +1,17 @@
+/* ==========================================================================
+   1. 基础变量与全局重置
+   ========================================================================== */
 @import 'tailwindcss';
 @import '@nuxt/ui';
-
 @plugin "@tailwindcss/typography";
 
 :root {
   --ui-primary: oklch(65.6% 0.241 354.308);
   --ui-code-bg: rgba(167, 132, 255, 0.11);
+  /* 抽取你高频使用的自定义曲线 */
+  --ease-jelly: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out-quint: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .dark {
@@ -13,685 +19,302 @@
   --ui-code-bg: oklch(89.987% 0.07619 70.421 / 0.07);
 }
 
-html,
-body {
-  /* 禁用双击缩放，并提升点击响应速度 */
+html, body {
   touch-action: manipulation;
-
-  /* 阻止 iOS Safari 在横屏时自动调整字体大小 */
   -webkit-text-size-adjust: 100%;
-
-  /* 解决点击元素时的蓝色高亮边框 (可选) */
   -webkit-tap-highlight-color: transparent;
-}
-
-body {
-  /* 字体平滑优化 */
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-
-  /* 确保页面高度充满屏幕，防止滚动回弹干扰 */
   min-height: 100vh;
   margin: 0;
 }
 
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  position: relative;
+}
+
+/* 隐藏滚动条 */
 ::-webkit-scrollbar {
   width: 0;
   background: transparent;
 }
 
+/* 全局背景纹理 - 保持 will-change 优化 */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-size: cover;
+  background-position: center;
+  background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23666666' fill-opacity='0.04' fill-rule='evenodd'/%3E%3C/svg%3E");
+  will-change: transform;
+}
+
+/* ==========================================================================
+   2. 视图过渡 (View Transitions)
+   ========================================================================== */
 ::view-transition-old(root),
 ::view-transition-new(root) {
   animation: none;
   mix-blend-mode: normal;
 }
+::view-transition-new(root) { z-index: 9999; }
+::view-transition-old(root) { z-index: 1; }
 
-::view-transition-new(root) {
-  z-index: 9999;
-}
-::view-transition-old(root) {
-  z-index: 1;
-}
-
+/* ==========================================================================
+   3. 布局组件样式 (Header, Progress Bar, etc.)
+   ========================================================================== */
 header {
   background-color: rgba(255, 255, 255, 0.3);
 }
-
-.dark header {
-  background-color: rgba(23, 23, 23, 0.3);
-}
+.dark header { background-color: rgba(23, 23, 23, 0.3); }
 
 header::before {
   content: "";
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
   z-index: -1;
-
   background-image:
-    repeating-linear-gradient(
-      0deg,
-      rgba(255, 255, 255, 0.1) 0px,
-      rgba(255, 255, 255, 0.1) 1px,
-      transparent 1px,
-      transparent 2px
-    ),
-    repeating-linear-gradient(
-      90deg,
-      rgba(255, 255, 255, 0.1) 0px,
-      rgba(255, 255, 255, 0.1) 1px,
-      transparent 1px,
-      transparent 2px
-    );
-
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.1) 0px, rgba(255, 255, 255, 0.1) 1px, transparent 1px, transparent 2px),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.1) 0px, rgba(255, 255, 255, 0.1) 1px, transparent 1px, transparent 2px);
   mix-blend-mode: overlay;
   pointer-events: none;
 }
-
 .dark header::before {
   background-image:
-    repeating-linear-gradient(
-      0deg,
-      rgba(23, 23, 23, 0.6) 0px,
-      rgba(23, 23, 23, 0.6) 1px,
-      transparent 1px,
-      transparent 2px
-    ),
-    repeating-linear-gradient(
-      90deg,
-      rgba(23, 23, 23, 0.6) 0px,
-      rgba(23, 23, 23, 0.6) 1px,
-      transparent 1px,
-      transparent 2px
-    );
-
+    repeating-linear-gradient(0deg, rgba(23, 23, 23, 0.6) 0px, rgba(23, 23, 23, 0.6) 1px, transparent 1px, transparent 2px),
+    repeating-linear-gradient(90deg, rgba(23, 23, 23, 0.6) 0px, rgba(23, 23, 23, 0.6) 1px, transparent 1px, transparent 2px);
   mix-blend-mode: normal;
 }
 
 .timeline-progress-bar {
   transform-origin: top;
-  /* 增加 translateZ(0) 是移动端开启硬件加速的“老偏方”，非常管用 */
   transform: translateZ(0);
   will-change: transform;
-  /* 去掉 transition，或者给一个极短的时间(0.1s)，让它更有“跟手”感 */
   transition: transform 0.1s linear;
 }
 
-.number-column {
-  width: 0.65em; /* 根据你的字体微调 */
-  height: 1.25em;
-  overflow: hidden;
-}
-
-.comma-column {
-  width: 0.3em;
-  text-align: center;
-}
-
+/* ==========================================================================
+   4. 数值滚动组件 (Number Scroll)
+   ========================================================================== */
+.number-column { width: 0.65em; height: 1.25em; overflow: hidden; }
+.comma-column { width: 0.3em; text-align: center; }
 .digit-cell {
   height: 1.25em;
   display: flex;
   align-items: center;
   justify-content: center;
-  /* 强制等宽，防止 1 变 8 时产生水平晃动 */
   font-variant-numeric: tabular-nums;
 }
-
 .number-scroll {
   display: flex;
   flex-direction: column;
   will-change: transform;
-  /* 使用你之前的贝塞尔曲线，它带有回弹效果，看起来很灵动 */
-  transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition-timing-function: var(--ease-jelly);
 }
 
-/* TransitionGroup 动画：数值位数的增减 */
-.digit-enter-active,
-.digit-leave-active {
-  transition: all 0.5s ease;
+/* Vue 过渡：数值位数变化 */
+.digit-enter-active, .digit-leave-active { transition: all 0.5s ease; }
+.digit-enter-from { opacity: 0; width: 0; transform: translateY(-0.5em); }
+.digit-leave-to { opacity: 0; width: 0; transform: translateY(0.5em); }
+
+/* ==========================================================================
+   5. Vue Transition 动画钩子 (核心交互逻辑)
+   ========================================================================== */
+
+/* 5.1 Header Fade - 导航联动 */
+.header-fade-enter-active, .header-fade-leave-active {
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+.header-fade-enter-from, .header-fade-leave-to { opacity: 0; }
+.header-fade-enter-from.logo-wrapper, .header-fade-leave-to.logo-wrapper { transform: scale(0.8); }
+.header-fade-enter-from.header-back-wrapper, .header-fade-leave-to.header-back-wrapper { transform: translateX(-15px); }
+
+/* 5.2 Fancy Slide - 左右交错滑入 */
+.slide-right-fancy-enter-active, .slide-left-fancy-enter-active {
+  transition: all 0.9s var(--ease-out-expo);
+}
+.slide-right-fancy-enter-from { opacity: 0; transform: translateX(-40px) scale(0.95); }
+.slide-left-fancy-enter-active { transition-delay: 0.12s; }
+.slide-left-fancy-enter-from { opacity: 0; transform: translateX(40px) scale(0.95); }
+
+/* 5.3 Jelly Pop - 果冻回弹 */
+.jelly-pop-enter-active { transition: all 0.6s var(--ease-jelly); }
+.jelly-pop-enter-from { opacity: 0; transform: scale(0.5); }
+.jelly-pop-enter-to { opacity: 1; transform: scale(1); }
+.jelly-pop-leave-active { transition: all 0.3s ease-in; }
+.jelly-pop-leave-to { opacity: 0; transform: scale(0.5); }
+
+/* 5.4 Auth Slide - 授权组件全员滑动 */
+.auth-wrapper { display: flex; align-items: center; overflow: visible; }
+.auth-slide-enter-active, .auth-slide-leave-active {
+  transition: all 0.5s var(--ease-in-out-quint);
+  max-width: 200px;
+}
+.auth-slide-enter-from, .auth-slide-leave-to {
+  opacity: 0; max-width: 0; transform: translateX(10px);
+}
+.auth-item { display: flex; align-items: center; gap: 12px; white-space: nowrap; }
+.avatar-pop { transform-origin: center; }
+.auth-slide-enter-active .avatar-pop { animation: auth-pop-in 0.6s var(--ease-jelly); }
+
+.flex.items-center.gap-3 > * { transition: all 0.5s var(--ease-in-out-quint); }
+
+/* 5.5 其他基础 Fade 过渡 */
+.fade-mdc-enter-active, .fade-mdc-leave-active { transition: opacity 0.5s ease; }
+.fade-mdc-enter-from, .fade-mdc-leave-to { opacity: 0; }
+
+.fade-enter-active, .fade-leave-active { transition: opacity 0.5s ease; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
+
+.inner-fade-enter-active { transition: opacity 0.6s ease-out; }
+.inner-fade-enter-from { opacity: 0; }
+.inner-fade-leave-active { transition: none; position: absolute; }
+
+/* ==========================================================================
+   6. Keyframes 关键帧定义
+   ========================================================================== */
+@keyframes auth-pop-in { 0% { transform: scale(0); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+
+@keyframes slide-up { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+
+@keyframes heart-pop {
+  0%, 100% { transform: scale(1); }
+  25% { transform: scale(0.8); }
+  50% { transform: scale(1.2); }
 }
 
-.digit-enter-from {
-  opacity: 0;
-  width: 0;
-  transform: translateY(-0.5em); /* 数字出现时带一点向下的位移 */
+@keyframes flare { 0% { left: -150%; } 40%, 100% { left: 150%; } }
+
+@keyframes icon-pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.5) rotate(-15deg); }
+  100% { transform: scale(1); }
 }
 
-.digit-leave-to {
-  opacity: 0;
-  width: 0;
-  transform: translateY(0.5em);
+@keyframes icon-crack {
+  0%, 100% { transform: translate(0); }
+  20% { transform: translate(-2px, 2px); }
+  40% { transform: translate(2px, -2px); }
+  60% { transform: translate(-2px, -2px); }
+  80% { transform: translate(2px, 2px); }
 }
 
-/* 1. 基础配置 */
-.header-fade-enter-active,
-.header-fade-leave-active {
-  transition:
-    opacity 0.25s ease,
-    transform 0.25s ease;
+@keyframes write {
+  0% { stroke-dashoffset: 1000px; opacity: 0; }
+  10% { opacity: 1; }
+  100% { stroke-dashoffset: 0; opacity: 1; }
 }
 
-/* 2. 初始/结束状态：强制透明度 */
-.header-fade-enter-from,
-.header-fade-leave-to {
-  opacity: 0;
-}
-
-/* --- 3. Logo 动画 (缩放) --- */
-/* 注意：这里类名是连在一起的，表示同一个元素同时拥有这两个类 */
-.header-fade-enter-from.logo-wrapper,
-.header-fade-leave-to.logo-wrapper {
-  transform: scale(0.8);
-}
-
-/* --- 4. 返回键动画 (左进左出) --- */
-/* 同理，类名连在一起 */
-.header-fade-enter-from.header-back-wrapper {
-  transform: translateX(-15px);
-}
-
-.header-fade-leave-to.header-back-wrapper {
-  transform: translateX(-15px);
-}
-
-.fade-mdc-enter-active,
-.fade-mdc-leave-active {
-  transition: opacity 0.5s ease;
-}
-.fade-mdc-enter-from,
-.fade-mdc-leave-to {
-  opacity: 0;
-}
-
-/* 定义统一的优雅曲线：指数减速曲线 */
-.slide-right-fancy-enter-active,
-.slide-left-fancy-enter-active {
-  transition: all 0.9s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-/* 左侧：从左侧稍远一点滑入，带一点点缩小 */
-.slide-right-fancy-enter-from {
-  opacity: 0;
-  transform: translateX(-40px) scale(0.95);
-}
-
-/* 右侧：增加 transition-delay 产生交错感 */
-.slide-left-fancy-enter-active {
-  transition-delay: 0.12s; /* 关键：延迟 120ms 触发 */
-}
-
-.slide-left-fancy-enter-from {
-  opacity: 0;
-  transform: translateX(40px) scale(0.95);
-}
-
-/* 果冻回弹动画定义 */
-.jelly-pop-enter-active {
-  /* 使用自定义贝塞尔曲线实现回弹效果 */
-  /* 这个曲线在结束前会稍微超过 1.0 然后弹回 */
-  transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.jelly-pop-enter-from {
-  opacity: 0;
-  transform: scale(0.5); /* 从更小开始缩放 */
-}
-
-.jelly-pop-enter-to {
-  opacity: 1;
-  transform: scale(1);
-}
-
-/* 离开时的效果（可选，保持平滑） */
-.jelly-pop-leave-active {
-  transition: all 0.3s ease-in;
-}
-.jelly-pop-leave-to {
-  opacity: 0;
-  transform: scale(0.5);
-}
-
-/* 1. 容器：这是拉动左侧组件的关键 */
-.auth-wrapper {
-  display: flex;
-  align-items: center;
-  /* 允许容器宽度收缩，但不允许内容换行 */
-  overflow: visible;
-}
-
-/* 2. 动画活跃状态 */
-.auth-slide-enter-active,
-.auth-slide-leave-active {
-  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-  max-width: 200px; /* 足够容纳头像+按钮的宽度 */
-}
-
-/* 3. 进场与出场状态：控制宽度坍塌，从而实现全员滑动 */
-.auth-slide-enter-from,
-.auth-slide-leave-to {
-  opacity: 0;
-  max-width: 0;
-  transform: translateX(10px);
-}
-
-/* 4. 内部条目：防止宽度变小时内部组件乱跳 */
-.auth-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  white-space: nowrap;
-}
-
-/* 5. 头像弹出：去掉 overflow 限制后更自然 */
-.avatar-pop {
-  transform-origin: center;
-}
-.auth-slide-enter-active .avatar-pop {
-  animation: auth-pop-in 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-@keyframes auth-pop-in {
-  0% { transform: scale(0); opacity: 0; }
-  100% { transform: scale(1); opacity: 1; }
-}
-
-/* 6. 联动：让左侧所有组件都有位移过渡 */
-.flex.items-center.gap-3 > * {
-  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* 内容滑入 */
-.slide-up-content {
-  animation: slide-up 0.6s ease-out forwards;
-}
-
-@keyframes slide-up {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
+/* ==========================================================================
+   7. 特定组件与功能增强
+   ========================================================================== */
+.slide-up-content { animation: slide-up 0.6s ease-out forwards; }
 
 .comment-section {
-  /* 关键：给评论区一个进入延迟，确保它在正文动画开始后才显示 */
-  transition: opacity 0.8s ease cubic-bezier(0.4, 0, 0.2, 1);
+  transition: opacity 0.8s ease var(--ease-in-out-quint);
   transition-delay: 0.5s;
 }
 
-.inner-fade-enter-active {
-  transition: opacity 0.6s ease-out;
-}
-.inner-fade-enter-from {
-  opacity: 0;
-}
-
-.inner-fade-leave-active {
-  transition: none;
-  position: absolute;
-}
-
-.animate-heart-pop {
-  animation: heart-pop 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-
-@keyframes heart-pop {
-  0% {
-    transform: scale(1);
-  }
-  25% {
-    transform: scale(0.8);
-  }
-  50% {
-    transform: scale(1.2);
-  }
-  100% {
-    transform: scale(1);
-  }
-}
+.animate-heart-pop { animation: heart-pop 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
 
 .timeline-item-wrapper {
-  /* 初始设为透明，防止动画还没开始时突然闪现一下 */
   opacity: 0;
   will-change: transform, opacity;
   backface-visibility: hidden;
 }
 
-/* 绝对定位让两者重叠，消除切换时的空白期 */
-.post-skeleton-wrapper {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  z-index: 1;
-  pointer-events: none;
-}
+/* 骨架屏重叠处理 */
+.post-skeleton-wrapper { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+.post-content-wrapper.ready-to-animate { position: relative; z-index: 2; opacity: 0; }
 
-.post-content-wrapper.ready-to-animate {
-  position: relative;
-  z-index: 2; /* 确保内容盖在骨架屏上方 */
-  opacity: 0;
-  /* 初始不可见，直到 animateEntrance 改变它 */
-}
-
-.fade-leave-active {
-  transition: opacity 0.5s ease;
-}
-.fade-leave-to {
-  opacity: 0;
-}
-
-.prose {
-  /* 告诉浏览器这部分内容渲染相对独立，减少重绘范围 */
-  contain: content;
-}
-
+/* Prose 内容美化 */
+.prose { contain: content; }
 .prose a {
-  /* 1. 覆盖 Tailwind 默认样式 */
   text-decoration: none !important;
   border-bottom: none !important;
   box-shadow: none !important;
-
-  /* 2. 动画核心代码 */
   display: inline;
   background-image: linear-gradient(to right, var(--ui-primary), var(--ui-primary));
   background-size: 0% 2px;
   background-repeat: no-repeat;
-  background-position: left 100%; /* 确保在文字最下方 */
-  transition: background-size 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-
-  /* 3. 避开拼音下划线干扰（可选） */
+  background-position: left 100%;
+  transition: background-size 0.3s var(--ease-in-out-quint);
   padding-bottom: 2px;
 }
+.prose a:hover { background-size: 100% 2px; }
 
-.prose a:hover {
-  background-size: 100% 2px;
-}
-
-/* 如果容器内第一个元素不是 h1 而是 h2 */
-.prose h2 {
-  font-size: 1.55rem;
-  margin-top: 1em;
-}
-
-/* 当 h2 是容器内的第一个元素时（即上方没有 h1 或其他内容） */
-.prose h2:first-child {
-  font-size: 1.75rem;    /* 增大字号，模拟 h1 的视觉效果 */
-  margin-top: 0;       /* 颜色加深 */
-}
+.prose h2 { font-size: 1.55rem; margin-top: 1em; }
+.prose h2:first-child { font-size: 1.75rem; margin-top: 0; }
 
 .prose :where(img):not(:where([class~='not-prose'], [class~='not-prose'] *)) {
-  width: 100%;
-  height: auto;
-  aspect-ratio: 16 / 9;
-  object-fit: cover;
-  margin-top: 0px;
-  margin-bottom: 0px;
-  border-radius: var(--radius-lg);
+  width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: cover;
+  margin: 0; border-radius: var(--radius-lg);
 }
 
-.prose :where(code):not(:where([class~="not-prose"], [class~="not-prose"] *))::before,
-.prose :where(code):not(:where([class~="not-prose"], [class~="not-prose"] *))::after {
-    content: "";
-}
+.prose :where(code):not(:where([class~="not-prose"] *))::before,
+.prose :where(code):not(:where([class~="not-prose"] *))::after { content: ""; }
 
 .prose :not(pre)>code {
   background-color: var(--ui-code-bg);
   border-radius: 6px;
   padding: 2px 6px 1px 6px;
-  border: 0px;
 }
-
 .prose :not(pre,h1,h2,h3,h4,h5,h6)>code {
   font-family: var(--font-mono);
   color: var(--ui-primary);
   font-size: .875em;
 }
 
-/* ================================
- * Code Block Container (UI Shell)
- * ================================ */
+/* 代码块编辑器样式 */
 .custom-editor-canvas pre {
-  position: relative;
-  padding-top: 2.25rem; /* 给 filename 留空间 */
-  border-radius: 0.5rem;
-  overflow: hidden;
-
-  background: var(--ui-bg);
-  border: 1px solid var(--ui-border-muted);
+  position: relative; padding-top: 2.25rem; border-radius: 0.5rem;
+  overflow: hidden; background: var(--ui-bg); border: 1px solid var(--ui-border-muted);
 }
-
-/* ================================
- * Filename Header (Meta UI)
- * ================================ */
 .custom-editor-canvas .code-filename {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-
-  height: 2.25rem;
-  padding: 0 0.75rem;
-
-  display: flex;
-  align-items: center;
-
-  font-size: 0.8rem;
-  font-weight: 500;
-  font-family: var(--font-sans);
-
-  color: var(--ui-text-dimmed);
-  background: var(--ui-bg-muted);
-
-  border-bottom: 1px solid var(--ui-border-muted);
-
-  user-select: none;
-  pointer-events: none;
+  position: absolute; inset: 0 0 auto 0; height: 2.25rem; padding: 0 0.75rem;
+  display: flex; align-items: center; font-size: 0.8rem; font-weight: 500;
+  color: var(--ui-text-dimmed); background: var(--ui-bg-muted);
+  border-bottom: 1px solid var(--ui-border-muted); user-select: none; pointer-events: none;
 }
+.tiptap pre > code { display: block; padding: .8rem .1rem; background: transparent; }
+.tiptap { overflow-y: auto; height: 400px; }
 
-/* ================================
- * Code Content (Semantic Scope)
- * ================================ */
-.tiptap pre > code {
-  display: block;
-  padding: .8rem .1rem;
-  background: transparent;
-}
+/* Emoji 选择器定制 */
+.v3-emojis button { flex-basis: 16.6% !important; max-width: 16.6% !important; font-size: 24px !important; border-radius: 4px !important; }
+.v3-emoji-picker .v3-body { padding: 11px 0 15px 11px !important; }
+.v3-emoji-picker .v3-footer { display: none !important; }
 
-/* ================================
- * Light Mode – Improve Readability
- * ================================ */
-html:not(.dark) .tiptap pre > code {
-  color: var(--ui-text);
-}
-
-/* ================================
- * Dark Mode – Keep Native Contrast
- * ================================ */
-.dark .tiptap pre > code {
-  background: transparent;
-}
-
-.v3-emojis button {
-  flex-basis: 16.6% !important;
-  max-width: 16.6% !important;
-  font-size: 24px !important;
-  border-radius: 4px !important;
-}
-
-.v3-emoji-picker .v3-body {
-  padding: 11px 0 15px 11px !important;
-}
-
-.v3-emoji-picker .v3-footer {
-  display: none !important;
-}
-
-.tiptap {
-  overflow-y: auto;
-  height: 400px;
-}
-
+/* 扫光与点击反馈 */
 .glare {
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 60%;
-  height: 100%;
+  position: absolute; inset: 0; width: 60%;
   background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
   animation: flare 4s infinite;
 }
+.side:active { opacity: 0.9; }
+.animate-favourite { animation: icon-pop 0.4s var(--ease-jelly); }
+.animate-crack { animation: icon-crack 0.4s ease-in-out; }
 
-@keyframes flare {
-  0% {
-    left: -150%;
-  }
-  40% {
-    left: 150%;
-  }
-  100% {
-    left: 150%;
-  }
-}
+/* Eric SVG 签名动画 */
+.eric path { stroke-dasharray: 1000px; stroke-dashoffset: 1000px; }
+.eric path:nth-child(1) { animation: write 5s ease forwards; }
+.eric path:nth-child(2) { animation: write 5s ease forwards; animation-delay: 1.5s; }
+.eric path:nth-child(3) { animation: write 5s ease forwards; animation-delay: 2s; }
 
-.shake-red {
-  transform: scale(1.02) rotate(-1deg);
-}
-.shake-blue {
-  transform: scale(1.02) rotate(1deg);
-}
+.logo-wrapper svg { width: 32px; height: auto; display: block; }
+.logo-wrapper path { stroke-dasharray: none; stroke-dashoffset: 0; opacity: 1; }
 
-/* 点击反馈 */
-.side:active {
-  opacity: 0.9;
-}
-
-/* 红方：心跳放大动画 */
-.animate-favourite {
-  animation: icon-pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-
-@keyframes icon-pop {
-  0% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.5) rotate(-15deg);
-  }
-  100% {
-    transform: scale(1);
-  }
-}
-
-/* 蓝方：破碎抖动动画 */
-.animate-crack {
-  animation: icon-crack 0.4s ease-in-out;
-}
-
-@keyframes icon-crack {
-  0% {
-    transform: translate(0);
-  }
-  20% {
-    transform: translate(-2px, 2px);
-  }
-  40% {
-    transform: translate(2px, -2px);
-  }
-  60% {
-    transform: translate(-2px, -2px);
-  }
-  80% {
-    transform: translate(2px, 2px);
-  }
-  100% {
-    transform: translate(0);
-  }
-}
-
-.logo-wrapper path {
-  stroke-dasharray: none;
-  stroke-dashoffset: 0;
-  opacity: 1; /* 确保默认可见 */
-}
-
-.logo-wrapper svg {
-  width: 32px;
-  height: auto;
-  display: block;
-}
-
-/* 添加减少动画的媒体查询 */
+/* ==========================================================================
+   8. 性能优化与无障碍
+   ========================================================================== */
 @media (prefers-reduced-motion: reduce) {
-  *,
-  ::before,
-  ::after {
+  *, ::before, ::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
-
-  .eric path {
-    stroke-dasharray: none;
-    stroke-dashoffset: 0;
-    opacity: 1;
-  }
-}
-
-@keyframes write {
-  0% {
-    stroke-dashoffset: 1000px;
-    opacity: 0;
-  }
-
-  10% {
-    opacity: 1;
-  }
-
-  100% {
-    stroke-dashoffset: 0;
-    opacity: 1;
-  }
-}
-
-/* 只在 .eric 类下的路径应用动画 */
-.eric path:nth-child(1) {
-  stroke-dasharray: 1000px;
-  stroke-dashoffset: 1000px;
-  animation: write 5s ease forwards;
-}
-
-.eric path:nth-child(2) {
-  stroke-dasharray: 1000px;
-  stroke-dashoffset: 1000px;
-  animation: write 5s ease forwards;
-  animation-delay: 1.5s;
-}
-
-.eric path:nth-child(3) {
-  stroke-dasharray: 1000px;
-  stroke-dashoffset: 1000px;
-  animation: write 5s ease forwards;
-  animation-delay: 2s;
-}
-
-body::before {
-  content: '';
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-size: cover;
-  background-position: center;
-  pointer-events: none;
-  will-change: transform;
-  z-index: -1;
-  background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23666666' fill-opacity='0.04' fill-rule='evenodd'/%3E%3C/svg%3E");
+  .eric path { stroke-dasharray: none; stroke-dashoffset: 0; opacity: 1; }
 }

@@ -40,6 +40,12 @@ const emit = defineEmits<{
 
 const { handleCopy, handleShare, showAuthToast } = usePostsMenu(props.item);
 
+const performAction = (action: () => void) => {
+  requestAnimationFrame(() => {
+    setTimeout(action, 150);
+  });
+};
+
 const authItem = (config: any) => ({
   ...config,
   class: !props.canViewDrafts ? 'opacity-50 cursor-not-allowed' : '',
@@ -67,7 +73,7 @@ const dropdownItems = computed(() => {
         {
           icon: 'i-hugeicons:lock-key',
           label: '请先登录',
-          onClick: () => setTimeout(() => navigateTo('/auth'), 300),
+          onClick: () => performAction(() => navigateTo('/auth')),
         },
       ],
     ];
@@ -79,7 +85,7 @@ const dropdownItems = computed(() => {
       authItem({
         label: '重新编辑',
         icon: 'i-hugeicons:edit-04',
-        onClick: () => setTimeout(() => navigateTo(`/edit/${props.item.id}`), 300),
+        onClick: () => performAction(() => navigateTo(`/edit/${props.item.id}`)),
       }),
       authItem({
         label: '永久删除',

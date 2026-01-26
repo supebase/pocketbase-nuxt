@@ -36,7 +36,7 @@ export default defineApiHandler(async (event): Promise<AuthResponse> => {
    * - 立即调用 authWithPassword 进行登录，使当前 pb.authStore 获得 Token。
    * - 处理可能存在的 location 或初始个人资料 (profile) 字段。
    */
-  await registerService({ pb, email, password, passwordConfirm, location });
+  await registerService({ pb, email, password, passwordConfirm, location, event });
 
   /**
    * 会话持久化
