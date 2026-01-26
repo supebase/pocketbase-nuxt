@@ -5,7 +5,10 @@
         攒了 <CommonAnimateNumber :value="displayCount" /> 篇
         <template #fallback> 攒了 <CommonAnimateNumber :value="0" /> 篇 </template>
       </ClientOnly>
-      <div class="flex items-center ml-1">
+      <div
+        class="flex items-center ml-1 duration-500"
+        :class="[displayCount > 0 ? 'opacity-100 rotate-0' : 'opacity-0 -rotate-180']"
+      >
         <UIcon
           v-if="isRefreshing"
           name="i-hugeicons:refresh"

@@ -22,9 +22,11 @@ interface Props {
   isLogined: boolean;
   item: {
     id: string;
+    user: string;
     cleanContent?: string;
   };
   canViewDrafts: boolean;
+  currentUserId?: string;
 }
 
 interface Item {
@@ -33,7 +35,6 @@ interface Item {
 }
 
 const props = defineProps<Props>();
-
 const emit = defineEmits<{
   requestDelete: [item: Item];
 }>();
@@ -46,11 +47,25 @@ const performAction = (action: () => void) => {
   });
 };
 
-const authItem = (config: any) => ({
-  ...config,
-  class: !props.canViewDrafts ? 'opacity-50 cursor-not-allowed' : '',
-  onClick: () => (props.canViewDrafts ? config.onClick() : showAuthToast()),
-});
+const isAuthor = computed(() => props.isLogined && props.currentUserId === props.item.user);
+
+const authItem = (config: any) => {
+  const hasPermission = isAuthor.value;
+
+  return {
+    ...config,
+    class: !hasPermission ? 'opacity-50 cursor-not-allowed' : '',
+    onClick: () => {
+      if (!props.isLogined) {
+        showAuthToast('请先登录后再进行操作', '需要身份认证');
+      } else if (!hasPermission) {
+        showAuthToast('只有内容的所有者可以进行此操作', '无权操作');
+      } else {
+        config.onClick();
+      }
+    },
+  };
+};
 
 const dropdownItems = computed(() => {
   const common = [

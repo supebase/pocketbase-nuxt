@@ -40,6 +40,8 @@ export function usePostsActions(refreshCallback: () => Promise<void> | void) {
         icon: 'i-hugeicons:alert-02',
         color: 'error',
       });
+
+      isDeleteModalOpen.value = false;
     } finally {
       // 5. 状态清理
       isDeleting.value = false;

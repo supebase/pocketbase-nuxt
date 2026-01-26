@@ -69,6 +69,7 @@
                   :is-logined="loggedIn"
                   :item="item"
                   :can-view-drafts="canViewDrafts ?? false"
+                  :current-user-id="user?.id"
                   @request-delete="handleRequestDelete"
                 />
               </div>

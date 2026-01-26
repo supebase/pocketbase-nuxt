@@ -35,10 +35,10 @@ export const usePostsMenu = (item: { id: string; cleanContent?: string }) => {
     }
   };
 
-  const showAuthToast = () => {
+  const showAuthToast = (description: string, title: string = '权限不足') => {
     toast.add({
-      title: '权限不足',
-      description: '只有已认证用户可以进行此操作',
+      title,
+      description,
       icon: 'i-hugeicons:alert-02',
       color: 'warning',
     });

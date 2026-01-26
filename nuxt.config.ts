@@ -71,6 +71,7 @@ export default defineNuxtConfig({
         'prosemirror-model',
         'prosemirror-view',
         'prosemirror-gapcursor',
+        'partysocket',
       ],
     },
   },

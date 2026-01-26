@@ -16,11 +16,16 @@ export default defineApiHandler(async (event): Promise<CommentsListResponse> => 
   });
 
   const postId = (query.post || query.postId) as string | undefined;
-  let filter = query.filter as string | undefined;
 
-  if (postId) {
-    filter = pb.filter('post = {:postId}', { postId });
+  if (!postId) {
+    throw createError({
+      status: 400,
+      message: '参数缺失：未提供内容 ID 列表',
+      statusText: 'Bad Request',
+    });
   }
+
+  const filter = pb.filter('post = {:postId}', { postId });
 
   // 2. 调用评论服务：仅获取基础评论数据（解耦后的 Service）
   const result = await getCommentsList({

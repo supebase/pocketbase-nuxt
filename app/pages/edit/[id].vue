@@ -30,6 +30,7 @@ definePageMeta({
 });
 
 const { markAsUpdated } = usePostUpdateTracker();
+const toast = useToast();
 const route = useRoute();
 const { id } = route.params as { id: string };
 
@@ -97,7 +98,21 @@ const handleSubmit = async () => {
     }
 
     markAsUpdated(id);
+
+    toast.add({
+      title: '更新成功',
+      icon: 'i-hugeicons:checkmark-circle-03',
+      color: 'success',
+    });
+
     await navigateTo('/');
+  } catch (err: any) {
+    toast.add({
+      title: '编辑失败',
+      description: err.data?.message || '未知错误',
+      icon: 'i-hugeicons:alert-02',
+      color: 'error',
+    });
   } finally {
     isSubmitting.value = false;
   }

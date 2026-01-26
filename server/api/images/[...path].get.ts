@@ -3,7 +3,7 @@
  * @description 资源代理接口，支持路径规范化校验、安全过滤及缓存策略。
  */
 
-import { normalize } from 'node:path';
+import { posix } from 'node:path';
 
 export default defineEventHandler(async (event) => {
   // 1. 获取并解码路径参数
@@ -19,25 +19,28 @@ export default defineEventHandler(async (event) => {
   // 解码 URL 编码（处理 %2e 等绕过手段）
   const decodedPath = decodeURIComponent(rawPath);
 
+  if (decodedPath.includes('\0')) {
+    throw createError({ status: 400, message: '无效的路径字符' });
+  }
+
+  const unifiedPath = decodedPath.replace(/\\/g, '/');
+
   // 2. 路径安全校验 (Anti-Path Traversal)
   // normalize 会将 'a/../b' 转换为 'b'，去掉多余斜杠
-  const normalizedPath = normalize(decodedPath);
+  const normalizedPath = posix.normalize(unifiedPath);
 
   // 严格检查：禁止任何跳出当前目录的尝试
   // 在 Windows/Linux 下，normalize 处理后的非法路径通常以 '..' 或系统根目录开头
   if (
     normalizedPath.startsWith('..') ||
-    normalizedPath.startsWith('/') ||
-    normalizedPath.startsWith('\\') ||
-    normalizedPath.includes('\0') // 禁止空字节攻击
+    posix.isAbsolute(normalizedPath) || // 检查 / 开头
+    normalizedPath === '.'
   ) {
     throw createError({
       status: 403,
       message: '非法访问：路径超限',
     });
   }
-
-  //
 
   // 3. 构造后端目标 URL
   const config = useRuntimeConfig();
@@ -84,6 +87,7 @@ export default defineEventHandler(async (event) => {
 
     // 默认回退到 image/png，但优先使用后端返回的真实类型
     setResponseHeader(event, 'Content-Type', contentType || 'image/png');
+    setResponseHeader(event, 'X-Content-Type-Options', 'nosniff');
 
     // 生产环境开启强缓存策略
     if (process.env.NODE_ENV === 'production') {
