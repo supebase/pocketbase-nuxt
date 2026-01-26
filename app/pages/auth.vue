@@ -1,5 +1,5 @@
 <template>
-  <UCard variant="subtle" class="select-none backdrop-blur ring-0">
+  <UCard variant="subtle" class="select-none backdrop-blur ring-0 mt-8.5">
     <UTabs v-model="activeTab" :items="TABS" :content="false" color="primary" class="w-full gap-4" />
 
     <div class="mt-4 space-y-4">

@@ -1,5 +1,5 @@
 <template>
-  <aside class="hidden xl:block absolute top-2 left-full ml-10 w-72 h-full select-none">
+  <aside class="hidden xl:block absolute top-1 left-full ml-9.5 w-72 h-full select-none">
     <div class="sticky top-28 max-h-[calc(100vh-120px)] overflow-y-auto custom-scrollbar">
       <nav v-if="toc?.links?.length">
         <ul class="space-y-1 border-l border-neutral-200 dark:border-neutral-800 pl-4">

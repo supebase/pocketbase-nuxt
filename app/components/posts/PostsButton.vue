@@ -4,7 +4,7 @@
     tabindex="-1"
     variant="link"
     :ui="{
-      base: 'group relative px-5 py-2.5 rounded-xl bg-white dark:bg-neutral-950 font-bold tracking-wider uppercase text-sm transition-all! duration-500 scale-105 hover:scale-100 border border-rose-500/40 dark:border-purple-500/40 hover:border-rose-500/5 dark:hover:border-purple-500/15 overflow-visible items-center justify-center',
+      base: 'group relative px-4 py-2 rounded-xl bg-white dark:bg-neutral-950 font-bold tracking-wider uppercase text-sm transition-all! duration-500 scale-105 hover:scale-100 border border-rose-500/40 dark:border-purple-500/40 hover:border-rose-500/5 dark:hover:border-purple-500/15 overflow-visible items-center justify-center',
       label: 'contents',
       leadingIcon: 'hidden',
       trailingIcon: 'hidden',

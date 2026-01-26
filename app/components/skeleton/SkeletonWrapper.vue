@@ -1,5 +1,5 @@
 <template>
-  <div :class="['mask-b-from-10 animate-pulse opacity-50 w-full', containerClass]">
+  <div :class="['mask-b-from-10 w-full', containerClass]">
     <SkeletonBase :config="config" />
   </div>
 </template>

@@ -16,7 +16,7 @@
         v-else
         :class="[item.type === 'circle' ? 'rounded-full' : 'rounded', item.class]"
         :ui="{
-          background: 'bg-neutral-200/80 dark:bg-neutral-800/80',
+          background: 'bg-neutral-200 dark:bg-neutral-800',
           animate: 'animate-none',
         }"
       />
