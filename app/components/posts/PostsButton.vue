@@ -4,7 +4,7 @@
     tabindex="-1"
     variant="link"
     :ui="{
-      base: 'group relative px-4 py-2 rounded-xl bg-white dark:bg-neutral-950 font-bold tracking-wider uppercase text-sm transition-all! duration-500 scale-105 hover:scale-100 border border-rose-500/40 dark:border-purple-500/40 hover:border-rose-500/5 dark:hover:border-purple-500/15 overflow-visible items-center justify-center',
+      base: 'group relative px-4 py-2 rounded-xl bg-white dark:bg-neutral-950 font-bold tracking-wider uppercase text-sm border border-rose-500/40 dark:border-purple-500/40 hover:border-rose-500/5 dark:hover:border-purple-500/15 overflow-visible items-center justify-center',
       label: 'contents',
       leadingIcon: 'hidden',
       trailingIcon: 'hidden',
@@ -12,11 +12,10 @@
     :class="[postButtonConfig.disabled ? 'grayscale' : '']"
   >
     <template #default>
-      <div class="flex items-center gap-2 relative z-10 text-default">
-        <UIcon
-          :name="postButtonConfig.icon"
-          class="w-5 h-5 transition-transform duration-700 scale-125 group-hover:scale-100"
-        />
+      <div
+        class="flex items-center gap-2 relative z-10 text-default transition-transform duration-500 transform scale-105 group-hover:scale-100"
+      >
+        <UIcon :name="postButtonConfig.icon" class="size-5" />
         {{ postButtonConfig.label }}
       </div>
 

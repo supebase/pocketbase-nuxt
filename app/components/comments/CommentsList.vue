@@ -115,11 +115,18 @@ const confirmDelete = async () => {
 
   isDeleting.value = true;
   const targetToDelete = selectedComment.value; // 2. 局部变量锁定当前要删除的对象
+  const startTime = Date.now();
 
   try {
     await $fetch(`/api/collections/comment/${targetToDelete.id}`, {
       method: 'DELETE',
     });
+
+    const elapsed = Date.now() - startTime;
+    const minDisplayTime = 500;
+    if (elapsed < minDisplayTime) {
+      await new Promise((resolve) => setTimeout(resolve, minDisplayTime - elapsed));
+    }
 
     // 动画协调：先关弹窗
     isModalOpen.value = false;

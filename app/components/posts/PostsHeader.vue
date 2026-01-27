@@ -1,6 +1,6 @@
 <template>
   <div class="flex items-center justify-between w-full min-h-11">
-    <div class="flex items-center gap-1 text-[15px] tracking-widest text-muted mt-3">
+    <div class="flex items-center gap-1 text-[15px] tracking-widest text-dimmed font-medium mt-3">
       <ClientOnly>
         攒了 <CommonAnimateNumber :value="displayCount" /> 篇
         <template #fallback> 攒了 <CommonAnimateNumber :value="0" /> 篇 </template>

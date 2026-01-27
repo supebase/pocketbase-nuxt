@@ -10,20 +10,19 @@
         enter-from-class="opacity-0 scale-50"
         leave-active-class="transition duration-150 ease-in"
         leave-to-class="opacity-0 scale-50"
-        mode="out-in"
       >
-        <UIcon v-if="isLoading" name="i-hugeicons:refresh" class="size-5 text-primary animate-spin" key="loading" />
-        <UIcon
-          v-else
-          :name="liked ? 'i-hugeicons:heart-check' : 'i-hugeicons:favourite'"
-          :class="[
-            'size-5 transition-all duration-300',
-            liked ? 'text-primary scale-110' : 'text-dimmed group-hover:text-neutral-500',
-            liked && isManualClick ? 'animate-heart-pop' : '',
-          ]"
-          :key="liked ? 'liked' : 'unliked'"
-        />
+        <UIcon v-if="isLoading" name="i-hugeicons:refresh" class="absolute size-5 text-primary animate-spin" />
       </Transition>
+
+      <UIcon
+        :name="liked ? 'i-hugeicons:heart-check' : 'i-hugeicons:favourite'"
+        :class="[
+          'size-5 transition-all duration-300',
+          liked ? 'text-primary scale-110' : 'text-dimmed scale-100',
+          isManualClick ? 'animate-heart-pop' : '',
+          isLoading ? 'opacity-40 blur-[0.5px]' : 'opacity-100',
+        ]"
+      />
     </div>
 
     <CommonAnimateNumber :value="localLikesCount" class="tabular-nums text-sm text-dimmed font-medium" />
@@ -67,7 +66,11 @@ const handleLike = async () => {
     count: localLikesCount.value,
   };
 
-  isManualClick.value = true;
+  isManualClick.value = false;
+
+  nextTick(() => {
+    isManualClick.value = true;
+  });
 
   // 1. 乐观更新
   isLoading.value = true;

@@ -65,7 +65,7 @@
             size="lg"
             variant="ghost"
             class="hover:bg-transparent! cursor-pointer px-0 text-muted"
-            loading-auto
+            :loading="isSubmitting"
             :icon="submitIcon"
             :disabled="isSubmitDisabled"
             :ui="{ leadingIcon: 'size-5' }"
@@ -170,30 +170,47 @@ const handleSubmit = async () => {
   globalError.value = '';
   errors.comment = '';
 
+  const startTime = Date.now();
+
+  let isSuccess = false;
+  let responseData = null;
+
   try {
     const response = await $fetch<any>('/api/collections/comments', {
       method: 'POST',
       body: { post: form.post, comment: form.comment.trim() },
     });
 
-    const newComment = response.data?.comment;
-    if (newComment) {
-      const optimisticComment: CommentRecord = {
-        ...newComment,
+    responseData = response.data?.comment;
+    isSuccess = !!responseData;
+  } catch (error: any) {
+    globalError.value = error.data?.message || '发送失败，请稍后再试';
+  } finally {
+    const elapsed = Date.now() - startTime;
+    if (elapsed < 600) await new Promise((r) => setTimeout(r, 600 - elapsed));
+
+    isSubmitting.value = false;
+
+    if (isSuccess) {
+      form.comment = '';
+
+      nextTick(() => {
+        textareaRef.value?.textarea?.focus();
+      });
+
+      const optimisticComment = {
+        ...responseData,
         expand: { user: { ...currentUser.value } },
       };
-      form.comment = '';
+
       emit('comment-created', optimisticComment);
+
       toast.add({
         title: '评论发表成功',
         icon: 'i-hugeicons:checkmark-circle-03',
         color: 'success',
       });
     }
-  } catch (error: any) {
-    globalError.value = error.data?.message || '发送失败，请稍后再试';
-  } finally {
-    isSubmitting.value = false;
   }
 };
 
