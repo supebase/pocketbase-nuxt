@@ -33,10 +33,14 @@ export default defineEventHandler(async (event) => {
 
     const info = data?.ipdata?.info1;
 
-    if (info) {
+    if (info && info !== ip) {
       // 再次校验 API 返回的内容是否涉及私有地址描述
       const isInternalDesc = /保留IP|局域网|私有|本机地址/i.test(info);
-      result.location = isInternalDesc ? '内网地址' : info;
+      if (isInternalDesc) {
+        result.location = '内网地址';
+      } else {
+        result.location = info;
+      }
     }
   } catch (error) {
     // 4. 报错降级：console 记录错误，但返回给前端基本 IP 信息
