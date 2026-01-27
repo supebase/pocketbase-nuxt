@@ -1,8 +1,8 @@
 <template>
   <div>
-    <div v-if="status === 'pending' && !postWithRelativeTime && isLongLoading">
+    <!-- <div v-if="status === 'pending' && !postWithRelativeTime && isLongLoading">
       <SkeletonWrapper type="post" />
-    </div>
+    </div> -->
 
     <div v-if="postWithRelativeTime">
       <PostHeader :post="postWithRelativeTime" />

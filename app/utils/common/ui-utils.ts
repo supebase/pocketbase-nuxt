@@ -4,15 +4,22 @@
 export const processAnimateDigits = (value: number) => {
   const formatter = new Intl.NumberFormat('en-US');
   const str = formatter.format(value);
-  const chars = str.split('').reverse();
+  // 不要在 utils 里反转数组，保持字符串顺序，但在生成 ID 时参考其从右往左的权重
+  const chars = str.split('');
+  const length = chars.length;
 
-  let digitIndex = 0;
-  return chars.map((char) => {
+  return chars.map((char, index) => {
     const isDigit = /\d/.test(char);
-    if (isDigit) {
-      return { id: `d-${digitIndex++}`, digit: char, isComma: false };
-    }
-    return { id: `s-${digitIndex}`, digit: char, isComma: true };
+    // 关键点：ID 基于从右向左的距离生成
+    // 比如 1,234 中的 '4' 是 pos-0, '3' 是 pos-1...
+    // 这样当数字变成 12,345 时，'4' 和 '5' 的位移关系依然能被 Vue 识别
+    const reverseIndex = length - 1 - index;
+
+    return {
+      id: isDigit ? `d-${reverseIndex}` : `s-${reverseIndex}`,
+      digit: char,
+      isComma: !isDigit,
+    };
   });
 };
 

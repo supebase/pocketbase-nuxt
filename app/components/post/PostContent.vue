@@ -4,19 +4,14 @@
 
     <div class="relative w-full">
       <div
-        v-if="!animationFinished"
-        class="post-skeleton-wrapper"
-        :class="{ 'opacity-0 transition-opacity duration-300': animationStarted }"
+        v-if="!isReady"
+        class="absolute inset-0 flex items-center justify-center pt-[10vh] text-muted text-sm tracking-widest uppercase animate-pulse"
       >
-        <SkeletonWrapper type="mdc" />
+        正在努力排版 ...
       </div>
 
-      <div v-if="ast" ref="contentRef" class="post-content-wrapper ready-to-animate" :key="postId">
-        <MDCRenderer
-          :body="ast.body"
-          :data="ast.data"
-          class="prose prose-neutral overflow-x-hidden px-2 prose-base prose-blockquote:text-muted prose-blockquote:font-normal prose-blockquote:not-italic prose-blockquote:-ml-2.25 dark:prose-invert leading-7 max-w-none"
-        />
+      <div v-if="ast" ref="contentRef" class="post-content-wrapper" :class="{ 'is-visible': isReady }" :key="postId">
+        <MDCRenderer :body="ast.body" :data="ast.data" class="prose prose-neutral dark:prose-invert max-w-none px-2" />
       </div>
     </div>
   </div>
@@ -24,43 +19,25 @@
 
 <script setup lang="ts">
 const props = defineProps<{ postId: string; toc: any; ast: any }>();
-
-const emit = defineEmits<{
-  rendered: [];
-}>();
+const emit = defineEmits(['rendered']);
 
 const contentRef = ref<HTMLElement | null>(null);
-const animationStarted = ref(false);
-const animationFinished = ref(false);
+const isReady = ref(false);
 
-const animateEntrance = (el: HTMLElement) => {
-  if (animationStarted.value) return;
-  animationStarted.value = true;
-
-  el.animate(
-    [
-      { opacity: 0, transform: 'translateY(10px)', filter: 'blur(4px)' },
-      { opacity: 1, transform: 'translateY(0)', filter: 'blur(0px)' },
-    ],
-    {
-      duration: 500, // 稍微拉长，让过渡更丝滑
-      easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
-      fill: 'forwards',
-    },
-  ).finished.then(() => {
-    animationFinished.value = true; // 此时才彻底移除骨架屏 DOM
+const triggerShow = () => {
+  if (isReady.value) return;
+  // 给一帧延迟，确保 DOM 已经挂载，CSS transition 能生效
+  requestAnimationFrame(() => {
+    isReady.value = true;
     emit('rendered');
   });
 };
 
-// 监听内容注入的核心逻辑
 watch(
   () => props.ast,
   (newAst) => {
     if (newAst) {
-      nextTick(() => {
-        startObserving();
-      });
+      nextTick(() => startObserving());
     }
   },
   { immediate: true },
@@ -70,22 +47,34 @@ function startObserving() {
   const el = contentRef.value;
   if (!el) return;
 
-  // 如果已经有内容了（SSR 场景）
-  if (el.children.length > 0) {
-    animateEntrance(el);
+  // 1. 定义检查函数：只要发现有子元素（无论层级多深）就视为内容已注入
+  const checkContent = () => {
+    // 检查 el 内部是否有任何非空节点，或者特定的 prose 类
+    const content = el.querySelector('.prose');
+    return content && content.childNodes.length > 0;
+  };
+
+  // 2. 如果已经有内容了（SSR 场景或缓存）
+  if (checkContent()) {
+    triggerShow();
     return;
   }
 
-  // 慢速网络场景：监听 MDCRenderer 往里面塞东西的那一刻
+  // 3. 核心修正：监听 subtree，因为 .prose 本身也是异步注入的
   const observer = new MutationObserver((mutations, obs) => {
-    if (el.children.length > 0) {
-      animateEntrance(el);
-      obs.disconnect(); // 动画一旦开始，停止监听
+    if (checkContent()) {
+      triggerShow();
+      obs.disconnect(); // 动画一旦开始，立即断开监听
     }
   });
 
-  observer.observe(el, { childList: true, subtree: true });
-  // 如果 3 秒后还没渲染出来，强制停止监听并显示，防止内容死锁
+  // 必须开启 subtree: true，因为我们要监测 el 深层结构的变化
+  observer.observe(el, {
+    childList: true,
+    subtree: true,
+  });
+
+  // 兜底：如果 3 秒还是空，可能渲染失败或确实没内容
   setTimeout(() => observer.disconnect(), 3000);
 }
 

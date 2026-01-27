@@ -7,16 +7,15 @@
 
 :root {
   --ui-primary: oklch(65.6% 0.241 354.308);
-  --ui-code-bg: rgba(167, 132, 255, 0.11);
   /* 抽取你高频使用的自定义曲线 */
   --ease-jelly: cubic-bezier(0.34, 1.56, 0.64, 1);
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-in-out-quint: cubic-bezier(0.4, 0, 0.2, 1);
+  --digit-duration: 0.6s;
 }
 
 .dark {
   --ui-primary: oklch(60.6% 0.25 292.717);
-  --ui-code-bg: oklch(89.987% 0.07619 70.421 / 0.07);
 }
 
 html, body {
@@ -104,26 +103,77 @@ header::before {
 /* ==========================================================================
    4. 数值滚动组件 (Number Scroll)
    ========================================================================== */
-.number-column { width: 0.65em; height: 1.25em; overflow: hidden; }
-.comma-column { width: 0.3em; text-align: center; }
+.number-column, .comma-column {
+  position: relative;
+  height: 1.25em;
+  /* 确保宽度变化时是平滑的 */
+  transition: width var(--digit-duration) var(--ease-out-expo);
+  overflow: hidden;
+}
+
+.number-column {
+  width: 0.65em; /* 根据你的字体微调 */
+}
+
+.comma-column {
+  width: 0.35em;
+  text-align: center;
+}
+
 .digit-cell {
   height: 1.25em;
+  line-height: 1.25em;
   display: flex;
   align-items: center;
   justify-content: center;
+  /* 核心：强制等宽字体，防止数字切换时左右晃动 */
   font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
 }
+
 .number-scroll {
   display: flex;
   flex-direction: column;
   will-change: transform;
-  transition-timing-function: var(--ease-jelly);
+  /* 使用硬件加速 */
+  backface-visibility: hidden;
+  transition-property: transform;
+  /* 这里的 transitionDuration 应该由 Vue 传入或保持一致 */
+  transition-timing-function: var(--ease-out-expo);
 }
 
-/* Vue 过渡：数值位数变化 */
-.digit-enter-active, .digit-leave-active { transition: all 0.5s ease; }
-.digit-enter-from { opacity: 0; width: 0; transform: translateY(-0.5em); }
-.digit-leave-to { opacity: 0; width: 0; transform: translateY(0.5em); }
+/* ==========================================================================
+   Vue Transition Group (数值位数增减动画)
+   ========================================================================== */
+
+/* 1. 进入动画：新数字（如千位）出现 */
+.digit-enter-from {
+  opacity: 0;
+  width: 0;
+  transform: scale(0.5); /* 稍微缩小一点，增加灵动感 */
+}
+
+/* 2. 离开动画：旧数字消失 */
+.digit-leave-to {
+  opacity: 0;
+  width: 0;
+  transform: translateY(0.5em);
+}
+
+/* 3. 离开时的绝对定位：防止占位导致闪烁 */
+.digit-leave-active {
+  position: absolute;
+  transition: all var(--digit-duration) var(--ease-out-expo);
+}
+
+.digit-enter-active {
+  transition: all var(--digit-duration) var(--ease-out-expo);
+}
+
+/* 4. 排序动画：当数字平移给新进来的数字让位时 */
+.digit-move {
+  transition: transform var(--digit-duration) var(--ease-out-expo);
+}
 
 /* ==========================================================================
    5. Vue Transition 动画钩子 (核心交互逻辑)
@@ -231,9 +281,41 @@ header::before {
   backface-visibility: hidden;
 }
 
-/* 骨架屏重叠处理 */
-.post-skeleton-wrapper { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
-.post-content-wrapper.ready-to-animate { position: relative; z-index: 2; opacity: 0; }
+.post-content-wrapper {
+  opacity: 0;
+  transform: translateY(12px) scale(0.99); /* 加上极其微小的缩放 */
+  transition:
+    opacity 0.8s var(--ease-out-expo),
+    transform 0.8s var(--ease-out-expo);
+}
+
+.post-content-wrapper.is-visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+/* 高级感核心：让 prose 内部的前几个子元素稍微错开一点时间显示 */
+.post-content-wrapper.is-visible .prose > * {
+  animation: reveal-item 0.6s var(--ease-out-expo) both;
+}
+
+.post-content-wrapper.is-visible .prose > *:nth-child(1) { animation-delay: 0.05s; }
+.post-content-wrapper.is-visible .prose > *:nth-child(2) { animation-delay: 0.1s; }
+.post-content-wrapper.is-visible .prose > *:nth-child(3) { animation-delay: 0.15s; }
+.post-content-wrapper.is-visible .prose > *:nth-child(n+4) { animation-delay: 0.2s; }
+
+@keyframes reveal-item {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
 
 /* Prose 内容美化 */
 .prose { contain: content; }
@@ -262,8 +344,13 @@ header::before {
 .prose :where(code):not(:where([class~="not-prose"] *))::before,
 .prose :where(code):not(:where([class~="not-prose"] *))::after { content: ""; }
 
+.prose {
+    :where(pre code):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
+        font-size: 0.875em;
+    }
+}
+
 .prose :not(pre)>code {
-  background-color: var(--ui-code-bg);
   border-radius: 6px;
   padding: 2px 6px 1px 6px;
 }
@@ -271,6 +358,12 @@ header::before {
   font-family: var(--font-mono);
   color: var(--ui-primary);
   font-size: .875em;
+}
+
+.prose blockquote {
+  font-style: normal;
+  margin-left: -0.6rem;
+  border-color: var(--ui-primary);
 }
 
 /* 代码块编辑器样式 */

@@ -1,5 +1,5 @@
 <template>
-  <div class="inline-flex flex-row-reverse items-center tabular-nums overflow-hidden select-none h-[1.25em]">
+  <div class="inline-flex flex-row items-center tabular-nums overflow-hidden select-none h-[1.25em]">
     <transition-group name="digit">
       <div
         v-for="item in processedDigits"
