@@ -53,18 +53,23 @@ export const useCommentEditor = (textareaRef: Ref<any>) => {
     if (selectionStart !== selectionEnd) return currentValue;
 
     const textBeforeCursor = currentValue.substring(0, selectionStart);
-    const mentionMatch = textBeforeCursor.match(MENTION_REGEX);
 
-    if (mentionMatch) {
-      const matchString = mentionMatch[0];
+    // 这里直接写局部正则，专门用来匹配光标结尾处的提及
+    // 注意：这里的正则末尾带有 $
+    const lastAtMatch = textBeforeCursor.match(/@\S+\s?$/);
+
+    if (lastAtMatch) {
+      const matchString = lastAtMatch[0];
       const matchStart = selectionStart - matchString.length;
-      e.preventDefault();
 
+      e.preventDefault();
       const newText = currentValue.substring(0, matchStart) + currentValue.substring(selectionEnd);
+
       nextTick(() => {
         textarea.setSelectionRange(matchStart, matchStart);
         textarea.focus();
       });
+
       return newText;
     }
     return currentValue;

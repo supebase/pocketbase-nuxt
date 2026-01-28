@@ -7,6 +7,8 @@ interface CommentCache {
 const COMMENT_CACHE = new Map<string, CommentCache>();
 const MAX_CACHE_SIZE = 15;
 
+const POST_PARTICIPANTS = new Map<string, Map<string, any>>();
+
 export const useComments = (postId: string) => {
   const {
     allItems: comments,
@@ -20,6 +22,13 @@ export const useComments = (postId: string) => {
 
   const loading = ref(false);
   const lastLoadedPostId = ref<string | null>(null);
+
+  const getParticipantsMap = () => {
+    if (!POST_PARTICIPANTS.has(postId)) {
+      POST_PARTICIPANTS.set(postId, new Map());
+    }
+    return POST_PARTICIPANTS.get(postId)!;
+  };
 
   /**
    * 更新全局缓存
@@ -39,7 +48,22 @@ export const useComments = (postId: string) => {
     const res = await $fetch<any>(`/api/collections/comments`, {
       query: { post: postId, page, perPage: 10 },
     });
-    const items = (res.data?.comments || []).map((c: any) => ({
+
+    const rawItems = res.data?.comments || [];
+    const participants = getParticipantsMap();
+
+    rawItems.forEach((c: any) => {
+      const u = c.expand?.user;
+      if (u && !participants.has(u.id)) {
+        participants.set(u.id, {
+          id: u.id,
+          name: u.name,
+          avatar: u.avatar,
+        });
+      }
+    });
+
+    const items = rawItems.map((c: any) => ({
       ...c,
       likes: c.likes || 0,
       isLiked: c.isLiked || false,
@@ -81,6 +105,13 @@ export const useComments = (postId: string) => {
    */
   const syncSingleComment = (record: CommentRecord, action: 'create' | 'update' | 'delete') => {
     const index = comments.value.findIndex((c) => c.id === record.id);
+    if ((action === 'create' || action === 'update') && record.expand?.user) {
+      const u = record.expand.user;
+      const participants = getParticipantsMap();
+      if (!participants.has(u.id)) {
+        participants.set(u.id, { id: u.id, name: u.name, avatar: u.avatar });
+      }
+    }
     if (action === 'delete' && index !== -1) {
       comments.value.splice(index, 1);
       totalItems.value = Math.max(0, totalItems.value - 1);
@@ -118,12 +149,7 @@ export const useComments = (postId: string) => {
    * 获取参与用户列表
    */
   const getUniqueUsers = () => {
-    const usersMap = new Map();
-    comments.value.forEach((c) => {
-      const u = c.expand?.user;
-      if (u) usersMap.set(u.id, { id: u.id, name: u.name, avatar: u.avatar, location: u.location });
-    });
-    return Array.from(usersMap.values());
+    return Array.from(getParticipantsMap().values());
   };
 
   return {

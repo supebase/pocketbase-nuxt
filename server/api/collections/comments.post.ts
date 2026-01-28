@@ -60,6 +60,14 @@ export default defineApiHandler(async (event) => {
   // 调用 Service 层：执行创建并自动处理数据关联（Expand User）
   const comment = await createComment({ pb, data: createData });
 
+  handleMentionsInText({
+    pb,
+    text: cleanComment,
+    fromUser: { id: user.id, name: user.name },
+    postId: post,
+    commentId: comment.id,
+  }).catch((err) => console.error('Mention processing failed:', err));
+
   return {
     message: '发表评论成功',
     data: {

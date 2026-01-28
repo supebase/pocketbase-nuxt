@@ -1,20 +1,46 @@
 <template>
-  <div class="p-1 w-48 max-h-60 overflow-y-auto">
-    <div v-if="loading" class="p-2 text-center">
-      <UIcon name="i-hugeicons:refresh" class="animate-spin size-4" />
+  <div
+    class="min-w-50 max-h-70 overflow-y-auto bg-white/90 dark:bg-neutral-900/90 backdrop-blur-xl border border-neutral-200/50 dark:border-neutral-800/50 shadow-xl rounded-xl p-1.5 select-none"
+  >
+    <div v-if="loading" class="flex flex-col items-center justify-center py-8 gap-2">
+      <UIcon name="i-hugeicons:loading-03" class="animate-spin size-5 text-primary" />
+      <span class="text-[11px] text-neutral-400">正在寻找...</span>
     </div>
-    <div v-else-if="suggestions.length === 0" class="p-2 text-sm text-center text-dimmed">暂无可提及用户</div>
-    <div v-else>
+
+    <div v-else-if="suggestions.length === 0" class="flex flex-col items-center justify-center py-8 gap-2">
+      <UIcon name="i-hugeicons:user-search-01" class="size-6 text-neutral-300 dark:text-neutral-700" />
+      <p class="text-[12px] text-neutral-400">暂无可提及用户</p>
+    </div>
+
+    <div v-else class="space-y-0.5">
       <div
         v-for="user in suggestions"
         :key="user.id"
         @click="$emit('select', user.name)"
-        class="flex items-center gap-2 p-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded cursor-pointer transition-colors"
+        class="group relative flex items-center gap-2.5 px-2 py-1.5 rounded-lg cursor-pointer transition-all duration-200 hover:bg-neutral-100 dark:hover:bg-neutral-800"
       >
-        <div class="size-5 rounded-full overflow-hidden shrink-0">
-          <CommonGravatar :avatar-id="user.avatar" :size="32" />
+        <div
+          class="absolute left-0 w-1 h-3/5 bg-primary rounded-r-full opacity-0 group-hover:opacity-100 transition-opacity"
+        />
+
+        <div class="size-6 shrink-0 rounded-full overflow-hidden ring-1 ring-neutral-200/50 dark:ring-neutral-700/50">
+          <CommonGravatar :avatar-id="user.avatar" :size="48" class="size-full object-cover" />
         </div>
-        <span class="text-sm truncate">{{ user.name }}</span>
+
+        <div class="flex-1 min-w-0">
+          <span class="text-[13px] font-semibold text-neutral-700 dark:text-neutral-200 truncate block">
+            {{ user.name }}
+          </span>
+        </div>
+
+        <UIcon
+          name="i-hugeicons:arrow-right-01"
+          class="size-3 text-neutral-300 opacity-0 group-hover:opacity-100 transition-opacity"
+        />
+      </div>
+
+      <div class="mt-1.5 pt-1.5 border-t border-neutral-100 dark:border-neutral-800 flex justify-center">
+        <span class="text-[10px] text-neutral-400 font-medium uppercase tracking-wider">选择用户</span>
       </div>
     </div>
   </div>

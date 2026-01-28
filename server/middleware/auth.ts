@@ -19,6 +19,8 @@ const protectedRoutes = [
   { path: '/api/collections/comments', method: 'POST' },
   { path: '/api/collections/comment', method: 'DELETE', isPrefix: true },
   { path: '/api/collections/likes', method: 'POST' },
+  { path: '/api/collections/notification', method: ['GET', 'PATCH'] },
+  { path: '/api/collections/notification', method: ['PATCH', 'DELETE'], isPrefix: true },
 ];
 
 /**

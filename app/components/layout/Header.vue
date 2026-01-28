@@ -10,6 +10,7 @@
           <UButton to="/auth" color="neutral" variant="link" icon="i-hugeicons:lock-key" class="rounded-full" />
         </div>
         <div v-else key="user" class="auth-item">
+          <NotificationsBell />
           <UButton
             @click="handleLogout"
             :loading="isLoggingOut"

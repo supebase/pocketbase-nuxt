@@ -1,5 +1,9 @@
 import type { RealtimePayload } from '~/types';
 
+/**
+ * 全局 SSE 管理器（单例）
+ * 确保在整个应用生命周期内，所有组件共享同一个物理连接
+ */
 const sseManager = {
   instance: null as EventSource | null,
   subscribers: new Set<(payload: RealtimePayload) => void>(),
@@ -13,10 +17,15 @@ const sseManager = {
 
 export const usePocketRealtime = () => {
   const status = useState<'connecting' | 'online' | 'offline'>('pocket-sse-status', () => 'offline');
-  let currentCallback: ((payload: RealtimePayload) => void) | null = null;
 
+  // 跟踪当前组件实例注册的所有回调，用于自动清理
+  const localSubscribers = new Set<(payload: RealtimePayload) => void>();
+
+  /**
+   * 彻底断开物理连接并清理所有定时器
+   */
   const destroyConnection = () => {
-    console.log('[SSE] Destroying connection and clearing timers');
+    console.log('[SSE] 切断物理连接');
     if (sseManager.instance) {
       sseManager.instance.close();
       sseManager.instance = null;
@@ -27,14 +36,19 @@ export const usePocketRealtime = () => {
     status.value = 'offline';
   };
 
+  /**
+   * 建立物理连接逻辑
+   */
   const connectPhysical = () => {
     if (import.meta.server) return;
 
+    // 如果有待执行的自动断开任务，立即取消
     if (sseManager.cleanupTimer) {
       clearTimeout(sseManager.cleanupTimer);
       sseManager.cleanupTimer = null;
     }
 
+    // 检查现有连接状态
     if (sseManager.instance) {
       if (sseManager.instance.readyState === 1) {
         status.value = 'online';
@@ -50,9 +64,9 @@ export const usePocketRealtime = () => {
     sseManager.isConnecting = true;
     status.value = 'connecting';
 
-    console.log('[SSE] Attempting new connection');
+    console.log('[SSE] 初始化连接...');
 
-    const allCollections = ['posts', 'comments', 'likes'];
+    const allCollections = ['posts', 'comments', 'likes', 'notifications'];
     const colsParam = encodeURIComponent(allCollections.join(','));
 
     const es = new EventSource(`/api/realtime?cols=${colsParam}&t=${Date.now()}`, {
@@ -62,7 +76,7 @@ export const usePocketRealtime = () => {
     const reconnect = () => {
       destroyConnection();
       const delay = Math.min(1000 * Math.pow(2, sseManager.retryCount), 30000) + Math.random() * 1000;
-      console.log(`[SSE] Reconnecting in ${Math.round(delay)}ms...`);
+      console.log(`[SSE] 将在 ${Math.round(delay)}ms 后重新连接...`);
 
       sseManager.retryTimer = setTimeout(() => {
         sseManager.retryCount++;
@@ -70,44 +84,36 @@ export const usePocketRealtime = () => {
       }, delay);
     };
 
+    const updateActivity = () => {
+      sseManager.lastActivity = Date.now();
+    };
+
     const startHeartbeat = () => {
       clearInterval(sseManager.heartbeatTimer);
-      sseManager.lastActivity = Date.now();
+      updateActivity();
       sseManager.heartbeatTimer = setInterval(() => {
         const threshold = 60000;
         if (Date.now() - sseManager.lastActivity > threshold) {
-          console.warn('[SSE] Heartbeat timeout, restarting...');
+          console.warn('[SSE] 心跳丢失，正在重新连接...');
           reconnect();
         }
       }, 30000);
     };
 
-    // --- 新增：统一的活跃状态更新函数 ---
-    const updateActivity = () => {
-      sseManager.lastActivity = Date.now();
-    };
-
     es.onopen = () => {
-      console.log('[SSE] Connection established');
+      console.log('[SSE] 在线');
       sseManager.isConnecting = false;
       sseManager.retryCount = 0;
       status.value = 'online';
       startHeartbeat();
     };
 
-    // 监听默认消息 (没有指定 event 字段的消息)
     es.onmessage = updateActivity;
-
-    // --- 修改点：增加对系统事件的监听以维持心跳 ---
-    // 监听后端推送的 event: 'ping'
     es.addEventListener('ping', updateActivity);
-    // 监听后端推送的 event: 'connected'
     es.addEventListener('connected', updateActivity);
 
-    // 为每个业务集合绑定监听器
     allCollections.forEach((col) => {
       es.addEventListener(col, (event: MessageEvent) => {
-        // 收到任何业务数据，自然也代表连接是活跃的
         updateActivity();
         try {
           const data = JSON.parse(event.data);
@@ -116,45 +122,61 @@ export const usePocketRealtime = () => {
             action: data.action,
             record: data.record,
           };
+          // 广播给所有全局订阅者
           sseManager.subscribers.forEach((cb) => cb(payload));
         } catch (e) {
-          // console.error('[SSE] Parse error', e);
+          /* Parse error */
         }
       });
     });
 
     es.onerror = () => {
       sseManager.isConnecting = false;
-      // 注意：EventSource 出错时会自动重连，但我们有自定义的退避机制，所以调用 reconnect
       reconnect();
     };
 
     sseManager.instance = es;
   };
 
+  // 全局一次性初始化：浏览器事件监听
   if (import.meta.client && !(window as any).SSE_GLOBAL_INIT) {
     (window as any).SSE_GLOBAL_INIT = true;
     window.addEventListener('beforeunload', () => destroyConnection());
     window.addEventListener('online', () => {
-      console.log('[SSE] Network back online, refreshing connection');
+      console.log('[SSE] 网络已恢复');
       destroyConnection();
       connectPhysical();
     });
   }
 
+  /**
+   * 公开 API：监听实时数据
+   */
   const listen = (callback: (payload: RealtimePayload) => void) => {
     if (import.meta.server) return;
-    if (sseManager.subscribers.has(callback)) return;
-    currentCallback = callback;
-    sseManager.subscribers.add(callback);
-    connectPhysical();
+
+    if (!sseManager.subscribers.has(callback)) {
+      sseManager.subscribers.add(callback);
+      localSubscribers.add(callback); // 记录到当前组件实例
+      connectPhysical();
+    }
   };
 
-  const close = () => {
-    if (currentCallback) {
-      sseManager.subscribers.delete(currentCallback);
-      currentCallback = null;
+  /**
+   * 公开 API：停止监听
+   * @param callback 可选。如果不传，则清理当前组件注册的所有监听。
+   */
+  const close = (callback?: (payload: RealtimePayload) => void) => {
+    if (callback) {
+      sseManager.subscribers.delete(callback);
+      localSubscribers.delete(callback);
+    } else {
+      // 如果没传特定 callback，清理当前组件的所有订阅
+      localSubscribers.forEach((cb) => sseManager.subscribers.delete(cb));
+      localSubscribers.clear();
     }
+
+    // 检查全局：如果已经没有任何订阅者，延迟关闭物理连接
     if (sseManager.subscribers.size === 0 && sseManager.instance) {
       clearTimeout(sseManager.cleanupTimer);
       sseManager.cleanupTimer = setTimeout(() => {
@@ -165,6 +187,7 @@ export const usePocketRealtime = () => {
     }
   };
 
+  // 组件卸载时自动清理
   onUnmounted(() => close());
 
   return {

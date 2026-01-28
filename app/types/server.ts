@@ -96,3 +96,28 @@ export interface SyncOptions {
   content: string;
   existingImages?: string[];
 }
+
+export interface GetNotificationsOptions {
+  pb: TypedPocketBase;
+  page?: number;
+  perPage?: number;
+  filter?: string;
+}
+
+export interface CreateNotificationOptions {
+  pb: TypedPocketBase;
+  data: Create<'notifications'>;
+}
+
+export interface HandleMentionsOptions {
+  pb: TypedPocketBase;
+  text: string;
+  fromUser: { id: string; name: string };
+  postId: string;
+  commentId: string;
+}
+
+export interface MarkReadOptions {
+  pb: TypedPocketBase;
+  notificationId?: string;
+}

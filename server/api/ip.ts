@@ -26,11 +26,12 @@ export default defineEventHandler(async (event) => {
     const config = useRuntimeConfig();
 
     // 3. 服务端请求外部 API (受保护的环境)
-    const data = await $fetch<{ ipdata: { info1: string } }>(config.geoLocation, {
+    const data = await $fetch<{ ipinfo: { cnip: boolean }; ipdata: { info1: string } }>(config.geoLocation, {
       params: { ip },
       timeout: 3000,
     });
 
+    const cn = data?.ipinfo?.cnip;
     const info = data?.ipdata?.info1;
 
     if (info && info !== ip) {
@@ -39,7 +40,11 @@ export default defineEventHandler(async (event) => {
       if (isInternalDesc) {
         result.location = '内网地址';
       } else {
-        result.location = info;
+        if (cn) {
+          result.location = info.replace(/中国|省|自治区/g, '').trim();
+        } else {
+          result.location = info;
+        }
       }
     }
   } catch (error) {
