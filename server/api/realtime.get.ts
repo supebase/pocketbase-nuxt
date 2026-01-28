@@ -2,6 +2,8 @@
  * @file Real-time SSE Handler
  * @description 提供 Server-Sent Events 流式推送，监听 PocketBase 数据库变动并同步至前端。
  */
+import { updateConnCount } from './metrics.get';
+
 export default defineEventHandler(async (event) => {
   // 1. 设置响应头
   setHeaders(event, {
@@ -19,6 +21,8 @@ export default defineEventHandler(async (event) => {
           .map((c) => c.trim())
           .filter(Boolean)
       : ['posts'];
+
+  updateConnCount(1);
 
   const eventStream = createEventStream(event);
   // getPocketBase 内部现在建议已实现请求内缓存
@@ -71,6 +75,7 @@ export default defineEventHandler(async (event) => {
     isCleaned = true;
 
     clearInterval(timer);
+    updateConnCount(-1);
 
     // 先关闭流，让客户端感知断开
     try {

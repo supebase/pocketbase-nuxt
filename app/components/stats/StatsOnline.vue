@@ -10,6 +10,7 @@
     >
       <UBadge
         v-if="count !== null"
+        @click="isOpen = true"
         variant="subtle"
         color="primary"
         size="md"
@@ -22,10 +23,22 @@
         <span class="tabular-nums tracking-tight">{{ count }} 人在线</span>
       </UBadge>
     </Transition>
+
+    <UModal
+      v-model:open="isOpen"
+      title="系统状态"
+      description="显示当前系统的运行状态和统计信息。"
+      :ui="{ overlay: 'backdrop-blur-xs' }"
+    >
+      <template #body>
+        <StatsServer />
+      </template>
+    </UModal>
   </div>
 </template>
 
 <script setup lang="ts">
 import { useOnlineStats } from '~/utils/stats/stats-logic';
 const { count } = useOnlineStats();
+const isOpen = ref(false);
 </script>

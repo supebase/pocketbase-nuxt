@@ -85,3 +85,26 @@ export interface CacheEntry {
   value: string;
   expiry: number;
 }
+
+export interface ServerMetrics {
+  status: string;
+  mode: string;
+  total_connections?: number;
+  system_resource?: {
+    heap_used: string;
+    rss: string;
+    uptime: string;
+  };
+  summary?: {
+    total_active_connections: number;
+    server_time: string;
+  };
+  instances?: Array<{
+    pm_id: number;
+    status: string;
+    connections: number;
+    cpu: string;
+    memory: string;
+    restart_count: number;
+  }>;
+}
