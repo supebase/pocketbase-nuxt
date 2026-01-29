@@ -8,6 +8,7 @@
         icon="i-hugeicons:folder-search"
         to="https://icones.js.org/collection/simple-icons"
         target="_blank"
+        :ui="{ base: 'rounded-lg' }"
       />
     </UFieldGroup>
 

@@ -1,12 +1,15 @@
 <template>
   <Editor :model-value="form" :max-limit="maxLimit" :disabled="isSubmitting" @submit="handleSubmit">
     <template #actions>
-      <UButton type="button" color="warning" variant="soft" @click="useRouter().back()"> 取消发布 </UButton>
+      <UButton type="button" color="warning" variant="soft" @click="useRouter().back()" :ui="{ base: 'px-4' }">
+        取消发布
+      </UButton>
       <UButton
         type="submit"
         color="neutral"
         :loading="isSubmitting"
         :disabled="isSubmitting || form.content.trim() === '' || form.content.length > maxLimit"
+        :ui="{ base: 'px-4' }"
       >
         发布
       </UButton>

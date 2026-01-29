@@ -93,12 +93,22 @@
         size="xl"
         block
         class="mt-1 cursor-pointer"
+        :ui="{ base: 'rounded-lg h-12' }"
       />
     </UForm>
 
     <USeparator type="dashed" label="或者" class="my-5" />
 
-    <UButton type="button" variant="soft" label="返回首页" color="neutral" size="xl" block to="/" />
+    <UButton
+      type="button"
+      variant="outline"
+      label="返回首页"
+      color="neutral"
+      size="xl"
+      block
+      to="/"
+      :ui="{ base: 'rounded-lg h-12' }"
+    />
   </div>
 </template>
 

@@ -12,8 +12,8 @@
             ? [
                 {
                   label: '立即登录',
-                  variant: 'soft',
                   color: 'neutral',
+                  ui: { base: 'px-5' },
                   to: '/auth',
                 },
               ]

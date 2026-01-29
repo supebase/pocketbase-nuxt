@@ -39,6 +39,11 @@ export default defineAppConfig({
         },
       },
     },
+    button: {
+      slots: {
+        base: 'rounded-full',
+      },
+    },
     input: {
       slots: {
         leadingIcon: 'size-5! ml-1!',
@@ -52,8 +57,16 @@ export default defineAppConfig({
     },
     tabs: {
       slots: {
+        list: 'rounded-full! h-12 mb-2',
         label: 'text-[15px]!',
-        trigger: ['cursor-pointer dark:data-[state=active]:text-white!'],
+        trigger: ['cursor-pointer'],
+      },
+      variants: {
+        variant: {
+          pill: {
+            indicator: 'rounded-full',
+          },
+        },
       },
     },
     chip: {
@@ -105,6 +118,5 @@ export default defineAppConfig({
     position: 'bottom-right' as const,
     expand: false,
     duration: 4000,
-    // progress: false,
   },
 });

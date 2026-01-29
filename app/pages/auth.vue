@@ -1,11 +1,11 @@
 <template>
-  <UCard variant="subtle" class="select-none backdrop-blur ring-0 mt-8.5">
-    <UTabs v-model="activeTab" :items="TABS" :content="false" color="primary" class="w-full gap-4" />
+  <div class="select-none">
+    <UTabs v-model="activeTab" :items="TABS" :content="false" color="neutral" class="w-full gap-4" />
 
     <div class="mt-4 space-y-4">
       <UAlert
         v-if="currentTabConfig"
-        :title="authError || currentTabConfig?.description"
+        :description="authError || currentTabConfig?.description"
         variant="outline"
         :color="authError ? 'error' : 'neutral'"
         :icon="authError ? 'i-hugeicons:alert-circle' : 'i-hugeicons:information-circle'"
@@ -14,7 +14,7 @@
 
       <AuthForm :key="activeTab" :is-login-mode="activeTab === 'login'" @update:error="(val) => (authError = val)" />
     </div>
-  </UCard>
+  </div>
 </template>
 
 <script setup lang="ts">

@@ -1,12 +1,15 @@
 <template>
   <Editor v-if="!isLoading" :model-value="form" :max-limit="maxLimit" :disabled="isSubmitting" @submit="handleSubmit">
     <template #actions>
-      <UButton type="button" color="warning" variant="soft" @click="$router.back()"> 取消编辑 </UButton>
+      <UButton type="button" color="warning" variant="soft" @click="$router.back()" :ui="{ base: 'px-4' }">
+        取消编辑
+      </UButton>
       <UButton
         type="submit"
         color="neutral"
         :loading="isSubmitting"
         :disabled="isSubmitting || form.content.trim() === '' || form.content.length > maxLimit"
+        :ui="{ base: 'px-4' }"
       >
         更新内容
       </UButton>

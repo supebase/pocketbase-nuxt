@@ -7,7 +7,9 @@
         <form @submit.prevent="$emit('submit')" class="space-y-6 select-none">
           <EditorAction v-model="model.action" :items="actionItems" />
 
-          <div class="p-3 space-y-6 bg-neutral-100 dark:bg-neutral-950/70 rounded-lg">
+          <div
+            class="p-3 space-y-6 rounded-2xl border-2 border-neutral-200/80 dark:border-neutral-800 bg-white dark:bg-neutral-950"
+          >
             <EditorCanvas
               v-model="editorContent"
               :extensions="extensions"

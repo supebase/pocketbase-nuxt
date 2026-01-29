@@ -2,40 +2,11 @@
   <UButton
     v-bind="postButtonConfig"
     tabindex="-1"
-    variant="link"
-    :ui="{
-      base: 'group relative px-4 py-2 rounded-xl bg-white dark:bg-neutral-950 font-bold tracking-wider uppercase text-sm border border-rose-500/40 dark:border-purple-500/40 hover:border-rose-500/5 dark:hover:border-purple-500/15 overflow-visible items-center justify-center',
-      label: 'contents',
-      leadingIcon: 'hidden',
-      trailingIcon: 'hidden',
-    }"
-    :class="[postButtonConfig.disabled ? 'grayscale' : '']"
-  >
-    <template #default>
-      <div
-        class="flex items-center gap-2 relative z-10 text-default transition-transform duration-500 transform scale-105 group-hover:scale-100"
-      >
-        <UIcon :name="postButtonConfig.icon" class="size-5" />
-        {{ postButtonConfig.label }}
-      </div>
-
-      <div
-        class="absolute inset-0 rounded-xl bg-[radial-gradient(circle_at_50%_50%,var(--color-fuchsia-500),transparent_50%)]/10 dark:bg-[radial-gradient(circle_at_50%_50%,var(--color-purple-500),transparent_50%)]/10 opacity-100 group-hover:opacity-0 transition-all duration-500"
-      ></div>
-
-      <div
-        class="absolute -inset-1 rounded-xl bg-neutral-900/10 blur-md dark:bg-linear-to-br dark:from-purple-600 dark:via-violet-600 dark:to-indigo-600 dark:opacity-20 dark:blur-xl opacity-100 group-hover:opacity-0 transition-all duration-500"
-      ></div>
-
-      <div
-        class="absolute bottom-0 left-0 right-0 h-0.5 bg-linear-to-r from-transparent via-pink-500 dark:via-purple-500 to-transparent scale-x-100 group-hover:scale-x-0 transition-transform duration-500"
-      ></div>
-
-      <div
-        class="absolute top-0 left-0 right-0 h-0.5 bg-linear-to-r from-transparent via-fuchsia-500 dark:via-indigo-500 to-transparent scale-x-100 group-hover:scale-x-0 transition-transform duration-700"
-      ></div>
-    </template>
-  </UButton>
+    color="neutral"
+    :label="postButtonConfig.label"
+    :icon="postButtonConfig.icon"
+    :ui="{ base: 'px-4', leadingIcon: [postButtonConfig.disabled ? 'rotate-45' : ''] }"
+  />
 </template>
 
 <script setup lang="ts">
