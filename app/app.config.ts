@@ -94,6 +94,11 @@ export default defineAppConfig({
         fieldset: 'gap-3 justify-center',
       },
     },
+    modal: {
+      slots: {
+        content: 'rounded-xl!',
+      },
+    },
     skeleton: {
       base: 'animate-none',
     },

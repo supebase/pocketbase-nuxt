@@ -31,14 +31,14 @@
       </template>
 
       <div v-else class="absolute inset-0 flex items-center justify-center">
-        <UIcon :name="isGitHub ? 'i-hugeicons:github' : 'i-hugeicons:image-02'" class="text-muted/30 size-8" />
+        <UIcon :name="isGitHub ? 'i-hugeicons:github' : 'i-hugeicons:image-02'" class="text-muted/20 size-8" />
       </div>
     </div>
 
     <div
       class="flex-1 p-3 min-w-0 flex flex-col justify-center space-y-1 bg-neutral-200/30 dark:bg-neutral-800/50 backdrop-blur"
     >
-      <div class="text-[15px] text-default font-bold line-clamp-1 w-full">
+      <div class="text-[15px] text-primary font-bold line-clamp-1 w-full">
         {{ cleanTitle }}
       </div>
 
@@ -46,7 +46,7 @@
         {{ data.description }}
       </div>
 
-      <div class="text-[10px] text-muted/70 truncate uppercase font-mono">
+      <div class="text-[10px] text-dimmed/70 truncate uppercase font-mono">
         {{ displayUrl }}
       </div>
     </div>

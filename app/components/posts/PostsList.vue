@@ -35,11 +35,8 @@
             :is-resetting="isResetting"
           >
             <template #indicator="{ item }">
-              <div
-                v-if="item.icon"
-                class="flex items-center justify-center size-8 rounded-full bg-white dark:bg-neutral-900 overflow-hidden"
-              >
-                <UIcon :name="item.icon" class="size-6 text-primary" />
+              <div v-if="item.icon" class="flex items-center justify-center rounded-full bg-white dark:bg-neutral-900">
+                <UIcon :name="item.icon" class="size-8 text-neutral-800 dark:text-neutral-100" />
               </div>
               <CommonGravatar v-else :avatar-id="item.avatarId" :size="64" />
             </template>
@@ -103,7 +100,7 @@
         <div v-if="allPosts.length > 0" class="flex flex-col items-center justify-center mb-4 min-h-15">
           <Transition name="fade" mode="out-in">
             <div v-if="hasMore && !isLoadingMore" key="load-button mt-8">
-              <UButton variant="soft" color="neutral" class="cursor-pointer px-8" @click="handleLoadMore">
+              <UButton color="neutral" class="cursor-pointer px-6" @click="handleLoadMore" :ui="{ base: 'h-9' }">
                 加载更多
               </UButton>
             </div>
@@ -222,6 +219,8 @@ const manualRefresh = async () => {
 
 const handleLoadMore = () =>
   loadMore(async (nextPage) => {
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
     const res = await $fetch<PostsListResponse>('/api/collections/posts', {
       query: { page: nextPage },
     });

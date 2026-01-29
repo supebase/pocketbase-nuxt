@@ -79,7 +79,7 @@
         <UButton v-if="hasMore" :loading="isLoadingMore" variant="soft" color="neutral" @click="handleLoadMore">
           加载更多评论
         </UButton>
-        <USeparator v-else label="已经到底了" type="dashed" />
+        <USeparator v-else-if="!hasMore && comments.length > 0" label="已经到底了" type="dashed" />
       </div>
     </div>
   </div>

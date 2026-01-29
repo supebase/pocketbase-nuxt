@@ -25,7 +25,7 @@ export const usePocketRealtime = () => {
    * 彻底断开物理连接并清理所有定时器
    */
   const destroyConnection = () => {
-    console.log('[SSE] 切断物理连接');
+    // console.log('[SSE] 切断物理连接');
     if (sseManager.instance) {
       sseManager.instance.close();
       sseManager.instance = null;
@@ -64,7 +64,7 @@ export const usePocketRealtime = () => {
     sseManager.isConnecting = true;
     status.value = 'connecting';
 
-    console.log('[SSE] 初始化连接...');
+    // console.log('[SSE] 初始化连接...');
 
     const allCollections = ['posts', 'comments', 'likes', 'notifications'];
     const colsParam = encodeURIComponent(allCollections.join(','));
@@ -76,7 +76,7 @@ export const usePocketRealtime = () => {
     const reconnect = () => {
       destroyConnection();
       const delay = Math.min(1000 * Math.pow(2, sseManager.retryCount), 30000) + Math.random() * 1000;
-      console.log(`[SSE] 将在 ${Math.round(delay)}ms 后重新连接...`);
+      // console.log(`[SSE] 将在 ${Math.round(delay)}ms 后重新连接...`);
 
       sseManager.retryTimer = setTimeout(() => {
         sseManager.retryCount++;
@@ -94,14 +94,14 @@ export const usePocketRealtime = () => {
       sseManager.heartbeatTimer = setInterval(() => {
         const threshold = 60000;
         if (Date.now() - sseManager.lastActivity > threshold) {
-          console.warn('[SSE] 心跳丢失，正在重新连接...');
+          // console.warn('[SSE] 心跳丢失，正在重新连接...');
           reconnect();
         }
       }, 30000);
     };
 
     es.onopen = () => {
-      console.log('[SSE] 在线');
+      // console.log('[SSE] 在线');
       sseManager.isConnecting = false;
       sseManager.retryCount = 0;
       status.value = 'online';
@@ -143,7 +143,7 @@ export const usePocketRealtime = () => {
     (window as any).SSE_GLOBAL_INIT = true;
     window.addEventListener('beforeunload', () => destroyConnection());
     window.addEventListener('online', () => {
-      console.log('[SSE] 网络已恢复');
+      // console.log('[SSE] 网络已恢复');
       destroyConnection();
       connectPhysical();
     });

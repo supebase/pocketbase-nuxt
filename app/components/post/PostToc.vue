@@ -44,8 +44,8 @@ const TOCItem = defineComponent({
               props.link.depth === 3 ? 'pl-6 py-0.75' : '',
               props.link.depth === 4 ? 'pl-13 py-0.75' : '',
               props.activeId === props.link.id
-                ? 'text-primary font-medium translate-x-[8px]'
-                : 'text-dimmed hover:text-primary',
+                ? 'text-muted font-medium translate-x-[8px]'
+                : 'text-dimmed/70 hover:text-muted',
             ],
           },
           props.link.text,
