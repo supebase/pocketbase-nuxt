@@ -4,7 +4,7 @@
       <SkeletonWrapper type="comments" />
     </div>
 
-    <div v-else-if="comments.length > 0">
+    <div v-else>
       <USeparator type="dashed" class="mb-6 select-none">
         <CommonAnimateNumber :value="totalItems" class="text-dimmed mx-1.5 mt-0.5" />
         <div class="text-dimmed">条评论</div>
@@ -27,16 +27,7 @@
         <template #title="{ item }">
           <div class="flex items-center justify-between text-base font-medium">
             {{ item.expand?.user?.name || '匿名用户' }}
-            <div class="flex items-center justify-center gap-5">
-              <UIcon
-                v-if="item.expand?.user?.id === user?.id"
-                name="i-hugeicons:delete-01"
-                @click="!isDeleting && openDeleteModal(item)"
-                :class="[
-                  'size-5 text-dimmed transition-colors',
-                  isDeleting ? 'cursor-not-allowed' : 'cursor-pointer hover:text-error',
-                ]"
-              />
+            <div>
               <CommonLikeButton
                 :key="item.id"
                 :comment-id="item.id"
@@ -55,12 +46,34 @@
               <span v-else>{{ part.text }}</span>
             </template>
           </div>
-          <div class="text-sm text-dimmed mt-1.5">
-            {{ item.relativeTime
-            }}{{ item.expand?.user?.location ? `，来自${formatLocation(item.expand?.user?.location)}` : '' }}
+          <div class="flex items-center justify-between mt-2">
+            <div class="text-sm text-dimmed">
+              {{ item.relativeTime
+              }}{{
+                item.expand?.user?.location ? `，${formatLocation(item.expand?.user?.location)}` : '，坐标丢失 ...'
+              }}
+            </div>
+            <div
+              v-if="item.expand?.user?.id === user?.id"
+              @click="!isDeleting && openDeleteModal(item)"
+              :class="[
+                'text-sm text-dimmed transition-colors',
+                isDeleting ? 'cursor-not-allowed' : 'cursor-pointer hover:text-error',
+              ]"
+            >
+              删除
+            </div>
           </div>
         </template>
       </CommonMotionTimeline>
+
+      <div
+        v-if="comments.length === 0"
+        class="flex flex-col gap-3 items-center justify-center text-dimmed/50 min-h-[20vh]"
+      >
+        <UIcon name="i-hugeicons:comment-02" class="size-9 text-dimmed/20" />
+        评论的空间比我的代码注释还干净
+      </div>
 
       <div class="flex justify-center mt-8 mb-4 select-none">
         <UButton v-if="hasMore" :loading="isLoadingMore" variant="soft" color="neutral" @click="handleLoadMore">

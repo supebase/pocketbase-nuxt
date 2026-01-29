@@ -14,13 +14,13 @@
         variant="subtle"
         color="primary"
         size="md"
-        class="rounded-full px-3 py-1.5 font-bold ring-1 ring-primary/20 backdrop-blur-md bg-white/80 dark:bg-neutral-900/80"
+        class="rounded-full cursor-pointer px-3 py-1.5 font-bold ring-1 ring-primary/20 backdrop-blur-md bg-white/80 dark:bg-neutral-900/80"
       >
-        <span class="relative flex h-2 w-2 mr-2">
+        <span class="relative flex h-2 w-2 mr-1 mt-px">
           <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
           <span class="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
         </span>
-        <span class="tabular-nums tracking-tight">{{ count }} 人在线</span>
+        <span><CommonAnimateNumber :value="count" /> 人在线</span>
       </UBadge>
     </Transition>
 
@@ -28,7 +28,7 @@
       v-model:open="isOpen"
       title="系统状态"
       description="显示当前系统的运行状态和统计信息。"
-      :ui="{ overlay: 'backdrop-blur-xs' }"
+      :ui="{ overlay: 'backdrop-blur-xs', header: 'select-none' }"
     >
       <template #body>
         <StatsServer />

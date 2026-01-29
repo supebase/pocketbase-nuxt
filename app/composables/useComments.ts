@@ -149,7 +149,21 @@ export const useComments = (postId: string) => {
    * 获取参与用户列表
    */
   const getUniqueUsers = () => {
-    return Array.from(getParticipantsMap().values());
+    const userMap = new Map();
+
+    // 从当前内存中现有的评论里提取用户
+    comments.value.forEach((c) => {
+      const u = c.expand?.user;
+      if (u && !userMap.has(u.id)) {
+        userMap.set(u.id, {
+          id: u.id,
+          name: u.name,
+          avatar: u.avatar,
+        });
+      }
+    });
+
+    return Array.from(userMap.values());
   };
 
   return {

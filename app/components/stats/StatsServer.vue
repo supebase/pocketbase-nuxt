@@ -1,5 +1,5 @@
 <template>
-  <div class="w-full font-mono transition-all duration-300">
+  <div class="w-full font-mono transition-all duration-300 select-none">
     <div v-if="isLoading && !metrics" class="py-12 flex flex-col items-center justify-center text-sm text-muted">
       <UIcon name="i-hugeicons:refresh" class="size-5 animate-spin mb-2" />
       正在获取服务器信息
@@ -9,25 +9,25 @@
       <div class="flex justify-between items-start mb-6">
         <div>
           <div class="text-muted text-xs tracking-tighter">模式</div>
-          <div class="text-sm font-bold text-primary">{{ metrics?.mode }}</div>
+          <div class="font-bold text-primary">{{ metrics?.mode }}</div>
         </div>
         <div class="text-right">
           <div class="text-neutral-500 text-xs tracking-tighter">当前连接总数</div>
           <div class="font-black text-xl">
-            {{ totalConnections }}
+            <CommonAnimateNumber :value="totalConnections" />
           </div>
         </div>
       </div>
 
       <div class="grid grid-cols-2 gap-4">
         <div class="bg-neutral-200 dark:bg-neutral-800 p-3 rounded-lg">
-          <div class="text-xs text-muted mb-1 uppercase tracking-wider">总内存 (RSS)</div>
+          <div class="text-xs text-muted mb-1 tracking-wider">总内存 (RSS)</div>
           <div class="text-lg font-semibold">{{ displayRSS }}</div>
         </div>
 
         <div class="bg-neutral-200 dark:bg-neutral-800 p-3 rounded-lg">
-          <div class="text-xs text-muted mb-1 uppercase tracking-wider">最后同步</div>
-          <div class="text-lg font-semibold truncate text-orange-500">
+          <div class="text-xs text-muted mb-1 tracking-wider">最后同步</div>
+          <div class="text-lg font-semibold">
             {{ lastSyncTime }}
           </div>
         </div>
@@ -35,7 +35,7 @@
 
       <div v-if="metrics?.instances" class="mt-6 space-y-2">
         <div
-          class="text-xs text-muted uppercase tracking-widest border-b border-neutral-200 dark:border-neutral-800 pb-1 flex justify-between"
+          class="text-xs text-muted tracking-widest border-b border-neutral-200 dark:border-neutral-800 pb-1 flex justify-between"
         >
           <span>集群实例详情</span>
           <span>CPU / 内存</span>
@@ -53,14 +53,16 @@
             class="flex-1 mx-4 border-b border-neutral-200 dark:border-neutral-800 border-dotted mb-1 opacity-20"
           ></span>
           <div class="flex gap-3">
-            <span class="text-primary font-bold">{{ ins.connections }} 连接</span>
+            <span class="font-bold"> <CommonAnimateNumber :value="ins.connections" /> 连接 </span>
             <span class="text-muted w-14 text-right">{{ ins.cpu }}</span>
             <span class="text-muted w-24 text-right">{{ ins.memory }}</span>
           </div>
         </div>
       </div>
 
-      <div class="mt-6 text-[10px] text-neutral-500 flex justify-between uppercase border-t border-neutral-800 pt-4">
+      <div
+        class="mt-6 text-[11px] text-dimmed flex justify-between border-t border-neutral-200 dark:border-neutral-800 pt-4"
+      >
         <span>服务器状态: {{ metrics?.status }}</span>
         <span>运行时间: {{ metrics?.system_resource?.uptime || '集群管理' }}</span>
       </div>

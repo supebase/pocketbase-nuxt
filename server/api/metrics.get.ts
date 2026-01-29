@@ -23,7 +23,7 @@ export default defineEventHandler(async (event) => {
     const mem = process.memoryUsage();
     return {
       status: 'success',
-      mode: 'standalone (local)',
+      mode: '单机模式 (本地)',
       total_connections: localCount,
       system_resource: {
         heap_used: toMB(mem.heapUsed),
@@ -65,7 +65,7 @@ export default defineEventHandler(async (event) => {
         const query = getQuery(event);
         const result = {
           status: 'success',
-          mode: `cluster (${instances.length} instances)`,
+          mode: `集群模式 (${instances.length} 个实例)`,
           summary: {
             total_active_connections: totalConns,
             server_time: new Date().toLocaleString(),
