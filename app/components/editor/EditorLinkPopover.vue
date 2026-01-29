@@ -11,11 +11,21 @@
       />
     </UTooltip>
     <template #content>
-      <UInput v-model="url" autofocus placeholder="粘贴链接 ..." class="w-72" @keydown.enter.prevent="setLink">
+      <UInput
+        v-model="url"
+        autofocus
+        placeholder="粘贴链接 ..."
+        class="w-72"
+        @keydown.enter.prevent="setLink"
+        :ui="{
+          base: 'pr-17',
+          trailing: 'pr-1',
+        }"
+      >
         <template #trailing>
           <div class="flex items-center gap-0.5">
-            <UButton icon="i-hugeicons:tick-03" variant="ghost" color="neutral" size="sm" @click="setLink" />
-            <UButton icon="i-hugeicons:delete-01" variant="ghost" color="error" size="sm" @click="removeLink" />
+            <UButton icon="i-hugeicons:tick-03" variant="link" color="neutral" size="sm" @click="setLink" />
+            <UButton icon="i-hugeicons:delete-01" variant="link" color="error" size="sm" @click="removeLink" />
           </div>
         </template>
       </UInput>

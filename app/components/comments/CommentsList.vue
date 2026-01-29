@@ -69,10 +69,10 @@
 
       <div
         v-if="comments.length === 0"
-        class="flex flex-col gap-3 items-center justify-center text-dimmed/50 min-h-[20vh]"
+        class="flex flex-col gap-5 items-center justify-center text-sm text-dimmed/50 min-h-[20vh]"
       >
         <UIcon name="i-hugeicons:comment-02" class="size-9 text-dimmed/20" />
-        评论的空间比我的代码注释还干净
+        评论区比我的代码注释还干净
       </div>
 
       <div class="flex justify-center mt-8 mb-4 select-none">

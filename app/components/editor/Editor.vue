@@ -31,7 +31,7 @@
 
             <USeparator />
 
-            <div class="flex items-center justify-between">
+            <div class="flex items-center justify-between mb-3">
               <slot name="actions" />
             </div>
           </div>

@@ -11,11 +11,21 @@
       />
     </UTooltip>
     <template #content>
-      <UInput v-model="url" autofocus placeholder="图片链接 ..." class="w-72" @keydown.enter.prevent="setImage">
+      <UInput
+        v-model="url"
+        autofocus
+        placeholder="图片链接 ..."
+        class="w-72"
+        @keydown.enter.prevent="setImage"
+        :ui="{
+          base: 'pr-10',
+          trailing: 'pr-1',
+        }"
+      >
         <template #trailing>
           <UButton
             icon="i-hugeicons:tick-03"
-            variant="ghost"
+            variant="link"
             color="neutral"
             size="sm"
             :disabled="!url"

@@ -19,8 +19,14 @@
 
     <template #footer>
       <div class="flex items-center gap-3">
-        <UButton label="取消" variant="ghost" color="neutral" @click="isOpen = false" />
-        <UButton label="插入代码块" color="primary" :disabled="!formData.language" @click="handleConfirm" />
+        <UButton label="取消" variant="link" color="neutral" @click="isOpen = false" />
+        <UButton
+          label="插入代码块"
+          color="neutral"
+          :disabled="!formData.language"
+          @click="handleConfirm"
+          :ui="{ base: 'px-4' }"
+        />
       </div>
     </template>
   </UModal>

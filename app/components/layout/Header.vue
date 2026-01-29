@@ -2,7 +2,7 @@
   <div class="flex items-center gap-3 select-none">
     <ModalSearch />
     <StatsUsers />
-    <CommonColorModeButton />
+    <CommonColorMode />
     <USeparator orientation="vertical" class="h-6 transition-all duration-500" />
     <div class="auth-wrapper">
       <Transition name="auth-slide" mode="out-in">

@@ -1,7 +1,7 @@
 <template>
   <Editor v-if="!isLoading" :model-value="form" :max-limit="maxLimit" :disabled="isSubmitting" @submit="handleSubmit">
     <template #actions>
-      <UButton type="button" color="warning" variant="soft" @click="$router.back()" :ui="{ base: 'px-4' }">
+      <UButton type="button" color="error" variant="soft" @click="$router.back()" :ui="{ base: 'px-4' }">
         取消编辑
       </UButton>
       <UButton

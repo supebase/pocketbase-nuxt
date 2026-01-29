@@ -10,77 +10,82 @@
       @refresh="manualRefresh"
     />
 
-    <UAlert
-      v-if="error"
-      :description="error.data?.message || '获取列表失败，请检查网络连接'"
-      variant="soft"
-      icon="i-hugeicons:alert-02"
-      color="error"
-      class="mt-6"
-    />
-
-    <div v-else class="mt-10 space-y-4 w-full">
+    <div class="mt-10 space-y-4 w-full">
       <ClientOnly>
-        <PostsEmptyState
-          v-if="allPosts.length === 0 && status !== 'pending' && !isRefreshing"
-          @refresh="manualRefresh"
+        <UAlert
+          v-if="error"
+          :description="error.data?.message || '获取列表失败，请检查网络连接'"
+          variant="soft"
+          icon="i-hugeicons:alert-02"
+          color="error"
+          class="mt-6"
         />
 
         <template v-else>
-          <CommonMotionTimeline
-            :items="displayItems"
-            :loading-more="isLoadingMore"
-            line-offset="15px"
-            :trigger-ratio="0.55"
-            :is-resetting="isResetting"
-          >
-            <template #indicator="{ item }">
-              <div v-if="item.icon" class="flex items-center justify-center rounded-full bg-white dark:bg-neutral-900">
-                <UIcon :name="item.icon" class="size-8 text-neutral-800 dark:text-neutral-100" />
-              </div>
-              <CommonGravatar v-else :avatar-id="item.avatarId" :size="64" />
-            </template>
+          <PostsEmptyState
+            v-if="allPosts.length === 0 && status !== 'pending' && !isRefreshing"
+            @refresh="manualRefresh"
+          />
 
-            <template #title="{ item }">
-              <div class="flex items-center gap-3">
-                <div class="text-base">
-                  {{ item.icon ? formatIconName(item.icon) : item.title }}
+          <template v-else>
+            <CommonMotionTimeline
+              :items="displayItems"
+              :loading-more="isLoadingMore"
+              line-offset="15px"
+              :trigger-ratio="0.55"
+              :is-resetting="isResetting"
+            >
+              <template #indicator="{ item }">
+                <div
+                  v-if="item.icon"
+                  class="flex items-center justify-center rounded-full bg-white dark:bg-neutral-900"
+                >
+                  <UIcon :name="item.icon" class="size-8 text-neutral-800 dark:text-neutral-100" />
                 </div>
-                <div v-if="!item.published && canViewDrafts" class="text-warning">待发布稿</div>
-                <UBadge
-                  v-else-if="item.action === 'dit'"
-                  label="DIRE"
-                  variant="outline"
-                  color="neutral"
-                  size="sm"
-                  class="text-dimmed"
-                />
-                <UBadge v-else label="PARTAGER" variant="outline" color="neutral" size="sm" class="text-dimmed" />
-              </div>
-            </template>
+                <CommonGravatar v-else :avatar-id="item.avatarId" :size="64" />
+              </template>
 
-            <template #date="{ item }">
-              <div class="flex items-center gap-2.5">
-                <span class="text-dimmed">{{ item.date }}</span>
-                <PostsMenu
-                  :is-logined="loggedIn"
+              <template #title="{ item }">
+                <div class="flex items-center gap-3">
+                  <div class="text-base">
+                    {{ item.icon ? formatIconName(item.icon) : item.title }}
+                  </div>
+                  <div v-if="!item.published && canViewDrafts" class="text-warning">待发布稿</div>
+                  <UBadge
+                    v-else-if="item.action === 'dit'"
+                    label="DIRE"
+                    variant="outline"
+                    color="neutral"
+                    size="sm"
+                    class="text-dimmed"
+                  />
+                  <UBadge v-else label="PARTAGER" variant="outline" color="neutral" size="sm" class="text-dimmed" />
+                </div>
+              </template>
+
+              <template #date="{ item }">
+                <div class="flex items-center gap-2.5">
+                  <span class="text-dimmed">{{ item.date }}</span>
+                  <PostsMenu
+                    :is-logined="loggedIn"
+                    :item="item"
+                    :can-view-drafts="canViewDrafts ?? false"
+                    :current-user-id="user?.id"
+                    @request-delete="handleRequestDelete"
+                  />
+                </div>
+              </template>
+
+              <template #description="{ item, index }">
+                <PostsItem
                   :item="item"
+                  :delay="(index % 10) * 0.08"
                   :can-view-drafts="canViewDrafts ?? false"
-                  :current-user-id="user?.id"
-                  @request-delete="handleRequestDelete"
+                  :trigger-animation="animationTrigger"
                 />
-              </div>
-            </template>
-
-            <template #description="{ item, index }">
-              <PostsItem
-                :item="item"
-                :delay="(index % 10) * 0.08"
-                :can-view-drafts="canViewDrafts ?? false"
-                :trigger-animation="animationTrigger"
-              />
-            </template>
-          </CommonMotionTimeline>
+              </template>
+            </CommonMotionTimeline>
+          </template>
 
           <ModalDelete
             v-model:open="isDeleteModalOpen"

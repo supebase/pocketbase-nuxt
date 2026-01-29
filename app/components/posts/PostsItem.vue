@@ -9,45 +9,22 @@
       {{ item.cleanContent }}
     </ULink>
 
-    <ULink v-else :to="`/${item.id}`" class="group block relative overflow-visible">
-      <div class="relative mt-4 mb-8 transition-all duration-500">
-        <div
-          class="relative aspect-video overflow-hidden rounded-lg bg-neutral-200 dark:bg-neutral-900 transition-all duration-500"
-        >
+    <ULink v-else :to="`/${item.id}`" class="group block relative overflow-visible mt-4 mb-6">
+      <div
+        class="absolute -bottom-2 inset-x-4 h-12 bg-neutral-200/60 dark:bg-neutral-950/40 rounded-xl -z-10 transition-transform group-hover:translate-y-1"
+      ></div>
+      <div
+        class="bg-white dark:bg-neutral-950 rounded-xl overflow-hidden transition-all duration-500 group-hover:-translate-y-2"
+      >
+        <div class="aspect-video relative overflow-hidden">
           <img
             :src="item.firstImage"
-            @load="isLoaded = true"
-            :class="[
-              'w-full h-full object-cover transition-all duration-700 ease-in-out',
-              isLoaded ? 'opacity-100' : 'opacity-0',
-              'group-hover:scale-105 group-hover:rotate-1',
-            ]"
+            class="w-full h-full object-cover group-hover:grayscale transition-all duration-700"
           />
-
-          <div
-            class="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent opacity-60 group-hover:opacity-40 transition-opacity"
-          ></div>
-
-          <div
-            class="absolute top-0 inset-x-0 h-px bg-linear-to-r from-transparent via-white/50 to-transparent transform -translate-x-full group-hover:translate-x-full transition-transform duration-1000"
-          ></div>
-        </div>
-
-        <div class="absolute -bottom-4 left-1/2 -translate-x-1/2 w-[92%] z-10">
-          <div
-            class="relative p-4 rounded-lg transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] bg-white/70 dark:bg-neutral-800/70 backdrop-blur-md group-hover:-translate-y-2 group-hover:bg-white/95 dark:group-hover:bg-neutral-800/95"
-          >
-            <p
-              class="text-[13px] font-bold text-neutral-800 dark:text-neutral-100 line-clamp-2 leading-relaxed text-center tracking-tight"
-            >
+          <div class="absolute bottom-0 inset-x-0 p-5 bg-white/60 dark:bg-neutral-950/60 backdrop-blur-md">
+            <p class="text-sm font-medium text-neutral-800 dark:text-neutral-200 line-clamp-2">
               {{ item.cleanContent }}
             </p>
-
-            <div class="flex justify-center h-1 mt-0 group-hover:mt-3 transition-all duration-500 overflow-hidden">
-              <div
-                class="h-full w-0 bg-primary rounded-full transition-all duration-500 ease-out group-hover:w-12 opacity-0 group-hover:opacity-100"
-              ></div>
-            </div>
           </div>
         </div>
       </div>
