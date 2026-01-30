@@ -26,3 +26,5 @@ logs
 # Other
 .trae
 .partykit
+
+server/data
