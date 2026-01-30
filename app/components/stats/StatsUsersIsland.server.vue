@@ -4,7 +4,7 @@
       v-for="item in displayStats"
       :key="item.label"
       :ui="{
-        root: 'bg-white/90 dark:bg-neutral-950/50 backdrop-blur-sm shadow-xs ring-0',
+        root: 'bg-white/90 dark:bg-neutral-800/50 backdrop-blur-sm shadow-xs ring-0 rounded-xl',
         body: 'p-3.5!',
       }"
     >

@@ -5,7 +5,7 @@
     target="_blank"
     tabindex="-1"
     :ui="{
-      root: 'group my-3.5 flex items-stretch ring-0 rounded-lg overflow-hidden no-underline shadow-none bg-transparent',
+      root: 'group my-3.5 flex items-stretch ring-0 rounded-xl overflow-hidden no-underline shadow-none bg-transparent',
       body: 'p-0! flex items-stretch w-full',
     }"
   >
@@ -38,7 +38,7 @@
     <div
       class="flex-1 p-3 min-w-0 flex flex-col justify-center space-y-1 bg-neutral-200/30 dark:bg-neutral-800/50 backdrop-blur"
     >
-      <div class="text-[15px] text-primary font-bold line-clamp-1 w-full">
+      <div class="text-[15px] text-default font-bold line-clamp-1 w-full">
         {{ cleanTitle }}
       </div>
 

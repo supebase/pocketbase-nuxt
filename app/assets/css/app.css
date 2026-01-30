@@ -38,7 +38,7 @@ body {
 }
 
 /* 全局背景纹理 - 保持 will-change 优化 */
-body::before {
+/* body::before {
   content: '';
   position: fixed;
   top: 0;
@@ -53,7 +53,7 @@ body::before {
     linear-gradient(to right, rgba(128, 128, 128, 0.05) 1px, transparent 1px),
     linear-gradient(to bottom, rgba(128, 128, 128, 0.05) 1px, transparent 1px);
   background-size: 4vw 4vw;
-}
+} */
 
 /* ==========================================================================
    2. 视图过渡 (View Transitions)
@@ -440,13 +440,22 @@ header::before {
 .animate-crack { animation: icon-crack 0.4s ease-in-out; }
 
 /* Eric SVG 签名动画 */
-.eric path { stroke-dasharray: 1000px; stroke-dashoffset: 1000px; }
+.eric path { stroke-dasharray: 1000px; stroke-dashoffset: 1000px; animation-fill-mode: forwards; }
 .eric path:nth-child(1) { animation: write 5s ease forwards; }
 .eric path:nth-child(2) { animation: write 5s ease forwards; animation-delay: 1.5s; }
 .eric path:nth-child(3) { animation: write 5s ease forwards; animation-delay: 2s; }
 
-.logo-wrapper svg { width: 32px; height: auto; display: block; }
-.logo-wrapper path { stroke-dasharray: none; stroke-dashoffset: 0; opacity: 1; }
+.logo-wrapper:not(.eric) path { 
+  stroke-dasharray: none; 
+  stroke-dashoffset: 0; 
+  opacity: 1; 
+}
+
+.logo-wrapper svg { 
+  width: 32px; 
+  height: auto; 
+  display: block; 
+}
 
 /* ==========================================================================
    8. 性能优化与无障碍
@@ -459,4 +468,14 @@ header::before {
     scroll-behavior: auto !important;
   }
   .eric path { stroke-dasharray: none; stroke-dashoffset: 0; opacity: 1; }
+}
+
+/* 自定义慢速旋转动画 */
+.animate-spin-slow {
+  animation: spin 10s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }

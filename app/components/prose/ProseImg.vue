@@ -1,7 +1,7 @@
 <template>
   <div class="my-6">
     <div
-      class="rounded-lg overflow-hidden cursor-zoom-in relative bg-neutral-100 dark:bg-neutral-800"
+      class="rounded-xl overflow-hidden cursor-zoom-in relative bg-neutral-100 dark:bg-neutral-800"
       @click="isExpanded = true"
       :style="{ aspectRatio: aspectRatio }"
     >
@@ -39,7 +39,7 @@
         >
           <img
             :src="refinedSrc"
-            class="max-w-[95vw] max-h-[95vh] object-contain shadow-2xl rounded-lg transition-transform duration-300"
+            class="max-w-[95vw] max-h-[95vh] object-contain shadow-2xl rounded-xl transition-transform duration-300"
             :class="isExpanded ? 'scale-100' : 'scale-95'"
           />
         </div>

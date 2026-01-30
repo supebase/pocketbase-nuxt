@@ -11,7 +11,7 @@
 
     <ULink v-else :to="`/${item.id}`" class="group block relative overflow-visible mt-4 mb-6">
       <div
-        class="absolute -bottom-2 inset-x-4 h-12 bg-neutral-200/60 dark:bg-neutral-950/40 rounded-xl -z-10 transition-transform group-hover:translate-y-1"
+        class="absolute -bottom-2 inset-x-4 h-12 bg-neutral-200/60 dark:bg-neutral-800/60 rounded-xl -z-10 transition-transform group-hover:translate-y-1"
       ></div>
       <div
         class="bg-white dark:bg-neutral-950 rounded-xl overflow-hidden transition-all duration-500 group-hover:-translate-y-2"

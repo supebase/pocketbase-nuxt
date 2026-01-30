@@ -1,5 +1,5 @@
 <template>
-  <UPopover arrow :ui="{ content: 'bg-neutral-50/60 dark:bg-neutral-950/60 backdrop-blur' }">
+  <UPopover arrow :ui="{ content: 'bg-neutral-50 dark:bg-neutral-950 backdrop-blur rounded-xl' }">
     <UButton
       color="neutral"
       variant="link"
@@ -36,7 +36,7 @@
             <USkeleton
               v-for="i in 3"
               :key="i"
-              class="h-29 w-34.75 animate-pulse rounded-lg bg-white/90 dark:bg-neutral-950/50 backdrop-blur-sm shadow-xs ring-0"
+              class="h-29 w-34.75 animate-pulse rounded-lg bg-white/90 dark:bg-neutral-800/50 backdrop-blur-sm shadow-xs ring-0"
             />
           </div>
         </template>

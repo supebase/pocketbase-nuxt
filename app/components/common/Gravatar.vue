@@ -7,7 +7,7 @@
       :has-error="hasError"
     >
       <div
-        class="relative overflow-hidden rounded-full size-full flex items-center justify-center bg-white dark:bg-neutral-900 group"
+        class="relative overflow-hidden rounded-full size-full flex items-center justify-center bg-neutral-100 dark:bg-neutral-800 group"
       >
         <div v-if="isLoading" class="absolute inset-0 z-30 flex items-center justify-center bg-inherit">
           <UIcon name="i-hugeicons:refresh" class="size-4 text-dimmed animate-spin" />
