@@ -5,7 +5,7 @@
     </div>
 
     <div v-else>
-      <USeparator type="dashed" class="mb-6 select-none">
+      <USeparator type="dashed" class="mb-6 select-none" v-if="loggedIn">
         <CommonAnimateNumber :value="totalItems" class="text-dimmed mx-1.5 mt-0.5" />
         <div class="text-dimmed">条评论</div>
       </USeparator>

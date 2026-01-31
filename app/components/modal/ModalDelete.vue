@@ -11,8 +11,15 @@
 
     <template #footer="{ close }">
       <div class="flex items-center gap-3">
-        <UButton label="取消" color="neutral" class="cursor-pointer" @click="close" />
-        <UButton label="确认删除" color="error" class="cursor-pointer" :loading="loading" @click="handleConfirm" />
+        <UButton label="取消" color="neutral" class="cursor-pointer" @click="close" :ui="{ base: 'px-4' }" />
+        <UButton
+          label="确认删除"
+          color="error"
+          class="cursor-pointer"
+          :loading="loading"
+          @click="handleConfirm"
+          :ui="{ base: 'px-4' }"
+        />
       </div>
     </template>
   </UModal>

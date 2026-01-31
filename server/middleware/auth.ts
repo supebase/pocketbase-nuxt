@@ -66,13 +66,16 @@ export default defineEventHandler(async (event) => {
         // 检查是否有该用户的刷新任务正在进行
         if (!refreshRequests.has(userId)) {
           // 创建刷新任务并存入 Map
-          const refreshTask = pb
-            .collection('users')
-            .authRefresh()
-            .finally(() => {
-              // 无论成功失败，短暂延迟后移除锁（给并发请求留出同步时间）
-              setTimeout(() => refreshRequests.delete(userId), 1000);
-            });
+          const refreshTask = (async () => {
+            try {
+              const result = await pb.collection('users').authRefresh();
+              return result;
+            } finally {
+              // 立即清理，避免内存泄漏
+              refreshRequests.delete(userId);
+            }
+          })();
+
           refreshRequests.set(userId, refreshTask);
         }
 

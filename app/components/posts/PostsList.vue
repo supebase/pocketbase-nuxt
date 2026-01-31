@@ -1,7 +1,7 @@
 <template>
   <div class="flex flex-col items-center justify-center select-none">
     <PostsHeader
-      v-if="status !== 'pending' || isRefreshing || !error"
+      v-if="!error && (status !== 'pending' || isRefreshing)"
       :count="visibleTotalItems"
       :isRefreshing="isRefreshing"
       :length="allPosts.length"

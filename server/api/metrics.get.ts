@@ -1,30 +1,97 @@
 import io from '@pm2/io';
 import pm2 from 'pm2';
+import type { ProcessDescription } from 'pm2';
 
-// 1. 修复：@pm2/io 的 io.metric 接受的配置项
-// 如果 TS 报错 'type'，可以直接传值，因为 runtime 是支持的，或者通过类型断言绕过
-const connGauge = (io as any).metric({
+interface ConnectionInfo {
+  id: string;
+  connectedAt: number;
+  lastHeartbeat: number;
+}
+
+const CONFIG = {
+  PROCESS_NAME: process.env.PM2_PROCESS_NAME || 'Eric', // 和 PM2 名称一致
+  HEARTBEAT_TIMEOUT: 30000, // 30秒
+  CLEANUP_INTERVAL: 60000, // 60秒
+};
+
+const activeConnections = new Map<string, ConnectionInfo>();
+
+const connGauge = io.metric({
   name: 'Active Connections',
-  // 注意：某些版本 io.metric 不需要显式传 type: 'gauge'，它是默认行为
 });
 
-let localCount = 0;
+export const addConnection = (id: string): void => {
+  const now = Date.now();
+  activeConnections.set(id, {
+    id,
+    connectedAt: now,
+    lastHeartbeat: now,
+  });
+  updateGauge();
+};
 
-export const updateConnCount = (diff: number) => {
-  localCount += diff;
-  connGauge.set(localCount);
+export const removeConnection = (id: string): void => {
+  activeConnections.delete(id);
+  updateGauge();
+};
+
+export const updateHeartbeat = (id: string): void => {
+  const conn = activeConnections.get(id);
+  if (conn) {
+    conn.lastHeartbeat = Date.now();
+  }
+};
+
+const cleanupStaleConnections = (): void => {
+  const now = Date.now();
+  let cleaned = 0;
+
+  for (const [id, conn] of activeConnections.entries()) {
+    if (now - conn.lastHeartbeat > CONFIG.HEARTBEAT_TIMEOUT) {
+      activeConnections.delete(id);
+      cleaned++;
+    }
+  }
+
+  if (cleaned > 0) {
+    console.log(`[Metrics] Cleaned ${cleaned} stale connections`);
+    updateGauge();
+  }
+};
+
+const updateGauge = (): void => {
+  connGauge.set(activeConnections.size);
+};
+
+setInterval(cleanupStaleConnections, CONFIG.CLEANUP_INTERVAL);
+
+const toMB = (bytes: number): string => {
+  return (bytes / 1024 / 1024).toFixed(2) + ' MB';
+};
+
+const getInstanceMetrics = (proc: ProcessDescription) => {
+  const env = proc.pm2_env as any; // PM2 类型定义不完整，这里需要 any
+  const axmMonitor = env?.axm_monitor || {};
+
+  return {
+    pm_id: proc.pm_id ?? 'N/A',
+    status: env?.status ?? 'unknown',
+    connections: axmMonitor['Active Connections']?.value ?? 0,
+    cpu: (proc.monit?.cpu ?? 0) + '%',
+    memory: toMB(proc.monit?.memory ?? 0),
+    restart_count: env?.restart_time ?? 0,
+  };
 };
 
 export default defineEventHandler(async (event) => {
   const isPM2 = process.env.PM2_HOME !== undefined;
-  const toMB = (bytes: number) => (bytes / 1024 / 1024).toFixed(2) + ' MB';
 
   if (!isPM2) {
     const mem = process.memoryUsage();
     return {
       status: 'success',
-      mode: '单机模式 (本地)',
-      total_connections: localCount,
+      mode: '单机模式',
+      total_connections: activeConnections.size,
       system_resource: {
         heap_used: toMB(mem.heapUsed),
         rss: toMB(mem.rss),
@@ -35,52 +102,52 @@ export default defineEventHandler(async (event) => {
 
   return new Promise((resolve) => {
     pm2.connect((err) => {
-      if (err) return resolve({ status: 'error', message: 'PM2 connect failed' });
+      if (err) {
+        return resolve({
+          status: 'error',
+          message: 'PM2 连接失败: ' + err.message,
+        });
+      }
 
-      pm2.list((err, list) => {
+      pm2.list((listErr, processList) => {
         pm2.disconnect();
-        if (err) return resolve({ status: 'error', message: 'PM2 list failed' });
 
-        // 2. 修复：通过类型断言访问 axm_monitor
-        const instances = list
-          .filter((proc) => proc.name === 'Eric')
-          .map((proc) => {
-            const env = proc.pm2_env as any; // 转为 any 以访问动态属性
-            const axm_monitor = env?.axm_monitor;
-
-            return {
-              pm_id: proc.pm_id,
-              status: env?.status,
-              // 关键修复：从自定义指标中取值
-              connections: axm_monitor?.['Active Connections']?.value ?? 0,
-              cpu: proc.monit?.cpu + '%',
-              memory: toMB(proc.monit?.memory || 0),
-              restart_count: env?.restart_time,
-            };
+        if (listErr) {
+          return resolve({
+            status: 'error',
+            message: 'PM2 获取进程列表失败: ' + listErr.message,
           });
-
-        const totalConns = instances.reduce((sum, i) => sum + Number(i.connections), 0);
-
-        // 获取 ?pretty 参数支持友好查看
-        const query = getQuery(event);
-        const result = {
-          status: 'success',
-          mode: `集群模式 (${instances.length} 个实例)`,
-          summary: {
-            total_active_connections: totalConns,
-            server_time: new Date().toLocaleString(),
-          },
-          instances,
-        };
-
-        if (query.pretty !== undefined) {
-          // 在 Nuxt 中手动处理美化输出
-          event.node.res.setHeader('Content-Type', 'application/json; charset=utf-8');
-          event.node.res.end(JSON.stringify(result, null, 2));
-          return;
         }
 
-        resolve(result);
+        try {
+          const instances = processList.filter((proc) => proc.name === CONFIG.PROCESS_NAME).map(getInstanceMetrics);
+
+          const totalConns = instances.reduce((sum, i) => sum + Number(i.connections || 0), 0);
+
+          const result = {
+            status: 'success',
+            mode: `集群模式 (${instances.length} 实例)`,
+            summary: {
+              total_active_connections: totalConns,
+              server_time: new Date().toISOString(),
+            },
+            instances,
+          };
+
+          const query = getQuery(event);
+          if (query.pretty !== undefined) {
+            event.node.res.setHeader('Content-Type', 'application/json; charset=utf-8');
+            event.node.res.end(JSON.stringify(result, null, 2));
+            return;
+          }
+
+          resolve(result);
+        } catch (error) {
+          resolve({
+            status: 'error',
+            message: '处理数据时出错: ' + (error as Error).message,
+          });
+        }
       });
     });
   });
