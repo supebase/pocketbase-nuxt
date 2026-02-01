@@ -13,15 +13,22 @@
       <div
         class="absolute -bottom-2 inset-x-4 h-12 bg-neutral-200/60 dark:bg-neutral-800/60 rounded-xl -z-10 transition-transform group-hover:translate-y-1"
       ></div>
-      <div
-        class="bg-white dark:bg-neutral-950 rounded-xl overflow-hidden transition-all duration-500 group-hover:-translate-y-2"
-      >
+      <div class="rounded-xl overflow-hidden transition-all duration-500 group-hover:-translate-y-2">
         <div class="aspect-video relative overflow-hidden">
           <img
             :src="item.firstImage"
+            @load="isLoaded = true"
+            loading="lazy"
             class="w-full h-full object-cover group-hover:grayscale transition-all duration-700"
+            :class="[isLoaded ? 'opacity-100' : 'opacity-0']"
           />
-          <div class="absolute bottom-0 inset-x-0 p-5 bg-white/60 dark:bg-neutral-950/60 backdrop-blur-md">
+          <div
+            v-if="!isLoaded"
+            class="absolute inset-0 flex items-center justify-center bg-neutral-100 dark:bg-neutral-800 rounded-xl"
+          >
+            <UIcon name="i-hugeicons:refresh" class="size-5 text-dimmed animate-spin" />
+          </div>
+          <div v-else class="absolute bottom-0 inset-x-0 p-5 bg-white/60 dark:bg-neutral-950/60 backdrop-blur-md">
             <p class="text-sm font-medium text-neutral-800 dark:text-neutral-200 line-clamp-2">
               {{ item.cleanContent }}
             </p>
@@ -53,6 +60,7 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+
 const isLoaded = ref(false);
 const isFirstTimeRender = ref(true);
 
