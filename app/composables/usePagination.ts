@@ -1,58 +1,53 @@
-export interface PaginationResult<T> {
-  items: T[];
-  total: number;
-}
-
-export type TransformFn<T> = (items: T[]) => T[];
+import type { PaginationResult, TransformFn } from '~/types';
 
 export function usePagination<T extends { id: string | number }>(initialItems?: Ref<T[]>) {
-  // 1. 初始化状态：使用更清晰的命名和类型推断
   const allItems = initialItems || (ref<T[]>([]) as Ref<T[]>);
   const currentPage = ref(1);
   const totalItems = ref(0);
   const isLoadingMore = ref(false);
-  const isFirstLoad = ref(true); // 增加一个状态位，区分“初始空”和“加载完后的空”
+  const isFirstLoad = ref(true);
 
-  // 2. 逻辑分明：计算是否还有更多数据
+  // 用于管理请求的取消
+  let abortController: AbortController | null = null;
+
   const hasMore = computed(() => {
-    if (isFirstLoad.value) return true; // 还没加载过时，默认认为有数据
+    if (isFirstLoad.value) return true;
     return allItems.value.length < totalItems.value;
   });
 
-  /**
-   * 优雅的去重合并逻辑
-   * 使用 reduce 代替 forEach 配合 Map，更具函数式风格
-   */
   const mergeItems = (existing: T[], incoming: T[], transformFn?: TransformFn<T>): T[] => {
     const processedIncoming = transformFn ? transformFn(incoming) : incoming;
-
-    // 使用 Map 去重（防止分页拉取到已通过 SSE 插入的数据）
     const map = new Map<T['id'], T>(existing.map((item) => [item.id, item]));
     processedIncoming.forEach((item) => map.set(item.id, item));
 
-    // 重新排序
-    // 实时系统中，顶部插入会打乱 Offset 分页。合并后强制排序可以纠正 UI。
     return Array.from(map.values()).sort((a: any, b: any) => {
       const dateA = new Date(a.created || 0).getTime();
       const dateB = new Date(b.created || 0).getTime();
-      return dateB - dateA; // 降序：最新的在前
+      return dateB - dateA;
     });
   };
 
   /**
    * 加载更多数据
+   * 修改：fetchDataFn 现在接收第二个参数 signal
    */
   const loadMore = async (
-    fetchDataFn: (page: number) => Promise<PaginationResult<T> | undefined>,
+    fetchDataFn: (page: number, signal?: AbortSignal) => Promise<PaginationResult<T> | undefined>,
     transformFn?: TransformFn<T>,
   ) => {
-    // 守卫语句：防止重复加载或无效加载
     if (isLoadingMore.value || !hasMore.value) return;
+
+    // 竞态处理：如果上一次请求还没回来，直接取消它
+    if (abortController) {
+      abortController.abort();
+    }
+    abortController = new AbortController();
 
     isLoadingMore.value = true;
     try {
       const nextPage = currentPage.value + 1;
-      const result = await fetchDataFn(nextPage);
+      // 将当前请求的信号传递下去
+      const result = await fetchDataFn(nextPage, abortController.signal);
 
       if (result?.items) {
         totalItems.value = result.total;
@@ -60,19 +55,26 @@ export function usePagination<T extends { id: string | number }>(initialItems?: 
         currentPage.value = nextPage;
         isFirstLoad.value = false;
       }
-    } catch (err) {
-      // 专业的错误处理：不仅 console，还应该抛出或标记错误状态
-      // console.error('[Pagination] Failed to fetch more items:', err);
-      throw err; // 抛出错误让调用者决定是否显示 Toast
+    } catch (err: any) {
+      // 忽略由手动取消引起的错误
+      if (err.name === 'AbortError' || err.message === 'canceled') {
+        return;
+      }
+      throw err;
     } finally {
-      isLoadingMore.value = false;
+      // 只有当前请求依然是最新请求时才重置加载状态
+      if (!abortController?.signal.aborted) {
+        isLoadingMore.value = false;
+      }
     }
   };
 
-  /**
-   * 重置分页
-   */
   const resetPagination = (items: T[], total: number, transformFn?: TransformFn<T>) => {
+    // 重置时也应取消进行中的请求
+    if (abortController) {
+      abortController.abort();
+      abortController = null;
+    }
     allItems.value = transformFn ? transformFn(items) : items;
     totalItems.value = total;
     currentPage.value = 1;

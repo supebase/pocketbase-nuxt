@@ -108,3 +108,15 @@ export interface ServerMetrics {
     restart_count: number;
   }>;
 }
+
+export interface RefreshState {
+  isRefreshing: Ref<boolean>;
+  isResetting: Ref<boolean>;
+}
+
+export interface PaginationResult<T> {
+  items: T[];
+  total: number;
+}
+
+export type TransformFn<T> = (items: T[]) => T[];

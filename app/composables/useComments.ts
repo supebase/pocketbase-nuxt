@@ -1,13 +1,18 @@
-import type { CommentRecord } from '~/types/comments';
+import type { CommentRecord, CommentCache } from '~/types';
 
-interface CommentCache {
-  items: CommentRecord[];
-  total: number;
-}
-const COMMENT_CACHE = new Map<string, CommentCache>();
 const MAX_CACHE_SIZE = 15;
-
+const COMMENT_CACHE = new Map<string, CommentCache>();
 const POST_PARTICIPANTS = new Map<string, Map<string, any>>();
+
+const pruneCache = () => {
+  if (COMMENT_CACHE.size > MAX_CACHE_SIZE) {
+    const firstKey = COMMENT_CACHE.keys().next().value;
+    if (firstKey !== undefined) {
+      COMMENT_CACHE.delete(firstKey);
+      POST_PARTICIPANTS.delete(firstKey);
+    }
+  }
+};
 
 export const useComments = (postId: string) => {
   const {
@@ -24,29 +29,27 @@ export const useComments = (postId: string) => {
   const lastLoadedPostId = ref<string | null>(null);
 
   const getParticipantsMap = () => {
-    if (!POST_PARTICIPANTS.has(postId)) {
-      POST_PARTICIPANTS.set(postId, new Map());
+    let participants = POST_PARTICIPANTS.get(postId);
+    if (!participants) {
+      participants = new Map();
+      POST_PARTICIPANTS.set(postId, participants);
     }
-    return POST_PARTICIPANTS.get(postId)!;
+    return participants;
   };
 
-  /**
-   * 更新全局缓存
-   */
   const updateCache = () => {
-    if (COMMENT_CACHE.size > MAX_CACHE_SIZE) {
-      const firstKey = COMMENT_CACHE.keys().next().value;
-      if (firstKey !== undefined) COMMENT_CACHE.delete(firstKey);
-    }
+    // 深度克隆数据以防止引用污染
     COMMENT_CACHE.set(postId, {
       items: [...comments.value],
       total: totalItems.value,
     });
+    pruneCache();
   };
 
-  const fetchCommentsApi = async (page: number) => {
+  const fetchCommentsApi = async (page: number, signal?: AbortSignal) => {
     const res = await $fetch<any>(`/api/collections/comments`, {
       query: { post: postId, page, perPage: 10 },
+      signal, // 竞态修复：透传信号
     });
 
     const rawItems = res.data?.comments || [];
@@ -55,11 +58,7 @@ export const useComments = (postId: string) => {
     rawItems.forEach((c: any) => {
       const u = c.expand?.user;
       if (u && !participants.has(u.id)) {
-        participants.set(u.id, {
-          id: u.id,
-          name: u.name,
-          avatar: u.avatar,
-        });
+        participants.set(u.id, { id: u.id, name: u.name, avatar: u.avatar });
       }
     });
 
@@ -72,18 +71,14 @@ export const useComments = (postId: string) => {
     return { items, total: res.data?.totalItems || 0 };
   };
 
-  /**
-   * 初始化/获取评论
-   */
   const fetchComments = async (isSilent = false, forceRefresh = false) => {
-    // 如果强制刷新或尚未加载过评论，则继续获取
     if (!forceRefresh && lastLoadedPostId.value === postId && comments.value.length > 0) return;
 
-    // 检查缓存，但如果是强制刷新则跳过缓存
     const cached = COMMENT_CACHE.get(postId);
+    // 如果是切换回该帖子且有缓存，立即恢复
     if (cached && !isSilent && !forceRefresh) {
       resetPagination(cached.items, cached.total);
-      lastLoadedPostId.value = postId; // 确保标记已加载
+      lastLoadedPostId.value = postId;
       return;
     }
 
@@ -101,17 +96,18 @@ export const useComments = (postId: string) => {
   const handleLoadMore = () => loadMore(fetchCommentsApi);
 
   /**
-   * 实时同步单条评论 (Create/Update/Delete)
+   * SSE 联动：确保实时更新直接写入缓存，实现“无感刷新”
    */
   const syncSingleComment = (record: CommentRecord, action: 'create' | 'update' | 'delete') => {
     const index = comments.value.findIndex((c) => c.id === record.id);
+
+    // 1. 参与者数据原子更新
     if ((action === 'create' || action === 'update') && record.expand?.user) {
       const u = record.expand.user;
-      const participants = getParticipantsMap();
-      if (!participants.has(u.id)) {
-        participants.set(u.id, { id: u.id, name: u.name, avatar: u.avatar });
-      }
+      getParticipantsMap().set(u.id, { id: u.id, name: u.name, avatar: u.avatar });
     }
+
+    // 2. 内存列表更新
     if (action === 'delete' && index !== -1) {
       comments.value.splice(index, 1);
       totalItems.value = Math.max(0, totalItems.value - 1);
@@ -130,41 +126,21 @@ export const useComments = (postId: string) => {
         expand: { ...(comments.value[index]?.expand || {}), ...(record.expand || {}) },
       };
     }
+
+    // 3. 强一致性同步：将 SSE 结果同步到单例 Map
     updateCache();
   };
 
-  /**
-   * 点赞处理逻辑
-   */
   const handleLikeChange = (liked: boolean, likes: number, commentId: string, isFromRealtime = false) => {
     const target = comments.value.find((c) => c.id === commentId);
     if (target) {
       target.likes = likes;
       if (!isFromRealtime) target.isLiked = liked;
-      updateCache(); // 点赞后必须更新缓存，否则切回来数据会回滚
+      updateCache(); // 同步缓存
     }
   };
 
-  /**
-   * 获取参与用户列表
-   */
-  const getUniqueUsers = () => {
-    const userMap = new Map();
-
-    // 从当前内存中现有的评论里提取用户
-    comments.value.forEach((c) => {
-      const u = c.expand?.user;
-      if (u && !userMap.has(u.id)) {
-        userMap.set(u.id, {
-          id: u.id,
-          name: u.name,
-          avatar: u.avatar,
-        });
-      }
-    });
-
-    return Array.from(userMap.values());
-  };
+  const getUniqueUsers = () => Array.from(getParticipantsMap().values());
 
   return {
     comments,

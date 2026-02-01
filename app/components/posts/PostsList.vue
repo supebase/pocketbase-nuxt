@@ -223,11 +223,10 @@ const manualRefresh = async () => {
 };
 
 const handleLoadMore = () =>
-  loadMore(async (nextPage) => {
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
+  loadMore(async (nextPage, signal) => {
     const res = await $fetch<PostsListResponse>('/api/collections/posts', {
       query: { page: nextPage },
+      signal,
     });
 
     return {

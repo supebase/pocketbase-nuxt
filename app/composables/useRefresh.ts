@@ -1,31 +1,14 @@
-/**
- * 管理刷新状态的返回类型
- */
-export interface RefreshState {
-  isRefreshing: Ref<boolean>;
-  isResetting: Ref<boolean>;
-}
+import type { RefreshState } from '~/types';
 
-/**
- * 创建刷新状态管理
- * @returns 刷新状态和刷新方法
- */
 export function useRefresh() {
   const isRefreshing = ref(false);
   const isResetting = ref(false);
 
-  /**
-   * 初始化刷新状态
-   */
   const initializeRefresh = () => {
     isRefreshing.value = true;
     isResetting.value = true;
   };
 
-  /**
-   * 完成刷新状态
-   * @param delay 延迟时间（毫秒），用于给 CSS 动画留出时间
-   */
   const completeRefresh = (delay: number = 300) => {
     setTimeout(() => {
       isRefreshing.value = false;
@@ -34,36 +17,34 @@ export function useRefresh() {
   };
 
   /**
-   * 刷新文章列表并同时刷新所有帖子的评论数据缓存
-   * @param refreshPosts 刷新文章的函数
-   * @param posts 文章列表
-   * @param currentPage 当前页码引用
+   * 刷新文章列表并同步更新缓存
+   * 优化：增强了异常处理和缓存更新的并发控制
    */
   const refreshPostsAndComments = async (
     refreshPosts: () => Promise<void>,
     postsRef: Ref<any[]>,
     currentPage: Ref<number>,
   ) => {
+    // 防止重复触发刷新
     if (isRefreshing.value) return;
 
     try {
       initializeRefresh();
 
-      // 1. 刷新文章
+      // 1. 执行主刷新逻辑（刷新文章列表）
       await refreshPosts();
 
-      // 2. 强制刷新所有帖子的评论数据缓存
-      // 注意：用 refresh 而不是 clear，这样能确保正在显示的组件重新进入 pending
+      // 2. 缓存一致性：批量刷新评论缓存
+      // 采用 Promise.allSettled 以防其中某个 ID 失效导致整体中断
       if (postsRef.value && Array.isArray(postsRef.value)) {
-        postsRef.value.forEach((post) => {
-          refreshNuxtData(`comments-data-${post.id}`);
-        });
+        const refreshTasks = postsRef.value.map((post) => refreshNuxtData(`comments-data-${post.id}`));
+        await Promise.allSettled(refreshTasks);
       }
 
-      // 3. 重置页码
+      // 3. 重置页码状态
       currentPage.value = 1;
     } catch (err) {
-      // console.error('刷新失败:', err);
+      // 可以在此处添加全局通知逻辑，例如：useToast().error('刷新失败')
       throw err;
     } finally {
       completeRefresh();

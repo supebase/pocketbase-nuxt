@@ -28,3 +28,8 @@ export interface CreateCommentRequest {
   comment: string;
   post: string;
 }
+
+export interface CommentCache {
+  items: CommentRecord[];
+  total: number;
+}

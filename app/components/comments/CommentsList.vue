@@ -76,8 +76,15 @@
       </div>
 
       <div class="flex justify-center mt-8 mb-4 select-none">
-        <UButton v-if="hasMore" :loading="isLoadingMore" variant="soft" color="neutral" @click="handleLoadMore">
-          加载更多评论
+        <UButton
+          v-if="hasMore"
+          :loading="isLoadingMore"
+          color="neutral"
+          class="cursor-pointer px-6"
+          @click="handleLoadMore"
+          :ui="{ base: 'h-9' }"
+        >
+          加载更多
         </UButton>
         <USeparator v-else-if="!hasMore && comments.length > 0" label="已经到底了" type="dashed" />
       </div>
