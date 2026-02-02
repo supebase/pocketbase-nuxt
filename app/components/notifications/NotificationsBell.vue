@@ -7,6 +7,7 @@
         variant="link"
         color="neutral"
         tabindex="-1"
+        :disabled="unreadCount === 0"
         :class="[isRinging ? 'animate-swing' : '']"
       />
     </UChip>

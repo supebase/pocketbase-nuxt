@@ -43,9 +43,13 @@ export async function getCommentById({ pb, commentId }: GetCommentByIdOptions) {
  * 创建新评论
  */
 export async function createComment({ pb, data }: CreateCommentOptions) {
-  return await pb.collection('comments').create<PBCommentsResponse<CommentExpand>>(data, {
+  const comment = await pb.collection('comments').create<PBCommentsResponse<CommentExpand>>(data, {
     expand: 'user',
   });
+
+  await invalidateCommentCaches();
+
+  return comment;
 }
 
 /**
@@ -53,5 +57,9 @@ export async function createComment({ pb, data }: CreateCommentOptions) {
  */
 export async function deleteComment({ pb, commentId }: DeleteCommentOptions) {
   await ensureOwnership(pb, 'comments', commentId);
-  return await pb.collection('comments').delete(commentId);
+  const result = await pb.collection('comments').delete(commentId);
+
+  await invalidateCommentCaches(commentId);
+
+  return result;
 }

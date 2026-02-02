@@ -3,9 +3,7 @@
     <div class="flex items-center justify-between pt-4 select-none">
       <div>
         <h2 class="text-2xl font-bold tracking-tight text-neutral-900 dark:text-white">提醒</h2>
-        <p class="text-sm text-neutral-500">
-          当前页面有 {{ notifications.filter((n) => !n.is_read).length }} 条未读消息
-        </p>
+        <p class="text-sm text-neutral-500">当前页面有 {{ unreadCount }} 条未读消息</p>
       </div>
       <UButton
         v-if="notifications.length > 0"
@@ -14,7 +12,8 @@
         class="cursor-pointer"
         tabindex="-1"
         icon="i-hugeicons:checkmark-circle-03"
-        @click="handleMarkAllAsRead"
+        :loading="isMarkingAll"
+        @click="markAllAsRead"
       >
         全部标记为已读
       </UButton>
@@ -60,117 +59,50 @@
       </TransitionGroup>
 
       <div v-if="hasMore" class="pt-6 flex flex-col items-center gap-4">
-        <button class="text-sm font-bold text-muted cursor-pointer" @click="loadMore">查看以前的消息</button>
+        <button class="text-sm font-bold text-muted cursor-pointer" :disabled="loadingMore" @click="loadMore">
+          {{ loadingMore ? '加载中...' : '查看以前的消息' }}
+        </button>
       </div>
     </div>
   </ClientOnly>
 </template>
 
 <script setup lang="ts">
-import type { NotificationRecord, NotificationsApiResult } from '~/types';
+import type { NotificationRecord } from '~/types';
 
-const notifications = ref<NotificationRecord[]>([]);
-const page = ref(1);
-const hasMore = ref(false);
-const isMarkingAll = ref(false);
-const loadingMore = ref(false);
+const {
+  notifications,
+  hasMore,
+  isMarkingAll,
+  loadingMore,
+  markAllAsRead,
+  markAsRead,
+  loadMore,
+  resetAndRefresh,
+  setupRealtime,
+} = useNotifications();
 
-const { user } = useUserSession();
-const { listen } = usePocketRealtime();
+// 计算属性
+const unreadCount = computed(() => notifications.value.filter((n) => !n.is_read).length);
 
-// 1. 获取通知列表逻辑
-const { pending, refresh } = await useFetch<NotificationsApiResult>('/api/collections/notification', {
-  query: { page, perPage: 10 },
-  // 关键：强制让这个请求只在客户端运行，避免服务端认证丢失问题
-  server: false,
-  onResponse({ response }) {
-    if (response._data?.data) {
-      const { items, totalPages } = response._data.data;
-      if (page.value === 1) {
-        notifications.value = items;
-      } else {
-        const existingIds = new Set(notifications.value.map((n) => n.id));
-        const uniqueItems = items.filter((n) => !existingIds.has(n.id));
-        notifications.value.push(...uniqueItems);
-      }
-      hasMore.value = page.value < totalPages;
-    }
-  },
-});
-
-// 2. KeepAlive 激活时重置并刷新
-onActivated(() => {
-  page.value = 1;
-  refresh();
-});
-
-// 3. 实时监听：新消息直接插到列表头部
+// 生命周期
 onMounted(() => {
-  listen(async ({ collection, action, record }) => {
-    // 基础过滤
-    if (collection === 'notifications' && action === 'create' && record.to_user === user.value?.id) {
-      // 避免重复
-      if (notifications.value.find((n) => n.id === record.id)) return;
-
-      try {
-        const res = await $fetch<any>(`/api/collections/notification/${record.id}`);
-
-        if (res.data && page.value === 1) {
-          // 将带 expand 的完整对象插入列表
-          notifications.value.unshift(res.data as NotificationRecord);
-
-          // 可选：为了保持简约，如果列表太长，可以去掉末尾一个
-          if (notifications.value.length > 10) {
-            notifications.value.pop();
-          }
-        }
-      } catch (e) {
-        console.error('实时通知解析失败:', e);
-      }
-    }
-  });
+  setupRealtime();
 });
 
-// 4. 全部标记已读
-const handleMarkAllAsRead = async () => {
-  if (isMarkingAll.value) return;
-  isMarkingAll.value = true;
-  try {
-    await $fetch('/api/collections/notification', { method: 'PATCH' });
-    notifications.value.forEach((n) => (n.is_read = true));
-  } finally {
-    isMarkingAll.value = false;
-  }
-};
+onActivated(() => {
+  resetAndRefresh();
+});
 
-// 5. 点击跳转并标记已读
+// 处理跳转
 const handleJump = async (item: NotificationRecord) => {
-  if (!item.is_read) {
-    // 乐观更新 UI
-    item.is_read = true;
-    $fetch(`/api/collections/notification/${item.id}`, { method: 'PATCH' }).catch(() => {
-      item.is_read = false; // 失败则回滚
-    });
-  }
-
-  // 跳转到文章。如果你有评论锚点，记得带上：`/${item.post}#comment-${item.comment}`
+  await markAsRead(item);
   navigateTo(`/${item.post}`);
 };
 
-// 6. 分页加载
-const loadMore = async () => {
-  if (loadingMore.value) return;
-  loadingMore.value = true;
-  page.value++;
-  await refresh();
-  loadingMore.value = false;
-};
-
-// 过滤内容中的 @用户 标签
+// 文本处理
 const cleanComment = (text?: string) => {
   if (!text) return '';
-  // 正则说明：匹配 @ 符号后跟着非空白字符，直到遇到空格或结束
-  // 如果你的用户名包含特殊字符，可以根据实际格式调整正则，如 /@[\u4e00-\u9fa5\w-]+/g
   return text.replace(/@([^\s@#$!%^&*()]+)/g, '').trim();
 };
 </script>

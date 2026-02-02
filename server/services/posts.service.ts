@@ -179,9 +179,13 @@ export async function updatePost({ pb, postId, body }: UpdatePostOptions): Promi
 
   if (Array.from(formData.keys()).length === 0) return existing;
 
-  return (await pb.collection('posts').update(postId, formData, {
+  const updated = (await pb.collection('posts').update(postId, formData, {
     expand: 'user',
   })) as PostRecord;
+
+  await invalidatePostCaches(postId);
+
+  return updated;
 }
 
 /**
@@ -189,7 +193,11 @@ export async function updatePost({ pb, postId, body }: UpdatePostOptions): Promi
  */
 export async function deletePost({ pb, postId }: DeletePostOptions) {
   await ensureOwnership(pb, 'posts', postId);
-  return await pb.collection('posts').delete(postId);
+  const result = await pb.collection('posts').delete(postId);
+
+  await invalidatePostCaches(postId);
+
+  return result;
 }
 
 /**
