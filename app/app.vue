@@ -28,6 +28,12 @@
       </UContainer>
     </UMain>
 
+    <UFooter>
+      <ClientOnly>
+        <LazyBuildEnvironment />
+      </ClientOnly>
+    </UFooter>
+
     <LazyStatsOnline />
     <LazyCommonWeChatGuide />
   </UApp>
