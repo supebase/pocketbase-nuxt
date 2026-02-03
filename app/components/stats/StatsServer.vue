@@ -19,10 +19,18 @@
           <div class="text-muted text-xs tracking-tighter">模式</div>
           <div class="font-bold text-primary">{{ metrics.mode }}</div>
         </div>
-        <div class="text-right">
-          <div class="text-neutral-500 text-xs tracking-tighter">当前连接总数</div>
-          <div class="font-black text-xl">
-            <CommonAnimateNumber :value="totalConnections" />
+        <div class="flex gap-6 text-right">
+          <div>
+            <div class="text-neutral-500 text-xs tracking-tighter">在线设备</div>
+            <div class="font-black text-xl">
+              <CommonAnimateNumber :value="uniqueDevices" />
+            </div>
+          </div>
+          <div>
+            <div class="text-neutral-500 text-xs tracking-tighter">连接总数</div>
+            <div class="font-black text-xl">
+              <CommonAnimateNumber :value="totalConnections" />
+            </div>
           </div>
         </div>
       </div>
@@ -95,6 +103,11 @@ const isLoading = computed(() => status.value === 'pending');
 
 const totalConnections = computed(() => {
   return metrics.value?.summary?.total_active_connections ?? metrics.value?.total_connections ?? 0;
+});
+
+// 计算独立设备数
+const uniqueDevices = computed(() => {
+  return metrics.value?.summary?.total_unique_devices ?? metrics.value?.unique_devices ?? 0;
 });
 
 const displayRSS = computed(() => {

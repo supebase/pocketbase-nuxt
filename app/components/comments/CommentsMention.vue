@@ -38,10 +38,6 @@
           class="size-3 text-neutral-300 opacity-0 group-hover:opacity-100 transition-opacity"
         />
       </div>
-
-      <div class="mt-1.5 pt-1.5 border-t border-neutral-100 dark:border-neutral-800 flex justify-center">
-        <span class="text-[10px] text-neutral-400 font-medium uppercase tracking-wider">选择用户</span>
-      </div>
     </div>
   </div>
 </template>

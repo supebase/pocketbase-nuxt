@@ -12,6 +12,16 @@ const sseManager = {
   heartbeatTimer: null as ReturnType<typeof setInterval> | null,
   lastActivity: Date.now(),
   cleanupTimer: null as ReturnType<typeof setTimeout> | null,
+  MAX_RETRY_COUNT: 10,
+  clientId:
+    typeof window !== 'undefined'
+      ? localStorage.getItem('sse_cid') ||
+        (() => {
+          const id = crypto.randomUUID();
+          localStorage.setItem('sse_cid', id);
+          return id;
+        })()
+      : '',
 };
 
 export const usePocketRealtime = () => {
@@ -77,15 +87,31 @@ export const usePocketRealtime = () => {
     const allCollections = ['posts', 'comments', 'likes', 'notifications'];
     const colsParam = encodeURIComponent(allCollections.join(','));
 
-    // 修复：添加唯一的连接标识防止浏览器缓存
-    const es = new EventSource(`/api/realtime?cols=${colsParam}&t=${Date.now()}`, {
+    // 组合唯一 URL：包含业务集合、客户端 ID、以及防缓存时间戳
+    const url = `/api/realtime?cols=${colsParam}&cid=${sseManager.clientId}&t=${Date.now()}`;
+
+    const es = new EventSource(url, {
       withCredentials: true,
     });
 
     const reconnect = () => {
       destroyConnection();
-      // 指数退避算法
-      const delay = Math.min(1000 * Math.pow(2, sseManager.retryCount), 30000) + Math.random() * 1000;
+
+      // 检查是否超过最大重试次数
+      if (sseManager.retryCount >= sseManager.MAX_RETRY_COUNT) {
+        // console.warn('[SSE] 达到最大重试次数，停止自动连接');
+        status.value = 'offline';
+        return;
+      }
+
+      // 指数退避算法 + Jitter (抖动)
+      // 基础延迟: 1s, 2s, 4s, 8s, 16s, 30s...
+      const baseDelay = Math.min(1000 * Math.pow(2, sseManager.retryCount), 30000);
+      // 引入 0-50% 的随机抖动，分散后端压力
+      const jitter = baseDelay * Math.random() * 0.5;
+      const delay = baseDelay + jitter;
+
+      // console.log(`[SSE] 将在 ${Math.round(delay / 1000)}s 后进行第 ${sseManager.retryCount + 1} 次重连`);
 
       sseManager.retryTimer = setTimeout(() => {
         sseManager.retryCount++;

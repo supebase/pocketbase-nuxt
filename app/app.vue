@@ -41,6 +41,7 @@ const appConfig = useAppConfig();
 const colorMode = useColorMode();
 const { showHeaderBack } = useHeader();
 const { loggedIn, fetch: fetchSession } = useUserSession();
+const { status: sseStatus, listen: sseListen } = usePocketRealtime();
 
 // 身份状态清理
 const pbAuth = useCookie('pb_auth', { path: '/' });
@@ -54,15 +55,25 @@ watch(loggedIn, (isLogged) => {
 // 标签页可见性监听
 if (import.meta.client) {
   const visibility = useDocumentVisibility();
-  // 增加一个简单的节流或冷却判断
-  const lastFetchTime = ref(0);
+  const lastCheckTime = ref(0);
+
   watch(visibility, (state) => {
     if (state === 'visible') {
       const now = Date.now();
-      // 如果距离上次检查不足 1 分钟，就不重复请求
-      if (now - lastFetchTime.value > 60000) {
+
+      // 策略 A: 校验 Session (频率控制：1分钟)
+      if (now - lastCheckTime.value > 60000) {
         fetchSession();
-        lastFetchTime.value = now;
+        lastCheckTime.value = now;
+      }
+
+      // 策略 B: 唤醒 SSE
+      // 如果 SSE 当前是 offline (可能是因为重连次数超限)，且用户已登录
+      // 只要调用一次 listen，内部逻辑就会重置计数器并尝试 connectPhysical
+      if (sseStatus.value === 'offline' && loggedIn.value) {
+        // console.log('[SSE] Tab visible, re-activating connection...');
+        // 传入一个空回调即可触发内部重连逻辑，或者直接导出 connectPhysical
+        sseListen(() => {});
       }
     }
   });

@@ -4,13 +4,14 @@ import type { ProcessDescription } from 'pm2';
 
 interface ConnectionInfo {
   id: string;
+  clientId?: string;
   connectedAt: number;
   lastHeartbeat: number;
 }
 
 const CONFIG = {
   PROCESS_NAME: process.env.PM2_PROCESS_NAME || 'Eric', // 和 PM2 名称一致
-  HEARTBEAT_TIMEOUT: 30000, // 30秒
+  HEARTBEAT_TIMEOUT: 45000, // 增加到45秒，给网络波动留点余地
   CLEANUP_INTERVAL: 60000, // 60秒
 };
 
@@ -20,10 +21,11 @@ const connGauge = io.metric({
   name: 'Active Connections',
 });
 
-export const addConnection = (id: string): void => {
+export const addConnection = (id: string, metadata?: { clientId?: string }): void => {
   const now = Date.now();
   activeConnections.set(id, {
     id,
+    clientId: metadata?.clientId, // 存储客户端 ID
     connectedAt: now,
     lastHeartbeat: now,
   });
@@ -59,8 +61,21 @@ const cleanupStaleConnections = (): void => {
   }
 };
 
+const deviceGauge = io.metric({
+  name: 'Unique Devices',
+});
+
 const updateGauge = (): void => {
   connGauge.set(activeConnections.size);
+
+  // 计算当前实例去重后的设备数
+  const uniqueCount = new Set(
+    Array.from(activeConnections.values())
+      .map((c) => c.clientId)
+      .filter(Boolean),
+  ).size;
+
+  deviceGauge.set(uniqueCount);
 };
 
 setInterval(cleanupStaleConnections, CONFIG.CLEANUP_INTERVAL);
@@ -70,13 +85,14 @@ const toMB = (bytes: number): string => {
 };
 
 const getInstanceMetrics = (proc: ProcessDescription) => {
-  const env = proc.pm2_env as any; // PM2 类型定义不完整，这里需要 any
+  const env = proc.pm2_env as any;
   const axmMonitor = env?.axm_monitor || {};
 
   return {
     pm_id: proc.pm_id ?? 'N/A',
     status: env?.status ?? 'unknown',
     connections: axmMonitor['Active Connections']?.value ?? 0,
+    unique_devices: axmMonitor['Unique Devices']?.value ?? 0,
     cpu: (proc.monit?.cpu ?? 0) + '%',
     memory: toMB(proc.monit?.memory ?? 0),
     restart_count: env?.restart_time ?? 0,
@@ -88,10 +104,18 @@ export default defineEventHandler(async (event) => {
 
   if (!isPM2) {
     const mem = process.memoryUsage();
+    // 计算去重后的设备数
+    const uniqueDevices = new Set(
+      Array.from(activeConnections.values())
+        .map((c) => c.clientId)
+        .filter(Boolean),
+    ).size;
+
     return {
       status: 'success',
       mode: '单机模式',
       total_connections: activeConnections.size,
+      unique_devices: uniqueDevices,
       system_resource: {
         heap_used: toMB(mem.heapUsed),
         rss: toMB(mem.rss),
@@ -123,12 +147,14 @@ export default defineEventHandler(async (event) => {
           const instances = processList.filter((proc) => proc.name === CONFIG.PROCESS_NAME).map(getInstanceMetrics);
 
           const totalConns = instances.reduce((sum, i) => sum + Number(i.connections || 0), 0);
+          const totalDevices = instances.reduce((sum, i) => sum + Number(i.unique_devices || 0), 0);
 
           const result = {
             status: 'success',
             mode: `集群模式 (${instances.length} 实例)`,
             summary: {
               total_active_connections: totalConns,
+              total_unique_devices: totalDevices,
               server_time: new Date().toISOString(),
             },
             instances,

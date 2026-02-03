@@ -15,6 +15,8 @@ export default defineEventHandler(async (event) => {
   });
 
   const query = getQuery(event);
+  const clientId = query.cid as string;
+
   const collections =
     typeof query.cols === 'string'
       ? query.cols
@@ -25,7 +27,7 @@ export default defineEventHandler(async (event) => {
 
   // ===== 修复：生成唯一连接 ID =====
   const connectionId = randomUUID();
-  addConnection(connectionId);
+  addConnection(connectionId, { clientId });
 
   const eventStream = createEventStream(event);
   const pb = getPocketBase(event);
@@ -35,9 +37,9 @@ export default defineEventHandler(async (event) => {
 
   for (const col of collections) {
     try {
-      await pb.collection(col).subscribe(
+      await pb.collection(col).subscribe<Record<string, any>>(
         '*',
-        (data: { action: any; record: any }) => {
+        (data) => {
           if (!event.node.req.destroyed) {
             eventStream.push({
               event: col,

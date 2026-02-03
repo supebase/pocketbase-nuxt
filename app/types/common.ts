@@ -90,6 +90,7 @@ export interface ServerMetrics {
   status: string;
   mode: string;
   total_connections?: number;
+  unique_devices?: number;
   system_resource?: {
     heap_used: string;
     rss: string;
@@ -97,6 +98,7 @@ export interface ServerMetrics {
   };
   summary?: {
     total_active_connections: number;
+    total_unique_devices?: number;
     server_time: string;
   };
   instances?: Array<{

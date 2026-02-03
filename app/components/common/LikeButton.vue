@@ -25,7 +25,7 @@
       />
     </div>
 
-    <CommonAnimateNumber :value="localLikesCount" class="tabular-nums text-sm text-dimmed font-medium" />
+    <CommonAnimateNumber :value="localLikesCount" class="tabular-nums text-dimmed font-medium" />
   </div>
 </template>
 

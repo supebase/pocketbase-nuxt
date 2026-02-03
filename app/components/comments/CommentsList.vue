@@ -21,12 +21,15 @@
 
       <CommonMotionTimeline :items="comments" line-offset="15px" :trigger-ratio="0.55">
         <template #indicator="{ item }">
-          <CommonGravatar :avatar-id="item.expand?.user?.avatar" :size="64" />
+          <CommonGravatar :avatar-id="item.expand?.user?.avatar" :size="64" class="size-7" />
         </template>
 
         <template #title="{ item }">
-          <div class="flex items-center justify-between text-base font-medium">
-            {{ item.expand?.user?.name || '匿名用户' }}
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+              <span class="text-base font-medium">{{ item.expand?.user?.name || '匿名用户' }}</span>
+              <span class="text-sm text-dimmed tabular-nums">{{ item.relativeTime }}</span>
+            </div>
             <div>
               <CommonLikeButton
                 :key="item.id"
@@ -46,22 +49,16 @@
               <span v-else>{{ part.text }}</span>
             </template>
           </div>
-          <div class="flex items-center justify-between mt-2">
-            <div class="text-sm text-dimmed">
-              {{ item.relativeTime
-              }}{{
-                item.expand?.user?.location ? `，${formatLocation(item.expand?.user?.location)}` : '，坐标丢失 ...'
-              }}
-            </div>
+          <div class="flex items-center mt-2">
             <div
               v-if="item.expand?.user?.id === user?.id"
               @click="!isDeleting && openDeleteModal(item)"
-              :class="[
-                'text-sm text-dimmed transition-colors',
-                isDeleting ? 'cursor-not-allowed' : 'cursor-pointer hover:text-error',
-              ]"
+              :class="['text-sm mr-3 text-error', isDeleting ? 'cursor-not-allowed' : 'cursor-pointer']"
             >
               删除
+            </div>
+            <div class="text-sm text-dimmed">
+              {{ item.expand?.user?.location ? `${formatLocation(item.expand?.user?.location)}` : '坐标丢失 ...' }}
             </div>
           </div>
         </template>
