@@ -9,7 +9,7 @@
     </div>
 
     <template #content>
-      <div class="p-2 drop-shadow-2xl">
+      <div class="p-2 drop-shadow-2xl select-none">
         <NuxtEmojiPicker
           native
           hide-search

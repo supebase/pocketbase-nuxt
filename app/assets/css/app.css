@@ -111,7 +111,9 @@ header::before {
 }
 
 .number-column {
-  width: 0.65em; /* 根据你的字体微调 */
+  width: 0.6em; /* 稍微调窄，更像等宽字体 */
+  height: 1.25em;
+  overflow: hidden;
 }
 
 .comma-column {
@@ -121,23 +123,24 @@ header::before {
 
 .digit-cell {
   height: 1.25em;
-  line-height: 1.25em;
   display: flex;
   align-items: center;
   justify-content: center;
-  /* 核心：强制等宽字体，防止数字切换时左右晃动 */
+
+  /* 强制开启当前字体的等宽数字功能 */
   font-variant-numeric: tabular-nums;
-  -webkit-font-smoothing: antialiased;
+
+  /* 移除可能导致偏移的 padding */
+  padding: 0;
+  margin: 0;
 }
 
 .number-scroll {
-  display: flex;
-  flex-direction: column;
+  /* 强制硬件加速 */
+  transform: translate3d(0, 0, 0);
   will-change: transform;
-  /* 使用硬件加速 */
-  backface-visibility: hidden;
   transition-property: transform;
-  /* 这里的 transitionDuration 应该由 Vue 传入或保持一致 */
+  /* 使用你定义的变量 */
   transition-timing-function: var(--ease-out-expo);
 }
 
@@ -445,16 +448,16 @@ header::before {
 .eric path:nth-child(2) { animation: write 5s ease forwards; animation-delay: 1.5s; }
 .eric path:nth-child(3) { animation: write 5s ease forwards; animation-delay: 2s; }
 
-.logo-wrapper:not(.eric) path { 
-  stroke-dasharray: none; 
-  stroke-dashoffset: 0; 
-  opacity: 1; 
+.logo-wrapper:not(.eric) path {
+  stroke-dasharray: none;
+  stroke-dashoffset: 0;
+  opacity: 1;
 }
 
-.logo-wrapper svg { 
-  width: 32px; 
-  height: auto; 
-  display: block; 
+.logo-wrapper svg {
+  width: 32px;
+  height: auto;
+  display: block;
 }
 
 /* ==========================================================================

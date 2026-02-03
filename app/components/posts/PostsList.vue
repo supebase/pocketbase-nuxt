@@ -82,6 +82,7 @@
                   :delay="(index % 10) * 0.08"
                   :can-view-drafts="canViewDrafts ?? false"
                   :trigger-animation="animationTrigger"
+                  :is-priority="index === 0"
                 />
               </template>
             </CommonMotionTimeline>

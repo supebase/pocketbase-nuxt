@@ -13,19 +13,28 @@
       class="relative w-22.25 shrink-0 overflow-hidden border-r border-white dark:border-neutral-900 bg-neutral-200/50 dark:bg-neutral-800/80 backdrop-blur"
     >
       <template v-if="linkImage">
-        <div class="relative w-full h-full">
+        <div class="relative w-full h-full bg-neutral-200/50 dark:bg-neutral-800/80">
+          <img
+            :src="linkImage"
+            class="absolute inset-0 w-full h-full object-cover blur-xl scale-110 opacity-60"
+            aria-hidden="true"
+          />
+
           <img
             :src="linkImage"
             @load="isLoaded = true"
-            :class="[
-              'w-full h-full object-cover transition-all duration-700 ease-in-out',
-              isLoaded ? 'blur-0 scale-100 opacity-100' : 'blur-xl scale-110 opacity-0',
-            ]"
             alt="preview"
-            loading="lazy"
+            :loading="isPriority ? 'eager' : 'lazy'"
+            :fetchpriority="isPriority ? 'high' : 'auto'"
+            class="relative w-full h-full object-cover transition-opacity duration-500 ease-in-out"
+            :class="[isLoaded ? 'opacity-100' : 'opacity-0']"
           />
-          <div v-if="!isLoaded" class="absolute inset-0 flex items-center justify-center">
-            <UIcon name="i-hugeicons:refresh" class="size-5 text-dimmed animate-spin" />
+
+          <div
+            v-if="!isLoaded"
+            class="absolute inset-0 flex items-center justify-center bg-white/10 dark:bg-black/10 backdrop-blur-[2px]"
+          >
+            <UIcon name="i-hugeicons:refresh" class="size-4 text-neutral-500 animate-spin" />
           </div>
         </div>
       </template>
@@ -58,6 +67,7 @@ import type { LinkPreviewData } from '~/types';
 
 const props = defineProps<{
   data: LinkPreviewData;
+  isPriority?: boolean;
   linkImage?: string;
 }>();
 
@@ -66,4 +76,10 @@ const isLoaded = ref(false);
 const isGitHub = computed(() => isGitHubUrl(props.data.url));
 const cleanTitle = computed(() => formatLinkTitle(props.data.title || '', props.data.url));
 const displayUrl = computed(() => formatDisplayUrl(props.data.url));
+
+if (props.isPriority && props.linkImage) {
+  useHead({
+    link: [{ rel: 'preload', as: 'image', href: props.linkImage }],
+  });
+}
 </script>

@@ -14,21 +14,30 @@
         class="absolute -bottom-2 inset-x-4 h-12 bg-neutral-200/60 dark:bg-neutral-800/60 rounded-xl -z-10 transition-transform group-hover:translate-y-1"
       ></div>
       <div class="rounded-xl overflow-hidden transition-all duration-500 group-hover:-translate-y-2">
-        <div class="aspect-video relative overflow-hidden">
+        <div class="aspect-video relative overflow-hidden bg-neutral-100 dark:bg-neutral-800">
+          <img
+            :src="item.firstImage"
+            class="absolute inset-0 w-full h-full object-cover blur-2xl scale-110 opacity-50"
+            aria-hidden="true"
+          />
+
           <img
             :src="item.firstImage"
             @load="isLoaded = true"
-            loading="lazy"
-            class="w-full h-full object-cover group-hover:grayscale transition-all duration-700"
+            :loading="isPriority ? 'eager' : 'lazy'"
+            :fetchpriority="isPriority ? 'high' : 'auto'"
+            class="relative w-full h-full object-cover group-hover:grayscale transition-opacity duration-500"
             :class="[isLoaded ? 'opacity-100' : 'opacity-0']"
           />
-          <div
-            v-if="!isLoaded"
-            class="absolute inset-0 flex items-center justify-center bg-neutral-100 dark:bg-neutral-800 rounded-xl"
-          >
-            <UIcon name="i-hugeicons:refresh" class="size-5 text-dimmed animate-spin" />
+
+          <div v-if="!isLoaded" class="absolute inset-0 flex items-center justify-center bg-black/10 backdrop-blur-sm">
+            <UIcon name="i-hugeicons:refresh" class="size-5 text-white animate-spin" />
           </div>
-          <div v-else class="absolute bottom-0 inset-x-0 p-5 bg-white/60 dark:bg-neutral-950/60 backdrop-blur-md">
+
+          <div
+            v-if="isLoaded"
+            class="absolute bottom-0 inset-x-0 p-5 bg-white/60 dark:bg-neutral-950/60 backdrop-blur-md"
+          >
             <p class="text-sm font-medium text-neutral-800 dark:text-neutral-200 line-clamp-2">
               {{ item.cleanContent }}
             </p>
@@ -37,7 +46,12 @@
       </div>
     </ULink>
 
-    <CommonLinkCard v-if="item.link_data" :data="item.link_data" :link-image="getLinkImage(item, item.link_image)" />
+    <CommonLinkCard
+      v-if="item.link_data"
+      :data="item.link_data"
+      :is-priority="isPriority"
+      :link-image="getLinkImage(item, item.link_image)"
+    />
     <CommentsUsers :post-id="item.id" :allow-comment="item.allow_comment" />
   </div>
 </template>
@@ -54,6 +68,7 @@ interface Props {
     link_data: any;
     link_image?: string;
   };
+  isPriority?: boolean;
   delay: number;
   canViewDrafts: boolean;
   triggerAnimation?: number;
@@ -85,4 +100,14 @@ onMounted(() => {
     }, 1000);
   });
 });
+
+if (props.isPriority) {
+  const imagesToPreload = [];
+  if (props.item.firstImage) imagesToPreload.push(props.item.firstImage);
+  if (props.item.link_image) imagesToPreload.push(getLinkImage(props.item, props.item.link_image));
+
+  useHead({
+    link: imagesToPreload.map((href) => ({ rel: 'preload', as: 'image', href })),
+  });
+}
 </script>

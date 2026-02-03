@@ -11,7 +11,7 @@
       </USeparator>
 
       <ModalDelete v-model:open="isModalOpen" :loading="isDeleting" @confirm="confirmDelete">
-        <div v-if="selectedComment" class="flex flex-col gap-2">
+        <div v-if="selectedComment" class="flex flex-col gap-2 select-none">
           <div class="text-sm text-primary font-semibold">即将消失的数据</div>
           <div class="text-sm text-muted line-clamp-2">
             {{ selectedComment.comment }}
@@ -25,7 +25,7 @@
         </template>
 
         <template #title="{ item }">
-          <div class="flex items-center justify-between">
+          <div class="flex items-center justify-between select-none">
             <div class="flex items-center space-x-3">
               <span class="text-base font-medium">{{ item.expand?.user?.name || '匿名用户' }}</span>
               <span class="text-sm text-dimmed tabular-nums">{{ item.relativeTime }}</span>
@@ -45,11 +45,11 @@
         <template #description="{ item }">
           <div class="text-base tracking-wide leading-6 hyphens-none whitespace-pre-wrap">
             <template v-for="(part, index) in parsedContent(item.comment)" :key="index">
-              <span v-if="part.isMention" class="text-primary font-semibold">{{ part.text }}</span>
+              <span v-if="part.isMention" class="text-primary font-semibold select-none">{{ part.text }}</span>
               <span v-else>{{ part.text }}</span>
             </template>
           </div>
-          <div class="flex items-center mt-2">
+          <div class="flex items-center mt-2 select-none">
             <div
               v-if="item.expand?.user?.id === user?.id"
               @click="!isDeleting && openDeleteModal(item)"

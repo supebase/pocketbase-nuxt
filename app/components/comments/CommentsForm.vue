@@ -19,7 +19,7 @@
         @keydown="onKeyDown"
       />
 
-      <div class="flex justify-between items-center px-3 py-1">
+      <div class="flex justify-between items-center px-3 py-1 select-none">
         <div class="flex items-center space-x-3" :class="{ 'cursor-not-allowed pointer-events-none': isSubmitting }">
           <CommonEmojiSelector @emoji="onInsertEmoji" />
 

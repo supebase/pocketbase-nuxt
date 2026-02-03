@@ -2,21 +2,18 @@
  * 数字拆解逻辑：支持 999 变 1,000 的平滑插入
  */
 export const processAnimateDigits = (value: number) => {
-  const formatter = new Intl.NumberFormat('en-US');
-  const str = formatter.format(value);
-  // 不要在 utils 里反转数组，保持字符串顺序，但在生成 ID 时参考其从右往左的权重
+  const str = new Intl.NumberFormat('en-US').format(value);
   const chars = str.split('');
-  const length = chars.length;
+  const n = chars.length;
 
   return chars.map((char, index) => {
     const isDigit = /\d/.test(char);
-    // 关键点：ID 基于从右向左的距离生成
-    // 比如 1,234 中的 '4' 是 pos-0, '3' 是 pos-1...
-    // 这样当数字变成 12,345 时，'4' 和 '5' 的位移关系依然能被 Vue 识别
-    const reverseIndex = length - 1 - index;
+    const rightSideDigits = chars.slice(index + 1).filter((c) => /\d/.test(c)).length;
+    const idPrefix = isDigit ? 'd' : 's';
 
     return {
-      id: isDigit ? `d-${reverseIndex}` : `s-${reverseIndex}`,
+      // 这里的 ID 保证了：无论左边增加多少位，右边的数字 ID 永远不变
+      id: `${idPrefix}-${rightSideDigits}`,
       digit: char,
       isComma: !isDigit,
     };

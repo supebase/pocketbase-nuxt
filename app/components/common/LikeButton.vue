@@ -1,6 +1,6 @@
 <template>
   <div
-    class="flex items-center justify-center space-x-1.5 group select-none"
+    class="flex items-center justify-center space-x-2 group select-none"
     :class="isLoading ? 'cursor-wait' : 'cursor-pointer'"
     @click.stop="handleLike"
   >
@@ -25,7 +25,7 @@
       />
     </div>
 
-    <CommonAnimateNumber :value="localLikesCount" class="tabular-nums text-dimmed font-medium" />
+    <CommonAnimateNumber :value="localLikesCount" class="shrink-0 tabular-nums text-base text-dimmed font-medium" />
   </div>
 </template>
 

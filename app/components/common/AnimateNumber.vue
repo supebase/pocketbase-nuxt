@@ -1,5 +1,5 @@
 <template>
-  <div class="inline-flex flex-row items-center tabular-nums overflow-hidden select-none h-[1.25em]">
+  <div class="inline-flex flex-row items-center tabular-nums overflow-hidden select-none h-[1.25em] leading-none">
     <transition-group name="digit">
       <div
         v-for="item in processedDigits"
@@ -10,6 +10,7 @@
         <template v-if="item.isComma">
           <span class="digit-cell">{{ item.digit }}</span>
         </template>
+
         <template v-else>
           <div
             class="number-scroll"
@@ -18,9 +19,16 @@
               transitionDuration: '600ms',
             }"
           >
-            <div v-for="n in 10" :key="n" class="digit-cell">
-              {{ n - 1 }}
-            </div>
+            <div class="digit-cell">0</div>
+            <div class="digit-cell">1</div>
+            <div class="digit-cell">2</div>
+            <div class="digit-cell">3</div>
+            <div class="digit-cell">4</div>
+            <div class="digit-cell">5</div>
+            <div class="digit-cell">6</div>
+            <div class="digit-cell">7</div>
+            <div class="digit-cell">8</div>
+            <div class="digit-cell">9</div>
           </div>
         </template>
       </div>
