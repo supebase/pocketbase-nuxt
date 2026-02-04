@@ -41,7 +41,7 @@ export async function registerService({
   event,
 }: RegisterOptions & { event: H3Event }): Promise<UsersResponse> {
   const cleanEmail = normalizeEmail(email);
-  const md5Hash = getMd5Hash(cleanEmail);
+  const emailHash = getEmailHash(cleanEmail);
   const rawName = cleanEmail.split('@')[0] || '';
   const defaultName = formatDefaultName(rawName);
 
@@ -49,7 +49,7 @@ export async function registerService({
     email: cleanEmail,
     password,
     passwordConfirm,
-    avatar: md5Hash,
+    avatar: emailHash,
     name: defaultName,
     location,
   };

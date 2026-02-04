@@ -24,7 +24,7 @@
             <UUser size="sm">
               <template #avatar>
                 <div class="size-7 rounded-full">
-                  <CommonGravatar :avatar-id="user?.avatar" :size="56" />
+                  <CommonGravatar :avatar-id="user?.avatar" :size="64" />
                 </div>
               </template>
             </UUser>

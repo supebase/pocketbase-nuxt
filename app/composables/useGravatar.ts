@@ -15,8 +15,8 @@ export function useGravatar(
 
   const avatarUrl = computed(() => {
     const id = toValue(avatarIdSource);
-    // 使用 gravatar.loli.net 镜像源
-    return id ? `https://gravatar.loli.net/avatar/${id}?s=${size}&r=${rank}` : '';
+    // 使用 cn.cravatar.com 镜像源
+    return id ? `https://cn.cravatar.com/avatar/${id}?s=${size}&r=${rank}` : '';
   });
 
   // 监听 ID 变化，重置状态
