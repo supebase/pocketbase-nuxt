@@ -31,7 +31,7 @@ export function usePostsActions(refreshCallback: () => Promise<void> | void) {
       });
 
       // 3. 触发刷新 (不 block 最后的清理逻辑)
-      if (refreshCallback) await refreshCallback();
+      // if (refreshCallback) await refreshCallback();
     } catch (err: any) {
       // 4. 失败处理
       toast.add({
