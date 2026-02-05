@@ -11,7 +11,7 @@ const config = {
       name: 'Eric',
       script: './.output/server/index.mjs',
       exec_mode: 'cluster', // 开启集群模式
-      instances: 4, // 根据 CPU 核心数自动创建实例
+      instances: 2, // 根据 CPU 核心数自动创建实例
 
       // 环境变量配置
       env: {
@@ -22,7 +22,7 @@ const config = {
       },
 
       // 进阶优化建议：
-      max_memory_restart: '1G', // 单个实例超过 1G 内存自动重启
+      max_memory_restart: '2G', // 单个实例超过内存限制自动重启
       autorestart: true, // 异常退出自动重启
       watch: false, // 生产环境务必设置为 false
     },

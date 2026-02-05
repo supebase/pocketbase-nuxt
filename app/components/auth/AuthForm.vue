@@ -1,22 +1,33 @@
 <template>
   <div class="mt-4">
     <UForm :state="formState" @submit="handleAuth" class="flex flex-col gap-4">
-      <UInput
-        v-model="email"
-        id="email"
-        placeholder="电子邮件"
-        color="neutral"
-        :disabled="loading"
-        icon="i-hugeicons:at"
-        size="xl"
-        :maxlength="100"
-        class="w-full"
-      />
+      <UFieldGroup>
+        <UInput
+          v-model="email"
+          id="email"
+          placeholder="电子邮件"
+          color="neutral"
+          :disabled="loading"
+          icon="i-hugeicons:at"
+          size="xl"
+          :maxlength="100"
+          class="w-full"
+        />
+        <UButton
+          color="neutral"
+          variant="outline"
+          icon="i-simple-icons:gravatar"
+          to="https://cn.gravatar.com"
+          target="_blank"
+          :ui="{ base: 'rounded-lg flex min-w-11 justify-center text-muted' }"
+        />
+      </UFieldGroup>
 
       <UInput
         v-model="password"
         id="password"
         placeholder="登录密码"
+        color="neutral"
         :disabled="loading"
         icon="i-hugeicons:lock-key"
         size="xl"
@@ -106,8 +117,8 @@
       color="neutral"
       size="xl"
       block
-      to="/"
-      :ui="{ base: 'rounded-lg h-12' }"
+      @click="$router.back()"
+      :ui="{ base: 'rounded-lg h-12 cursor-pointer' }"
     />
   </div>
 </template>

@@ -11,9 +11,9 @@
 
     <ULink v-else :to="`/${item.id}`" class="group block relative overflow-visible mt-4 mb-6">
       <div
-        class="absolute -bottom-2 inset-x-4 h-12 bg-neutral-200/60 dark:bg-neutral-800/60 rounded-xl -z-10 transition-transform group-hover:translate-y-1"
+        class="absolute -bottom-2 inset-x-4 h-12 bg-neutral-200/60 dark:bg-neutral-800/60 rounded-xl -z-10 duration-500 transition-transform group-hover:translate-y-1"
       ></div>
-      <div class="rounded-xl overflow-hidden transition-all duration-500 group-hover:-translate-y-2">
+      <div class="rounded-xl overflow-hidden transition-all duration-500 hover:-translate-y-1.5">
         <div class="aspect-video relative overflow-hidden bg-neutral-100 dark:bg-neutral-800">
           <img
             :src="item.firstImage"
@@ -26,7 +26,7 @@
             @load="isLoaded = true"
             :loading="isPriority ? 'eager' : 'lazy'"
             :fetchpriority="isPriority ? 'high' : 'auto'"
-            class="relative w-full h-full object-cover group-hover:grayscale transition-opacity duration-500"
+            class="relative w-full h-full object-cover transition-opacity duration-500"
             :class="[isLoaded ? 'opacity-100' : 'opacity-0']"
           />
 

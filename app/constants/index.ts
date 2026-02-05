@@ -33,13 +33,11 @@ export const READ_SPEED_CONFIG = {
 export const TABS = [
   {
     label: '登录我的账户',
-    icon: 'i-hugeicons:login-02',
     value: 'login',
     description: '使用电子邮件和密码登录到您的账户。',
   },
   {
     label: '免费创建账户',
-    icon: 'i-hugeicons:user-add-01',
     value: 'register',
     description: '创建一个新账户，完成后即可自动登录。',
   },

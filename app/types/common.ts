@@ -37,7 +37,6 @@ export interface RawUserStats {
 export interface DisplayStatItem {
   label: string;
   value: number;
-  icon: string;
   desc: string;
   growth?: number;
 }
@@ -108,6 +107,7 @@ export interface ServerMetrics {
     cpu: string;
     memory: string;
     restart_count: number;
+    uptime: string;
   }>;
 }
 

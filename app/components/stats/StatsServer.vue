@@ -145,7 +145,11 @@ const lastSyncTime = computed(() => {
 });
 
 const displayUptime = computed(() => {
-  return metrics.value?.system_resource?.uptime || '集群管理';
+  // 如果是集群模式，取第一个实例的运行时间
+  if (metrics.value?.instances?.[0]?.uptime) {
+    return metrics.value.instances[0].uptime;
+  }
+  return metrics.value?.system_resource?.uptime || 'N/A';
 });
 
 const getStatusColor = (status: string) => {

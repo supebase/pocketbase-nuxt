@@ -82,16 +82,7 @@ const dropdownItems = computed(() => {
   ];
 
   if (!props.isLogined) {
-    return [
-      common,
-      [
-        {
-          icon: 'i-hugeicons:lock-key',
-          label: '请先登录',
-          onClick: () => performAction(() => navigateTo('/auth')),
-        },
-      ],
-    ];
+    return common;
   }
 
   return [
