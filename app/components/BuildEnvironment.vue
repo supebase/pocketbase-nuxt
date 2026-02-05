@@ -15,6 +15,7 @@
         external
         :href="`https://github.com/supebase/pocketbase-nuxt/commit/${buildInfo.commit}`"
         target="_blank"
+        tabindex="-1"
       >
         {{ buildInfo.shortCommit }}
       </NuxtLink>

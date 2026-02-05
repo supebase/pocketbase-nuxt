@@ -7,7 +7,14 @@
     <div class="auth-wrapper">
       <Transition name="auth-slide" mode="out-in">
         <div v-if="!loggedIn" key="login" class="auth-item">
-          <UButton to="/auth" color="neutral" variant="link" icon="i-hugeicons:lock-key" class="rounded-full" />
+          <UButton
+            to="/auth"
+            color="neutral"
+            variant="link"
+            icon="i-hugeicons:lock-key"
+            tabindex="-1"
+            class="rounded-full"
+          />
         </div>
         <div v-else key="user" class="auth-item">
           <NotificationsBell />

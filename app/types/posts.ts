@@ -4,7 +4,7 @@ import type { PostsResponse as PBPostResponse, UsersResponse } from './pocketbas
  * 1. 扩展 Expand 类型定义
  */
 export interface PostExpand {
-  user?: Pick<UsersResponse, 'name' | 'verified' | 'avatar'>;
+  user?: Pick<UsersResponse, 'name' | 'verified' | 'avatar' | 'is_admin'>;
 }
 
 /**

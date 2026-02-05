@@ -6,7 +6,7 @@
       :isRefreshing="isRefreshing"
       :length="allPosts.length"
       :is-login="loggedIn"
-      :user-verified="user?.verified"
+      :is-admin="user?.is_admin"
       @refresh="manualRefresh"
     />
 

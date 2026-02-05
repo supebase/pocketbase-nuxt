@@ -27,6 +27,7 @@ export async function handleAuthSuccess(
     avatar: pbUser.avatar,
     verified: pbUser.verified,
     location: pbUser.location,
+    is_admin: pbUser.is_admin,
   };
 
   // 更新服务端 Session (nuxt-auth-utils)

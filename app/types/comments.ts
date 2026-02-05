@@ -2,7 +2,7 @@ import type { CommentsResponse as PBCommentResponse, UsersResponse, PostsRespons
 import type { ComputedRef } from 'vue';
 
 export interface CommentExpand {
-  user?: Pick<UsersResponse, 'id' | 'name' | 'verified' | 'avatar' | 'location'>;
+  user?: Pick<UsersResponse, 'id' | 'name' | 'verified' | 'avatar' | 'location' | 'is_admin'>;
   post?: Pick<PostsResponse, 'id' | 'content'>;
 }
 

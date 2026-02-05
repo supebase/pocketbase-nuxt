@@ -63,7 +63,7 @@ export const usePosts = () => {
     return originalLoadMore(fetchDataFn, transformPosts);
   };
 
-  const canViewDrafts = computed(() => loggedIn.value && !!user.value?.verified);
+  const canViewDrafts = computed(() => loggedIn.value && !!user.value?.is_admin);
 
   const displayItems = computed(() => {
     const items = canViewDrafts.value ? allPosts.value : allPosts.value.filter((p) => p.published);

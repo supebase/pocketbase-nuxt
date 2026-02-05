@@ -141,6 +141,12 @@ export const useAuth = (isLoginModeArg?: Ref<boolean>) => {
     }
   };
 
+  const loginWithGithub = () => {
+    loading.value = true;
+    error.value = null;
+    window.location.href = '/api/auth/github';
+  };
+
   return {
     email,
     password,
@@ -153,5 +159,6 @@ export const useAuth = (isLoginModeArg?: Ref<boolean>) => {
     handleAuth,
     handleLogout,
     fetchGeo,
+    loginWithGithub,
   };
 };

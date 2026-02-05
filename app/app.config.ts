@@ -50,8 +50,7 @@ export default defineAppConfig({
       },
       compoundVariants: [
         {
-          class:
-            'ring focus-visible:ring dark:focus-visible:ring focus-visible:ring-black/20 dark:focus-visible:ring-white/20 transition-all duration-300',
+          class: 'focus-visible:ring-black/20 dark:focus-visible:ring-white/20 transition-all duration-300',
         },
       ],
     },

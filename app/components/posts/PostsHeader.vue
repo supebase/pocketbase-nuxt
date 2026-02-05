@@ -24,7 +24,7 @@
     </div>
     <Transition name="jelly-pop" appear>
       <div v-if="length > 0">
-        <PostsButton :isLogin="isLogin" :userVerified="userVerified" />
+        <PostsButton :isLogin="isLogin" :is-admin="isAdmin" />
       </div>
     </Transition>
   </div>
@@ -48,7 +48,7 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
-  userVerified: {
+  isAdmin: {
     type: Boolean,
     default: false,
   },

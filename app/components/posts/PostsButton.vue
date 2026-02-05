@@ -15,14 +15,14 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
-  userVerified: {
+  isAdmin: {
     type: Boolean,
     default: false,
   },
 });
 
 const postButtonConfig = computed(() => {
-  const isLocked = props.isLogin && !props.userVerified;
+  const isLocked = props.isLogin && !props.isAdmin;
 
   return {
     to: props.isLogin ? '/new' : '/auth',

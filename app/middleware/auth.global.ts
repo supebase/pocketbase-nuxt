@@ -32,12 +32,12 @@ export default defineNuxtRouteMiddleware((to, from) => {
     }
 
     /**
-     * 3. 邮箱验证 (Verified) 校验逻辑
+     * 3. 管理员验证 (Admin) 校验逻辑
      * 策略：发布和编辑（写操作）强制要求验证；查看通知（读操作）放行
      */
     const isWriteOperation = /^\/new$/.test(to.path) || /^\/edit\/.*/.test(to.path);
 
-    if (isWriteOperation && user.value && !user.value.verified) {
+    if (isWriteOperation && user.value && !user.value.is_admin) {
       // 如果用户已登录但未验证邮箱，禁止发布/编辑，回退到首页
       // 建议：此处可以配合全局 toast 提示用户“请先验证邮箱”
       return navigateTo('/', { replace: true });

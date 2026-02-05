@@ -1,5 +1,5 @@
 <template>
-  <div class="mt-4">
+  <div class="mt-4 space-y-6">
     <UForm :state="formState" @submit="handleAuth" class="flex flex-col gap-4">
       <UFieldGroup>
         <UInput
@@ -19,6 +19,7 @@
           icon="i-simple-icons:gravatar"
           to="https://cn.gravatar.com"
           target="_blank"
+          tabindex="-1"
           :ui="{ base: 'rounded-lg flex min-w-11 justify-center text-muted' }"
         />
       </UFieldGroup>
@@ -111,6 +112,18 @@
     <USeparator type="dashed" label="或者" class="my-5" />
 
     <UButton
+      variant="outline"
+      label="通过 GitHub 登录"
+      icon="i-hugeicons:github"
+      color="neutral"
+      size="xl"
+      block
+      :loading="loading"
+      @click="loginWithGithub"
+      :ui="{ base: 'rounded-lg h-12 cursor-pointer' }"
+    />
+
+    <UButton
       type="button"
       variant="outline"
       label="返回首页"
@@ -133,9 +146,8 @@ const emit = defineEmits<{
 }>();
 
 // 1. 引入 Auth 逻辑
-const { email, password, passwordConfirm, loading, error, strength, color, handleAuth, fetchGeo } = useAuth(
-  toRef(props, 'isLoginMode'),
-);
+const { email, password, passwordConfirm, loading, error, strength, color, handleAuth, fetchGeo, loginWithGithub } =
+  useAuth(toRef(props, 'isLoginMode'));
 
 // 2. 密码可见性逻辑 (保持原始自定义组合函数)
 const { isVisible: showPassword, toggleVisibility: togglePasswordVisibility } = usePasswordVisibility();

@@ -4,6 +4,7 @@
       :icon="nextTheme === 'dark' ? 'i-hugeicons:sun-03' : 'i-hugeicons:moon-02'"
       color="neutral"
       variant="link"
+      tabindex="-1"
       class="rounded-full cursor-pointer"
       @click="handleToggle"
     />

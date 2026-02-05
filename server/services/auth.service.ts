@@ -4,7 +4,7 @@
  */
 import { H3Event } from 'h3';
 import { normalizeEmail, formatDefaultName } from '~/utils/index';
-import type { UsersResponse, Create, LoginOptions, RegisterOptions, LogoutOptions } from '~/types';
+import type { UsersResponse, Create, LoginOptions, RegisterOptions, LogoutOptions, TypedPocketBase } from '~/types';
 
 /**
  * 用户登录
@@ -76,4 +76,38 @@ export async function logoutService({ event, pb }: LogoutOptions & { event: H3Ev
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
   });
+}
+
+/**
+ * GitHub OAuth2 登录服务
+ */
+export async function githubLoginService({
+  pb,
+  code,
+  codeVerifier,
+  redirectUrl,
+  event,
+}: {
+  pb: TypedPocketBase;
+  code: string;
+  codeVerifier: string;
+  redirectUrl: string;
+  event: H3Event;
+}): Promise<UsersResponse> {
+  // 清理旧 Session
+  await clearUserSession(event);
+
+  // 使用 code 交换 PocketBase 的 AuthData
+  // PocketBase 会自动处理：如果用户不存在则创建，如果存在则登录
+  const authData = await pb
+    .collection('users')
+    .authWithOAuth2Code<UsersResponse>('github', code, codeVerifier, redirectUrl);
+
+  // 更新 Nuxt Session
+  await setUserSession(event, {
+    user: authData.record,
+    loggedInAt: new Date().toISOString(),
+  });
+
+  return authData.record;
 }
