@@ -47,7 +47,7 @@ export async function createComment({ pb, data }: CreateCommentOptions) {
     expand: 'user',
   });
 
-  await invalidateCommentCaches();
+  await invalidateCommentCaches(undefined, data.post);
 
   return comment;
 }
@@ -56,10 +56,14 @@ export async function createComment({ pb, data }: CreateCommentOptions) {
  * 删除评论
  */
 export async function deleteComment({ pb, commentId }: DeleteCommentOptions) {
+  const comment = await getCommentById({ pb, commentId });
+  const postId = comment.post;
+
   await ensureOwnership(pb, 'comments', commentId);
   const result = await pb.collection('comments').delete(commentId);
 
-  await invalidateCommentCaches(commentId);
+  // 清除特定评论详情缓存，并精准清除所属文章的评论列表
+  await invalidateCommentCaches(commentId, postId);
 
   return result;
 }

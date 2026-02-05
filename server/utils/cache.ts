@@ -6,13 +6,16 @@ export async function invalidateCache(pattern: string) {
   const storage = useStorage('cache');
   const keys = await storage.getKeys();
 
-  const keysToDelete = keys.filter((key) => {
-    // 将模式转换为正则表达式
-    const regex = new RegExp('^' + pattern.replace(/\*/g, '.*') + '$');
-    return regex.test(key);
-  });
+  // 1. 转义正则特殊字符，除了我们自定义的 '*'
+  const escapedPattern = pattern.replace(/[.+^${}()|[\]\\]/g, '\\$&');
+  // 2. 将 '*' 转换为 '.*'
+  const regex = new RegExp('^' + escapedPattern.replace(/\\\*/g, '.*') + '$');
 
-  await Promise.all(keysToDelete.map((key) => storage.removeItem(key)));
+  const keysToDelete = keys.filter((key) => regex.test(key));
+
+  if (keysToDelete.length > 0) {
+    await Promise.all(keysToDelete.map((key) => storage.removeItem(key)));
+  }
 }
 
 /**
@@ -29,12 +32,19 @@ export async function invalidatePostCaches(postId?: string) {
 
 /**
  * 清除评论相关的所有缓存
+ * @param commentId - 可选，特定评论 ID
+ * @param postId - 可选，特定文章 ID（建议加上这个参数）
  */
-export async function invalidateCommentCaches(commentId?: string) {
+export async function invalidateCommentCaches(commentId?: string, postId?: string) {
   if (commentId) {
-    // 清除特定评论的详情缓存
     await invalidateCache(`*:getCommentById:${commentId}*`);
   }
-  // 清除评论列表缓存（因为发表新评论或删除都会改变列表）
-  await invalidateCache('*:getCommentsList:*');
+
+  if (postId) {
+    // 仅清除该文章下的评论列表缓存
+    await invalidateCache(`*:getCommentsList:*post=${postId}*`);
+  } else {
+    // 如果没传 postId，才保守地清除所有评论列表
+    await invalidateCache('*:getCommentsList:*');
+  }
 }

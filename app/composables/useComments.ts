@@ -109,8 +109,15 @@ export const useComments = (postId: string) => {
 
     // 2. 内存列表更新
     if (action === 'delete' && index !== -1) {
+      const targetComment = comments.value[index];
+      const userId = targetComment?.user;
+
       comments.value.splice(index, 1);
       totalItems.value = Math.max(0, totalItems.value - 1);
+
+      if (userId && !comments.value.some((c) => c.user === userId)) {
+        getParticipantsMap().delete(userId);
+      }
     } else if (action === 'create' && index === -1) {
       comments.value.unshift({
         ...record,

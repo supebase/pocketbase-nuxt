@@ -123,17 +123,6 @@
       @click="loginWithGithub"
       :ui="{ base: 'rounded-lg h-12 cursor-pointer' }"
     />
-
-    <UButton
-      type="button"
-      variant="outline"
-      label="返回首页"
-      color="neutral"
-      size="xl"
-      block
-      @click="$router.back()"
-      :ui="{ base: 'rounded-lg h-12 cursor-pointer' }"
-    />
   </div>
 </template>
 
