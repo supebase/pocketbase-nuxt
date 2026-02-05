@@ -119,7 +119,8 @@
       color="neutral"
       size="xl"
       block
-      :loading="loading"
+      loading-auto
+      :disabled="loading"
       @click="loginWithGithub"
       :ui="{ base: 'rounded-lg h-12 cursor-pointer' }"
     />
