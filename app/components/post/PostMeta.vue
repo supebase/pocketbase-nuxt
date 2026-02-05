@@ -4,7 +4,7 @@
       <div class="flex items-center gap-3 tracking-wide">
         <UIcon v-if="postMeta.icon" :name="postMeta.icon" class="size-7 text-neutral-800 dark:text-neutral-100" />
         <div v-else class="size-7">
-          <CommonGravatar :avatar-id="avatarId" :size="64" />
+          <CommonAvatar :avatar-id="avatarId" :avatar-github="avatarGithub" :user-id="userId" :size="64" />
         </div>
         <div class="text-dimmed text-sm flex items-center">
           <ClientOnly>
@@ -40,6 +40,8 @@ interface Props {
     views: number;
   };
   avatarId: string | null | undefined;
+  avatarGithub: string | null | undefined;
+  userId: string | null | undefined;
 }
 
 const props = defineProps<Props>();

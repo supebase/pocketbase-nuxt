@@ -22,8 +22,13 @@ export const useAssets = () => {
     return getImageUrl('posts', post.id, fileName);
   };
 
+  const getUserAvatar = (userId: string | undefined, fileName: string | undefined) => {
+    return getImageUrl('_pb_users_auth_', userId || '', fileName);
+  };
+
   return {
     getImageUrl,
     getLinkImage,
+    getUserAvatar,
   };
 };

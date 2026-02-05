@@ -14,7 +14,12 @@
               class="inline-block size-5.5 rounded-full ring-2 ring-white dark:ring-neutral-900 overflow-hidden"
               :style="{ zIndex: 10 - (index as number) }"
             >
-              <CommonGravatar :avatar-id="avatar" :size="32" />
+              <CommonAvatar
+                :avatar-id="avatar.avatarId"
+                :avatar-github="avatar.avatarGithub"
+                :user-id="avatar.userId"
+                :size="32"
+              />
             </div>
           </div>
           <UBadge

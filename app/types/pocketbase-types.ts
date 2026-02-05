@@ -172,6 +172,7 @@ export type UserStatsRecord<Tactive_users_30d = unknown, Ttoday_new_users = unkn
 
 export type UsersRecord = {
   avatar?: string;
+  avatar_github?: FileNameString;
   created: IsoAutoDateString;
   email: string;
   emailVisibility?: boolean;

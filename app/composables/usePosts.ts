@@ -41,6 +41,7 @@ export const usePosts = () => {
         date: item.created ? useRelativeTime(item.created) : '',
         userName: item.expand?.user?.name || '未知用户',
         avatarId: item.expand?.user?.avatar || undefined,
+        avatarGithub: item.expand?.user?.avatar_github || undefined,
       },
       expand: item.expand || {},
     } as PostWithUser;
@@ -72,6 +73,7 @@ export const usePosts = () => {
       title: item.ui?.userName || '未知用户',
       date: item.ui?.date || '',
       avatarId: item.ui?.avatarId,
+      avatarGithub: item.ui?.avatarGithub,
     }));
   });
 

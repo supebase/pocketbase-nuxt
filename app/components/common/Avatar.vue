@@ -2,7 +2,7 @@
   <div>
     <slot
       :src="avatarUrl"
-      :is-loaded="!isLoading && !hasError && !!avatarId"
+      :is-loaded="!isLoading && !hasError && !!avatarUrl"
       :is-loading="isLoading"
       :has-error="hasError"
     >
@@ -14,7 +14,7 @@
         </div>
 
         <img
-          v-if="avatarId && !hasError"
+          v-if="avatarUrl && !hasError"
           ref="imgRef"
           :src="avatarUrl"
           @load="handleLoad"
@@ -25,7 +25,7 @@
           ]"
         />
 
-        <div v-if="hasError || (!avatarId && !isLoading)" class="flex items-center justify-center w-full h-full">
+        <div v-if="hasError || (!avatarUrl && !isLoading)" class="flex items-center justify-center w-full h-full">
           <UIcon name="i-hugeicons:image-02" class="text-dimmed size-4.5" />
         </div>
       </div>
@@ -36,16 +36,23 @@
 <script setup lang="ts">
 const props = defineProps<{
   avatarId?: string | null;
+  avatarGithub?: string | null;
+  userId?: string | null;
   size?: number;
   rank?: string;
 }>();
 
 const imgRef = ref<HTMLImageElement | null>(null);
 
-const { avatarUrl, isLoading, hasError, handleLoad, handleError } = useGravatar(() => props.avatarId, {
-  size: props.size,
-  rank: props.rank,
-});
+const { avatarUrl, isLoading, hasError, handleLoad, handleError } = useAvatar(
+  () => props.avatarId,
+  () => props.avatarGithub,
+  () => props.userId,
+  {
+    size: props.size,
+    rank: props.rank,
+  },
+);
 
 /**
  * 核心：处理浏览器缓存

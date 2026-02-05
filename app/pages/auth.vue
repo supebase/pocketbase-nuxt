@@ -1,6 +1,13 @@
 <template>
   <div class="select-none">
-    <UTabs v-model="activeTab" :items="TABS" :content="false" color="neutral" class="w-full gap-4" />
+    <UTabs
+      v-model="activeTab"
+      :items="TABS"
+      :content="false"
+      :disabled="isLoading"
+      color="neutral"
+      class="w-full gap-4"
+    />
 
     <div class="mt-4 space-y-4">
       <UAlert
@@ -12,7 +19,12 @@
         class="transition-all duration-500"
       />
 
-      <AuthForm :key="activeTab" :is-login-mode="activeTab === 'login'" @update:error="(val) => (authError = val)" />
+      <AuthForm
+        :key="activeTab"
+        :is-login-mode="activeTab === 'login'"
+        @update:error="(val) => (authError = val)"
+        @loading-change="(val) => (isLoading = val)"
+      />
     </div>
   </div>
 </template>
@@ -27,6 +39,7 @@ definePageMeta({
 const route = useRoute();
 const router = useRouter();
 
+const isLoading = ref(false);
 const authError = ref<string | null>(null);
 
 // 2. 响应式同步路由
@@ -37,6 +50,7 @@ const activeTab = computed({
     return TABS.some((t) => t.value === queryTab) ? queryTab : 'login';
   },
   set(val) {
+    if (isLoading.value) return;
     authError.value = null;
     // 切换时更新 URL，使用 replace 避免污染浏览器后退历史
     router.replace({

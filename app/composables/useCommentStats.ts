@@ -33,7 +33,20 @@ export function useCommentStats(postId: string) {
     target,
     isRendered,
     status,
-    avatarList: computed(() => statsResponse.value?.data?.user_avatars?.split(',').filter(Boolean) || []),
+    avatarList: computed(() => {
+      const data = statsResponse.value?.data;
+      if (!data) return [];
+
+      const ids = data.user_ids?.split(',').filter(Boolean) || [];
+      const gravatars = data.user_avatars?.split(',') || [];
+      const githubs = data.user_github_avatars?.split('|') || [];
+
+      return ids.map((userId: string, index: number) => ({
+        userId,
+        avatarId: gravatars[index] || '',
+        avatarGithub: githubs[index] || '',
+      }));
+    }),
     totalCount: computed(() => statsResponse.value?.data?.total_items || 0),
     lastUserName: computed(() => statsResponse.value?.data?.last_user_name || ''),
   };

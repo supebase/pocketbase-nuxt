@@ -21,7 +21,13 @@
 
       <CommonMotionTimeline :items="comments" line-offset="15px" :trigger-ratio="0.55">
         <template #indicator="{ item }">
-          <CommonGravatar :avatar-id="item.expand?.user?.avatar" :size="64" class="size-7" />
+          <CommonAvatar
+            :avatar-id="item.expand?.user?.avatar"
+            :avatar-github="item.expand?.user?.avatar_github"
+            :user-id="item.expand?.user?.id"
+            :size="64"
+            class="size-7"
+          />
         </template>
 
         <template #title="{ item }">

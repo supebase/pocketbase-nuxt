@@ -32,7 +32,13 @@
             :class="[item.is_read ? 'opacity-40' : 'opacity-100']"
           >
             <div class="relative shrink-0">
-              <CommonGravatar :avatar-id="item.expand?.from_user?.avatar" :size="40" class="size-8" />
+              <CommonAvatar
+                :avatar-id="item.expand?.from_user?.avatar"
+                :avatar-github="item.expand?.from_user?.avatar_github"
+                :user-id="item.expand?.from_user?.id"
+                :size="40"
+                class="size-8"
+              />
             </div>
 
             <div class="flex-1 min-w-0">

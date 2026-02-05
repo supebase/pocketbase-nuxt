@@ -19,7 +19,7 @@ export default defineApiHandler(async (event) => {
   try {
     // 查询聚合视图：从 comment_stats 视图中获取预计算的统计数据
     const record = await pb.collection('comment_stats').getOne(id, {
-      fields: 'id,total_items,user_avatars,last_user_name',
+      fields: 'id,total_items,user_ids,user_avatars,user_github_avatars,last_user_name',
     });
 
     return {
@@ -37,7 +37,9 @@ export default defineApiHandler(async (event) => {
       data: {
         id,
         total_items: 0,
+        user_ids: '',
         user_avatars: '',
+        user_github_avatars: '',
         last_user_name: '',
       },
     };

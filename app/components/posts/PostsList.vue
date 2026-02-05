@@ -42,7 +42,13 @@
                 >
                   <UIcon :name="item.icon" class="size-8 text-neutral-800 dark:text-neutral-100" />
                 </div>
-                <CommonGravatar v-else :avatar-id="item.avatarId" :size="64" />
+                <CommonAvatar
+                  v-else
+                  :avatar-id="item.avatarId"
+                  :avatar-github="item?.avatarGithub"
+                  :user-id="item.expand?.user?.id"
+                  :size="64"
+                />
               </template>
 
               <template #title="{ item }">

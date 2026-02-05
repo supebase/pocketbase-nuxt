@@ -25,6 +25,7 @@ export async function handleAuthSuccess(
     email: pbUser.email,
     name: pbUser.name,
     avatar: pbUser.avatar,
+    avatar_github: pbUser.avatar_github,
     verified: pbUser.verified,
     location: pbUser.location,
     is_admin: pbUser.is_admin,

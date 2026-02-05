@@ -24,7 +24,13 @@
         />
 
         <div class="size-6 shrink-0 rounded-full overflow-hidden ring-1 ring-neutral-200/50 dark:ring-neutral-700/50">
-          <CommonGravatar :avatar-id="user.avatar" :size="48" class="size-full object-cover" />
+          <CommonAvatar
+            :avatar-id="user.avatar"
+            :avatar-github="user?.avatar_github"
+            :user-id="user?.id"
+            :size="48"
+            class="size-full object-cover"
+          />
         </div>
 
         <div class="flex-1 min-w-0">

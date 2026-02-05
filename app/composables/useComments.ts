@@ -58,7 +58,7 @@ export const useComments = (postId: string) => {
     rawItems.forEach((c: any) => {
       const u = c.expand?.user;
       if (u && !participants.has(u.id)) {
-        participants.set(u.id, { id: u.id, name: u.name, avatar: u.avatar });
+        participants.set(u.id, { id: u.id, name: u.name, avatar: u.avatar, avatar_github: u.avatar_github });
       }
     });
 
@@ -104,7 +104,7 @@ export const useComments = (postId: string) => {
     // 1. 参与者数据原子更新
     if ((action === 'create' || action === 'update') && record.expand?.user) {
       const u = record.expand.user;
-      getParticipantsMap().set(u.id, { id: u.id, name: u.name, avatar: u.avatar });
+      getParticipantsMap().set(u.id, { id: u.id, name: u.name, avatar: u.avatar, avatar_github: u.avatar_github });
     }
 
     // 2. 内存列表更新

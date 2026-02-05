@@ -100,6 +100,7 @@
       <UButton
         type="submit"
         loading-auto
+        :disabled="loading"
         :label="buttonLabel"
         color="neutral"
         size="xl"
@@ -143,6 +144,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   'update:error': [val: string | null];
+  'loading-change': [val: boolean];
 }>();
 
 // 1. 引入 Auth 逻辑
@@ -168,6 +170,10 @@ const buttonLabel = computed(() => {
 
 watch(error, (newVal) => {
   emit('update:error', newVal || null);
+});
+
+watch(loading, (newVal) => {
+  emit('loading-change', newVal);
 });
 
 defineExpose({
