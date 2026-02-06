@@ -63,7 +63,7 @@ export default defineApiHandler(async (event) => {
   handleMentionsInText({
     pb,
     text: cleanComment,
-    fromUser: { id: user.id, name: user.name },
+    fromUser: { id: user.id, name: user.name || '' },
     postId: post,
     commentId: comment.id,
   }).catch((err) => console.error('Mention processing failed:', err));

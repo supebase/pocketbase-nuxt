@@ -24,7 +24,7 @@ export default defineApiHandler(async (event): Promise<ToggleLikeResponse> => {
 
   // 执行切换逻辑 (Toggle Logic)
   // 调用 Service 层处理：检查状态 -> 增删记录 -> 更新计数 -> 返回结果
-  const result = await toggleLike({ pb, commentId, userId: user.id });
+  const result = await toggleLike({ pb, commentId, userId: user?.id || '' });
 
   // 返回状态感知型的响应消息
   return {

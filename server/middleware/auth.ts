@@ -4,6 +4,7 @@
  * 路径大小写安全匹配及 Nuxt Context 身份注入。
  */
 import { Buffer } from 'node:buffer';
+import { UsersRecord } from '~/types';
 
 /**
  * 内存锁：用于合并同一用户的并发刷新请求
@@ -16,8 +17,8 @@ const refreshRequests = new Map<string, Promise<{ token: string; record: any }>>
  * 注意：path 建议使用小写，匹配时会统一转为小写比对
  */
 const protectedRoutes = [
-  { path: '/api/collections/posts', method: 'POST' },
-  { path: '/api/collections/post', method: ['PUT', 'DELETE'], isPrefix: true },
+  { path: '/api/collections/posts', method: 'POST', adminOnly: true },
+  { path: '/api/collections/post', method: ['PUT', 'DELETE'], isPrefix: true, adminOnly: true },
   { path: '/api/collections/comments', method: 'POST' },
   { path: '/api/collections/comment', method: 'DELETE', isPrefix: true },
   { path: '/api/collections/likes', method: 'POST' },
@@ -120,7 +121,7 @@ export default defineEventHandler(async (event) => {
     }
 
     // 注入当前有效用户信息到 context
-    event.context.user = pb.authStore.record;
+    event.context.user = pb.authStore.record as unknown as UsersRecord;
   } else {
     // 自动降级：若 PB Token 失效则同步清理 Nuxt Session
     if (event.context.user) {
@@ -130,13 +131,11 @@ export default defineEventHandler(async (event) => {
   }
 
   // 4. 路由拦截逻辑
-  const isProtected = protectedRoutes.some((route) => {
-    // 检查 HTTP 方法匹配
+  const matchedRoute = protectedRoutes.find((route) => {
     const routeMethods = Array.isArray(route.method) ? route.method : [route.method];
     const methodMatch = routeMethods.some((m) => m.toUpperCase() === method);
     if (!methodMatch) return false;
 
-    // 检查路径匹配 (大小写不敏感比对)
     const targetPath = route.path.toLowerCase();
     if (route.isPrefix) {
       return matchUrl === targetPath || matchUrl.startsWith(`${targetPath}/`);
@@ -145,11 +144,17 @@ export default defineEventHandler(async (event) => {
   });
 
   // 5. 鉴权拦截判定
-  if (isProtected && !event.context.user) {
-    throw createError({
-      status: 401,
-      message: '此操作需要登录',
-      statusText: 'Unauthorized',
-    });
+  if (matchedRoute) {
+    // A. 未登录拦截
+    if (!event.context.user) {
+      throw createError({ status: 401, message: '请先登录' });
+    }
+
+    // B. 管理员权限拦截
+    if (matchedRoute.adminOnly) {
+      if (!event.context.user.is_admin) {
+        throw createError({ status: 403, message: '权限不足' });
+      }
+    }
   }
 });

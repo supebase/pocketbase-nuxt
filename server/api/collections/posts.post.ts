@@ -30,7 +30,7 @@ export default defineApiHandler(async (event): Promise<SinglePostResponse> => {
 
   // 构造 FormData (PocketBase 处理文件上传必须使用 FormData)
   const formData = new FormData();
-  formData.append('user', user.id);
+  formData.append('user', user?.id || '');
   formData.append('allow_comment', String(allow_comment ?? true));
   formData.append('published', String(published ?? true));
   formData.append('poll', String(poll ?? false));
