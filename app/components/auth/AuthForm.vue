@@ -20,7 +20,7 @@
           to="https://cn.gravatar.com"
           target="_blank"
           tabindex="-1"
-          :ui="{ base: 'rounded-lg flex min-w-11 justify-center text-muted' }"
+          :ui="{ base: 'rounded-lg flex min-w-11 justify-center text-muted', leadingIcon: 'size-4' }"
         />
       </UFieldGroup>
 
@@ -122,7 +122,7 @@
       :loading="githubLoading"
       :disabled="loading || githubLoading"
       @click="loginWithGithub"
-      :ui="{ base: 'rounded-lg h-12 cursor-pointer' }"
+      :ui="{ base: 'rounded-lg h-12 cursor-pointer', leadingIcon: 'size-5' }"
     />
   </div>
 </template>

@@ -77,101 +77,18 @@
       </div>
 
       <div
-        class="mt-6 text-[11px] text-dimmed flex justify-between border-t border-neutral-200 dark:border-neutral-800 pt-4"
+        class="mt-6 text-[11px] text-dimmed font-mono tabular-nums flex justify-between border-t border-neutral-200 dark:border-neutral-800 pt-4"
       >
-        <span>状态: {{ metrics.status }}</span>
-        <span>运行: {{ displayUptime }}</span>
+        <span>{{ metrics.status }}</span>
+        <span>{{ displayUptime }}</span>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import type { ServerMetrics } from '~/types/common';
+const { metrics, isLoading, error, uniqueDevices, totalConnections, displayRSS, displayUptime, lastSyncTime, refresh } =
+  useServerMetrics(5000);
 
-const {
-  data: metrics,
-  refresh,
-  status,
-  error,
-} = await useFetch<ServerMetrics>('/api/metrics', {
-  server: false,
-  lazy: true,
-});
-
-const isLoading = computed(() => status.value === 'pending');
-
-const totalConnections = computed(() => {
-  return metrics.value?.summary?.total_active_connections ?? metrics.value?.total_connections ?? 0;
-});
-
-// 计算独立设备数
-const uniqueDevices = computed(() => {
-  return metrics.value?.summary?.total_unique_devices ?? metrics.value?.unique_devices ?? 0;
-});
-
-const displayRSS = computed(() => {
-  // 单机模式
-  if (metrics.value?.system_resource?.rss) {
-    return metrics.value.system_resource.rss;
-  }
-
-  // 集群模式：累加所有实例内存
-  if (metrics.value?.instances?.length) {
-    const total = metrics.value.instances.reduce((acc, ins) => {
-      return acc + (parseFloat(ins.memory) || 0);
-    }, 0);
-    return total.toFixed(2) + ' MB';
-  }
-
-  return 'N/A';
-});
-
-const lastSyncTime = computed(() => {
-  const rawTime = metrics.value?.summary?.server_time;
-  if (!rawTime) return new Date().toLocaleTimeString('zh-CN', { hour12: false });
-
-  try {
-    const date = new Date(rawTime);
-    return date.toLocaleTimeString('zh-CN', {
-      hour12: false,
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-    });
-  } catch {
-    return new Date().toLocaleTimeString('zh-CN', { hour12: false });
-  }
-});
-
-const displayUptime = computed(() => {
-  // 如果是集群模式，取第一个实例的运行时间
-  if (metrics.value?.instances?.[0]?.uptime) {
-    return metrics.value.instances[0].uptime;
-  }
-  return metrics.value?.system_resource?.uptime || 'N/A';
-});
-
-const getStatusColor = (status: string) => {
-  return status === 'online' ? 'text-green-500' : 'text-red-500';
-};
-
-let timer: NodeJS.Timeout | null = null;
-
-onMounted(() => {
-  // 立即刷新一次
-  refresh();
-
-  // 每5秒刷新
-  timer = setInterval(() => {
-    refresh();
-  }, 5000);
-});
-
-onUnmounted(() => {
-  if (timer) {
-    clearInterval(timer);
-    timer = null;
-  }
-});
+const getStatusColor = (status: string) => (status === 'online' ? 'text-green-500' : 'text-red-500');
 </script>
