@@ -78,6 +78,7 @@ import type { NotificationRecord } from '~/types';
 
 const {
   notifications,
+  unreadCount,
   hasMore,
   isMarkingAll,
   loadingMore,
@@ -88,12 +89,10 @@ const {
   setupRealtime,
 } = useNotifications();
 
-// 计算属性
-const unreadCount = computed(() => notifications.value.filter((n) => !n.is_read).length);
-
 // 生命周期
 onMounted(() => {
   setupRealtime();
+  resetAndRefresh();
 });
 
 onActivated(() => {

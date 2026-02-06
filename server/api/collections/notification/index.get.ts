@@ -13,5 +13,5 @@ export default defineApiHandler(async (event) => {
     filter,
   });
 
-  return { data: result };
+  return result;
 });

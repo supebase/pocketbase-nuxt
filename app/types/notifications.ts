@@ -10,13 +10,11 @@ export interface NotificationExpand {
 }
 
 export interface NotificationsApiResult {
-  data: {
-    items: NotificationRecord[];
-    totalPages: number;
-    totalItems: number;
-    page: number;
-    perPage: number;
-  };
+  items: NotificationRecord[];
+  totalPages: number;
+  totalItems: number;
+  page: number;
+  perPage: number;
 }
 
 /**

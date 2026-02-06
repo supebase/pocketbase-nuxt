@@ -2,26 +2,48 @@ import type { NotificationRecord, NotificationsApiResult } from '~/types';
 
 export const useNotifications = () => {
   const notifications = useState<NotificationRecord[]>('notifications_list', () => []);
+  const unreadCount = useState<number>('notifications_unread_count', () => 0);
+
   const page = ref(1);
   const hasMore = ref(false);
   const isMarkingAll = ref(false);
   const loadingMore = ref(false);
+  const isRinging = ref(false);
 
   const { user } = useUserSession();
   const { listen } = usePocketRealtime();
 
-  // 1. 获取通知列表逻辑
+  const triggerEffect = () => {
+    isRinging.value = true;
+    setTimeout(() => (isRinging.value = false), 1200);
+  };
+
+  // 获取未读总数
+  const fetchUnreadCount = async () => {
+    try {
+      const res = await $fetch<any>('/api/collections/notification', {
+        query: { page: 1, perPage: 1, filter: 'is_read = false' },
+      });
+      unreadCount.value = res.totalItems || 0;
+    } catch (e) {
+      console.error('获取未读数失败:', e);
+    }
+  };
+
+  // 获取通知列表逻辑
   const { pending, refresh } = useFetch<NotificationsApiResult>('/api/collections/notification', {
     query: { page, perPage: 10 },
-    server: false, // 仅客户端运行
+    server: false,
+    watch: [page],
     onResponse({ response }) {
-      if (response._data?.data) {
-        const { items, totalPages } = response._data.data;
+      const rawData = response._data;
+      if (rawData && rawData.items) {
+        const { items, totalPages } = rawData;
         if (page.value === 1) {
           notifications.value = items;
         } else {
           const existingIds = new Set(notifications.value.map((n) => n.id));
-          const uniqueItems = items.filter((n) => !existingIds.has(n.id));
+          const uniqueItems = items.filter((n: any) => !existingIds.has(n.id));
           notifications.value.push(...uniqueItems);
         }
         hasMore.value = page.value < totalPages;
@@ -29,29 +51,36 @@ export const useNotifications = () => {
     },
   });
 
-  // 2. 实时监听逻辑
+  // 实时监听逻辑
   const setupRealtime = () => {
     listen(async ({ collection, action, record }) => {
-      if (collection === 'notifications' && action === 'create' && record.to_user === user.value?.id) {
-        if (notifications.value.find((n) => n.id === record.id)) return;
+      if (collection !== 'notifications' || record.to_user !== user.value?.id) return;
 
-        try {
-          const res = await $fetch<any>(`/api/collections/notification/${record.id}`);
-          if (res.data && page.value === 1) {
-            notifications.value.unshift(res.data as NotificationRecord);
-            if (notifications.value.length > 10) notifications.value.pop();
+      if (action === 'create') {
+        unreadCount.value++;
+        triggerEffect();
+        if (page.value === 1) {
+          try {
+            const res = await $fetch<any>(`/api/collections/notification/${record.id}`);
+            const newItem = res.data || res;
+            if (!notifications.value.find((n) => n.id === newItem.id)) {
+              notifications.value.unshift(newItem);
+            }
+          } catch (e) {
+            console.error(e);
           }
-        } catch (e) {
-          console.error('实时通知解析失败:', e);
         }
+      } else if (action === 'update' || action === 'delete') {
+        fetchUnreadCount();
       }
     });
   };
 
-  // 3. 操作方法
+  // 操作方法
   const markAllAsRead = async () => {
     if (isMarkingAll.value) return;
     isMarkingAll.value = true;
+
     try {
       await $fetch('/api/collections/notification', { method: 'PATCH' });
       notifications.value.forEach((n) => (n.is_read = true));
@@ -62,12 +91,13 @@ export const useNotifications = () => {
 
   const markAsRead = async (item: NotificationRecord) => {
     if (item.is_read) return;
-    const originalStatus = item.is_read;
-    item.is_read = true; // 乐观更新
+
     try {
       await $fetch(`/api/collections/notification/${item.id}`, { method: 'PATCH' });
-    } catch {
-      item.is_read = originalStatus; // 失败回滚
+      item.is_read = true;
+      unreadCount.value = Math.max(0, unreadCount.value - 1);
+    } catch (e) {
+      console.error('标记已读失败:', e);
     }
   };
 
@@ -75,24 +105,29 @@ export const useNotifications = () => {
     if (loadingMore.value || !hasMore.value) return;
     loadingMore.value = true;
     page.value++;
-    await refresh();
     loadingMore.value = false;
   };
 
-  const resetAndRefresh = () => {
-    page.value = 1;
-    refresh();
+  const resetAndRefresh = async () => {
+    if (page.value === 1) {
+      await refresh();
+    } else {
+      page.value = 1;
+    }
   };
 
   return {
     notifications,
+    unreadCount,
     pending,
     hasMore,
+    isRinging,
     isMarkingAll,
     loadingMore,
     markAllAsRead,
     markAsRead,
     loadMore,
+    fetchUnreadCount,
     resetAndRefresh,
     setupRealtime,
   };
