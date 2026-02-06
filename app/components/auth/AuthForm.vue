@@ -7,7 +7,7 @@
           id="email"
           placeholder="电子邮件"
           color="neutral"
-          :disabled="loading"
+          :disabled="loading || githubLoading"
           icon="i-hugeicons:at"
           size="xl"
           :maxlength="100"
@@ -29,7 +29,7 @@
         id="password"
         placeholder="登录密码"
         color="neutral"
-        :disabled="loading"
+        :disabled="loading || githubLoading"
         icon="i-hugeicons:lock-key"
         size="xl"
         :maxlength="50"
@@ -74,7 +74,7 @@
         id="passwordConfirm"
         placeholder="确认密码"
         color="neutral"
-        :disabled="loading"
+        :disabled="loading || githubLoading"
         icon="i-hugeicons:square-lock-check-01"
         size="xl"
         :maxlength="50"
@@ -100,7 +100,7 @@
       <UButton
         type="submit"
         loading-auto
-        :disabled="loading"
+        :disabled="loading || githubLoading"
         :label="buttonLabel"
         color="neutral"
         size="xl"
@@ -119,8 +119,8 @@
       color="neutral"
       size="xl"
       block
-      loading-auto
-      :disabled="loading"
+      :loading="githubLoading"
+      :disabled="loading || githubLoading"
       @click="loginWithGithub"
       :ui="{ base: 'rounded-lg h-12 cursor-pointer' }"
     />
@@ -138,8 +138,19 @@ const emit = defineEmits<{
 }>();
 
 // 1. 引入 Auth 逻辑
-const { email, password, passwordConfirm, loading, error, strength, color, handleAuth, fetchGeo, loginWithGithub } =
-  useAuth(toRef(props, 'isLoginMode'));
+const {
+  email,
+  password,
+  passwordConfirm,
+  loading,
+  githubLoading,
+  error,
+  strength,
+  color,
+  handleAuth,
+  fetchGeo,
+  loginWithGithub,
+} = useAuth(toRef(props, 'isLoginMode'));
 
 // 2. 密码可见性逻辑 (保持原始自定义组合函数)
 const { isVisible: showPassword, toggleVisibility: togglePasswordVisibility } = usePasswordVisibility();
@@ -162,7 +173,7 @@ watch(error, (newVal) => {
   emit('update:error', newVal || null);
 });
 
-watch(loading, (newVal) => {
+watch(githubLoading, (newVal) => {
   emit('loading-change', newVal);
 });
 

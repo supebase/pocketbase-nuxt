@@ -9,6 +9,7 @@ export const useAuth = (isLoginModeArg?: Ref<boolean>) => {
   const password = ref('');
   const passwordConfirm = ref('');
   const loading = ref(false);
+  const githubLoading = ref(false);
   const isLoggingOut = ref(false);
 
   const error = ref<string | null>(null);
@@ -142,7 +143,7 @@ export const useAuth = (isLoginModeArg?: Ref<boolean>) => {
   };
 
   const loginWithGithub = () => {
-    loading.value = true;
+    githubLoading.value = true;
     error.value = null;
     window.location.href = '/api/auth/github';
   };
@@ -152,6 +153,7 @@ export const useAuth = (isLoginModeArg?: Ref<boolean>) => {
     password,
     passwordConfirm,
     loading,
+    githubLoading,
     isLoggingOut,
     error,
     strength,

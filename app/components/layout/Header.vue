@@ -5,8 +5,8 @@
     <CommonColorMode />
     <USeparator orientation="vertical" class="h-6 transition-all duration-500" />
     <div class="auth-wrapper">
-      <Transition name="auth-slide" mode="out-in">
-        <div v-if="!loggedIn" key="login" class="auth-item">
+      <Transition name="auth-slide" mode="out-in" appear>
+        <div v-if="!isVisible" key="login" class="auth-item">
           <UButton
             to="/auth"
             color="neutral"
@@ -48,6 +48,18 @@
 </template>
 
 <script setup lang="ts">
-const { user, loggedIn } = useUserSession();
+const { user, loggedIn: sessionLoggedIn } = useUserSession();
 const { handleLogout, isLoggingOut } = useAuth();
+
+const isVisible = ref(false);
+
+onMounted(() => {
+  nextTick(() => {
+    isVisible.value = sessionLoggedIn.value;
+  });
+});
+
+watch(sessionLoggedIn, (val) => {
+  isVisible.value = val;
+});
 </script>
