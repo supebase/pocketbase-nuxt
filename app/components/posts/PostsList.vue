@@ -1,7 +1,7 @@
 <template>
   <div class="flex flex-col items-center justify-center select-none">
     <PostsHeader
-      v-show="!error && (status !== 'pending' || isRefreshing)"
+      v-show="shouldShowHeader"
       :count="visibleTotalItems"
       :isRefreshing="isRefreshing"
       :length="allPosts.length"
@@ -12,14 +12,7 @@
 
     <div class="mt-10 space-y-4 w-full">
       <ClientOnly>
-        <UAlert
-          v-if="error"
-          :description="error.data?.message || '获取列表失败，请检查网络连接'"
-          variant="soft"
-          icon="i-hugeicons:alert-02"
-          color="error"
-          class="mt-6"
-        />
+        <UPageHero v-if="error" :headline="error.data?.statusMessage" :description="error.data?.message" />
 
         <template v-else>
           <PostsEmptyState
@@ -56,7 +49,9 @@
                   <div class="text-base">
                     {{ item.icon ? formatIconName(item.icon) : item.title }}
                   </div>
-                  <div v-if="!item.published && canViewDrafts" class="text-warning">待发布稿</div>
+                  <span v-if="!item.published && canViewDrafts" class="flex items-center text-sm text-primary italic">
+                    <span class="mr-1">//</span> 草稿状态
+                  </span>
                   <UBadge
                     v-else-if="item.action === 'dit'"
                     label="DIRE"
@@ -241,4 +236,9 @@ const handleLoadMore = () =>
       total: res.data.totalItems,
     };
   });
+
+const shouldShowHeader = computed(() => {
+  const isNotBusy = status.value !== 'pending' || isRefreshing.value;
+  return !error.value && isNotBusy && allPosts.value.length > 0;
+});
 </script>

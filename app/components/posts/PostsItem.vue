@@ -3,7 +3,8 @@
     <ULink
       v-if="!item.firstImage"
       :to="`/${item.id}`"
-      class="line-clamp-3 text-default text-pretty md:text-justify hyphens-auto wrap-break-word tracking-wide md:tracking-tight leading-relaxed"
+      class="line-clamp-3 text-pretty md:text-justify hyphens-auto wrap-break-word tracking-wide md:tracking-tight leading-relaxed"
+      :class="item.published ? 'text-default' : 'text-dimmed'"
       tabindex="-1"
     >
       {{ item.cleanContent }}
@@ -27,7 +28,7 @@
             :loading="isPriority ? 'eager' : 'lazy'"
             :fetchpriority="isPriority ? 'high' : 'auto'"
             class="relative w-full h-full object-cover transition-opacity duration-500"
-            :class="[isLoaded ? 'opacity-100' : 'opacity-0']"
+            :class="[isLoaded ? 'opacity-100' : 'opacity-0', item.published ? '' : 'grayscale']"
           />
 
           <div v-if="!isLoaded" class="absolute inset-0 flex items-center justify-center bg-black/10 backdrop-blur-sm">
@@ -38,7 +39,10 @@
             v-if="isLoaded"
             class="absolute bottom-0 inset-x-0 p-5 bg-white/60 dark:bg-neutral-950/60 backdrop-blur-md"
           >
-            <p class="text-sm font-medium text-neutral-800 dark:text-neutral-200 line-clamp-2">
+            <p
+              class="text-sm font-medium line-clamp-2"
+              :class="item.published ? 'text-neutral-800 dark:text-neutral-200' : 'text-dimmed'"
+            >
               {{ item.cleanContent }}
             </p>
           </div>
@@ -62,6 +66,7 @@ const { getLinkImage } = useAssets();
 interface Props {
   item: {
     id: string;
+    published: boolean;
     cleanContent: string;
     allow_comment: boolean;
     firstImage: string | null;
@@ -70,7 +75,7 @@ interface Props {
   };
   isPriority?: boolean;
   delay: number;
-  canViewDrafts: boolean;
+  canViewDrafts?: boolean;
   triggerAnimation?: number;
 }
 

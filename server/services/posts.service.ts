@@ -61,7 +61,7 @@ export async function getPostById({ pb, postId }: GetPostByIdOptions) {
   } catch (error: any) {
     throw createError({
       status: 404,
-      message: '文章不存在或您没有权限查看',
+      message: '页面不存在或您没有权限查看',
       statusText: 'Not Found',
     });
   }

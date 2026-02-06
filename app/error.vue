@@ -10,9 +10,9 @@
       :clear="{
         color: 'neutral',
         size: 'xl',
-        class: 'rounded-full',
+        class: 'rounded-full px-6 cursor-pointer',
       }"
-      :error="error"
+      :error="error.data || ''"
     />
 
     <UFooter />

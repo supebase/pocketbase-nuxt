@@ -9,7 +9,7 @@
   --ui-primary: oklch(65.6% 0.241 354.308);
   --ease-jelly: cubic-bezier(0.34, 1.56, 0.64, 1);
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
-  --ease-in-out-quint: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-in-out-quint: cubic-bezier(0.6, 0, 0.2, 1);
   --digit-duration: 0.6s;
 }
 
@@ -207,7 +207,7 @@ header::before {
 /* 5.4 Auth Slide - 授权组件全员滑动 */
 .auth-wrapper { display: flex; align-items: center; overflow: visible; }
 .auth-slide-enter-active, .auth-slide-leave-active {
-  transition: all 0.5s var(--ease-in-out-quint);
+  transition: all 0.6s var(--ease-in-out-quint);
   max-width: 200px;
 }
 .auth-slide-enter-from, .auth-slide-leave-to {
