@@ -19,8 +19,11 @@ export const usePostLogic = (id: string | string[]) => {
   const ast = computed(() => data.value?.data?.mdcAst || null);
   const toc = computed(() => ast.value?.toc || null);
 
+  let refreshDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+
   const setupRealtime = () => {
     if (import.meta.server) return;
+
     listen(async ({ collection, action, record }) => {
       const targetId = idRef.value;
       if (collection !== 'posts' || record.id !== targetId) return;
@@ -37,8 +40,15 @@ export const usePostLogic = (id: string | string[]) => {
               allow_comment: !!record.allow_comment,
             },
           };
+          // 重量级数据：防抖刷新（Content 涉及 AST 重新解析）
           if (record.content !== data.value.data.content) {
-            await refresh();
+            if (refreshDebounceTimer) clearTimeout(refreshDebounceTimer);
+
+            refreshDebounceTimer = setTimeout(() => {
+              if (idRef.value === record.id) {
+                refresh();
+              }
+            }, 1000); // 1秒延迟
           }
         }
       } else if (action === 'delete') {
@@ -56,7 +66,10 @@ export const usePostLogic = (id: string | string[]) => {
 
   if (import.meta.client) {
     onMounted(() => setupRealtime());
-    onUnmounted(() => close());
+    onUnmounted(() => {
+      if (refreshDebounceTimer) clearTimeout(refreshDebounceTimer);
+      close();
+    });
   }
 
   return {

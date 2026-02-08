@@ -5,6 +5,7 @@
 
 import ogs from 'open-graph-scraper';
 import type { LinkPreviewData } from '~/types';
+import { getRandomUA } from '~/constants';
 
 /**
  * 确保 URL 为绝对路径
@@ -32,11 +33,10 @@ export const getLinkPreview = async (url: string): Promise<LinkPreviewData | nul
     // 发起爬取请求，配置高仿真 User-Agent 以减少被拦截风险
     const { result } = await ogs({
       url,
-      timeout: 3000,
+      timeout: 5000,
       fetchOptions: {
         headers: {
-          'user-agent':
-            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
+          'user-agent': getRandomUA(),
         },
       },
     });

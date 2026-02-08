@@ -1,9 +1,5 @@
 <template>
   <div>
-    <!-- <div v-if="status === 'pending' && !postWithRelativeTime && isLongLoading">
-      <SkeletonWrapper type="post" />
-    </div> -->
-
     <div v-if="postWithRelativeTime">
       <PostHeader :post="postWithRelativeTime" />
 
@@ -39,7 +35,6 @@ const { loggedIn } = useUserSession();
 definePageMeta({ hideHeaderBack: false });
 
 const { postWithRelativeTime, status, error, refresh, ast, toc, updatedMarks, clearUpdateMark } = usePostLogic(id);
-const isLongLoading = useTimeout(200);
 
 // 动画相关状态
 const hasAnimated = ref(false);
@@ -98,7 +93,9 @@ const onMdcFinished = async () => {
 watch(
   error,
   (err) => {
-    if (err) throw createError({ ...err });
+    if (err) {
+      navigateTo('/', { replace: true });
+    }
   },
   { immediate: true },
 );

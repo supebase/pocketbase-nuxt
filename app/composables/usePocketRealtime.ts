@@ -127,11 +127,11 @@ export const usePocketRealtime = () => {
       if (sseManager.heartbeatTimer) clearInterval(sseManager.heartbeatTimer);
       updateActivity();
       sseManager.heartbeatTimer = setInterval(() => {
-        const threshold = 60000;
+        const threshold = 120000;
         if (Date.now() - sseManager.lastActivity > threshold) {
           reconnect();
         }
-      }, 30000);
+      }, 60000);
     };
 
     es.onopen = () => {

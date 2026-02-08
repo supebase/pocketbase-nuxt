@@ -19,27 +19,31 @@ export const simplifyAst = (node: any) => {
  * 处理阅读量防刷与异步自增逻辑
  * @returns 返回即时更新后的阅读量数值
  */
+/**
+ * 处理阅读量防刷与异步自增逻辑
+ * @returns 返回即时更新后的阅读量数值
+ */
 export const handlePostViewTracking = async (event: H3Event, post: any) => {
   if (!post) return 0;
 
   const postId = post.id;
   const VIEW_LIST_KEY = 'v_list';
 
-  // 获取并清洗数据：filter(Boolean) 移除 split 产生的空字符串项
+  // 1. 读取并解析已阅列表
   const viewListStr = getCookie(event, VIEW_LIST_KEY) || '';
   const viewedIds = viewListStr.split(',').filter(Boolean);
 
   let currentViews = Number(post.views || 0);
 
-  // 检查是否包含当前 ID
+  // 2. 判定是否为新阅读
   if (!viewedIds.includes(postId)) {
-    // 压入新 ID
-    viewedIds.push(postId);
+    // 内存中立即 +1，确保本次 API 返回的值是最新的
+    currentViews += 1;
 
-    // 滚动窗口：限制存储最近的 20 条记录，防止 Cookie 过大
-    const updatedIds = viewedIds.slice(-20);
+    // 限制 Cookie 长度（保留最近 20 条），防止请求头过大导致 431 错误
+    const updatedIds = [...viewedIds, postId].slice(-20);
 
-    // 写回 Cookie
+    // 3. 同步写回 Cookie
     setCookie(event, VIEW_LIST_KEY, updatedIds.join(','), {
       maxAge: MAX_VIEW_COOKIE_AGE,
       httpOnly: true,
@@ -47,12 +51,23 @@ export const handlePostViewTracking = async (event: H3Event, post: any) => {
       path: '/',
     });
 
-    // 异步自增（非阻塞）
-    incrementPostViews({ pb: event.context.pb, postId }).catch((err) => {
-      // console.error(`[Views] 自增失败 (ID: ${postId}):`, err);
-    });
+    /**
+     * 4. 异步更新数据库（非阻塞）
+     * 不使用 await，让请求立即向下执行，但在后台处理错误
+     */
+    const pb = event.context.pb;
 
-    currentViews += 1;
+    if (pb) {
+      // 启动一个后台 Promise
+      incrementPostViews({ pb, postId })
+        .then(() => {
+          // 可以在这里打个 debug 日志：console.log(`[Views] Success: ${postId}`)
+        })
+        .catch((err) => {
+          // 这里的错误捕获至关重要，防止未捕获的异常导致 Node 进程不稳
+          console.error(`[Views Update Error] ID: ${postId} -`, err.message);
+        });
+    }
   }
 
   return currentViews;

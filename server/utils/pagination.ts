@@ -30,7 +30,14 @@ export const getPaginationParams = (
   const query = getQuery(event);
 
   // 强制页码最小值为 1
-  const page = Math.max(1, Number(query.page) || defaults.page);
+  const page = Math.max(1, Math.min(1000, Number(query.page) || defaults.page));
+
+  if (isNaN(page)) {
+    throw createError({
+      status: 400,
+      message: '页码必须是数字',
+    });
+  }
 
   // 步长约束逻辑：1 <= perPage <= maxPerPage
   const perPage = Math.min(defaults.maxPerPage, Math.max(1, Number(query.perPage) || defaults.perPage));

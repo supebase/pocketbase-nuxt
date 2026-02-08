@@ -28,21 +28,14 @@ export async function ensureOwnership<T extends keyof CollectionResponses>(
 
   // 获取当前认证用户状态
   const currentUser = pb.authStore.record;
+  const fieldValue = record[userField];
 
-  // 字段存在性防御检查
-  // 确保 userField 确实存在于数据库返回的对象中，避免逻辑穿透
-  if (!(userField in record)) {
-    // console.error(`[Guard Error]: 字段 '${String(userField)}' 不存在于集合 '${collectionName}'`);
-    throw createError({
-      status: 500,
-      message: '系统配置异常：校验字段缺失',
-      statusText: 'Internal Server Error',
-    });
-  }
+  // 核心鉴权逻辑优化
+  // 确保用户已登录
+  // 确保字段值是字符串（ID）且与当前用户 ID 完全匹配
+  const isOwner = currentUser?.id && typeof fieldValue === 'string' && fieldValue === currentUser.id;
 
-  // 核心鉴权逻辑
-  // 比较记录中的关联 ID 与当前用户 ID 是否一致
-  if (!currentUser || String(record[userField]) !== currentUser.id) {
+  if (!isOwner) {
     throw createError({
       status: 403,
       message: '无权操作：您不是该内容的所有者',

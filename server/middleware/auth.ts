@@ -35,20 +35,27 @@ function shouldRefreshToken(token: string | null | undefined): boolean {
     const parts = token.split('.');
     if (parts.length !== 3) return false;
 
-    // 获取 Payload 并处理 TypeScript 的 string 类型校验
     const base64Payload = parts[1] || '';
-    if (!base64Payload) return false;
-
     const payload = JSON.parse(Buffer.from(base64Payload, 'base64').toString());
     const now = Math.floor(Date.now() / 1000);
 
-    // 如果 Token 已完全过期，交由 PocketBase SDK 的 isValid 处理
-    if (!payload.exp || !payload.iat || now >= payload.exp) return false;
+    // 1. 基础检查：如果已经过期或没有过期时间，不处理（交给 SDK 报错）
+    if (!payload.exp || !payload.iat) return false;
+
+    // 2. 时钟偏差容忍度：给予 10 秒的宽限期
+    // 如果现在距离过期已经不到 10 秒了，认为它已经失效
+    if (now >= payload.exp - 10) return false;
 
     const totalDuration = payload.exp - payload.iat;
     const remaining = payload.exp - now;
 
-    return remaining < totalDuration / 2;
+    /**
+     * 刷新策略：
+     * - 情况 A: 距离过期时间不足 5 分钟 (300s)，必须强制刷新以应对网络延迟。
+     * - 情况 B: 距离过期时间不足总时长的 50%，在低频访问时维持 Token 活性。
+     */
+    const MIN_BUFFER = 300;
+    return remaining < MIN_BUFFER || remaining < totalDuration / 2;
   } catch {
     return false;
   }
@@ -72,34 +79,28 @@ export default defineEventHandler(async (event) => {
     const userId = pb.authStore.record.id;
 
     if (shouldRefreshToken(pb.authStore.token)) {
+      let refreshTask = refreshRequests.get(userId);
+
+      if (!refreshTask) {
+        // 创建刷新任务
+        refreshTask = pb
+          .collection('users')
+          .authRefresh()
+          .then((authData) => ({
+            token: authData.token,
+            record: authData.record,
+          }))
+          .finally(() => {
+            // 核心优化：一旦 Promise 完成（无论成功失败），立即从 Map 中移除
+            // 这样下一波并发进来时，会重新触发刷新逻辑
+            refreshRequests.delete(userId);
+          });
+
+        refreshRequests.set(userId, refreshTask);
+      }
+
       try {
-        // --- 并发锁控制开始 ---
-        let refreshTask = refreshRequests.get(userId);
-
-        if (!refreshTask) {
-          refreshTask = (async () => {
-            try {
-              const authData = await pb.collection('users').authRefresh();
-              return {
-                token: authData.token,
-                record: authData.record,
-              };
-            } catch (err) {
-              // 发生错误时立即清除任务，允许后续请求重试
-              refreshRequests.delete(userId);
-              throw err;
-            } finally {
-              // 延迟 3 秒清理 Key，确保极端并发下的微任务都能命中缓存
-              setTimeout(() => refreshRequests.delete(userId), 3000);
-            }
-          })();
-          refreshRequests.set(userId, refreshTask);
-        }
-
-        // 所有并发请求在此处“汇合”，获取相同的刷新结果
-        const latestAuth = await refreshTask;
-
-        // 【关键】将最新的 Token 和 Record 同步到当前请求的 pb 实例
+        const latestAuth = await refreshTask; // 所有并发请求都会在这里等待同一个结果
         pb.authStore.save(latestAuth.token, latestAuth.record);
 
         // 同步最新的 Auth 状态到 Response Header (Cookie)

@@ -6,19 +6,20 @@ export async function invalidateCache(pattern: string) {
   const storage = useStorage('cache');
   const keys = await storage.getKeys();
 
+  if (!keys.length) return;
+
   // 1. 先转义所有正则特殊字符（包括星号本身）
   // 这会将 "*" 变成 "\*"
   const escapedPattern = pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
   // 2. 将已经转义的 "\*" 替换为正则表达式中的通配符 ".*"
-  const regexString = '^' + escapedPattern.replace(/\\\*/g, '.*') + '$';
-  const regex = new RegExp(regexString);
-
+  const regex = new RegExp('^' + escapedPattern.replace(/\\\*/g, '.*') + '$');
   const keysToDelete = keys.filter((key) => regex.test(key));
 
   if (keysToDelete.length > 0) {
-    // 建议：缓存清理可以不使用 await，或者捕获错误防止阻塞主流程
-    await Promise.all(keysToDelete.map((key) => storage.removeItem(key)));
+    // 使用 allSettled。即使某个 Key 在 getKeys 和 removeItem 之间过期了，
+    // 也不会导致整个函数抛出异常从而影响你的业务流程。
+    await Promise.allSettled(keysToDelete.map((key) => storage.removeItem(key)));
   }
 }
 

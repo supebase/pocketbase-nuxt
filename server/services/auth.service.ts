@@ -54,9 +54,18 @@ export async function registerService({
     location,
   };
 
-  await pb.collection('users').create(newUser);
-  // 注册成功后自动调用登录服务，复用 authStore 状态
-  return await loginService({ pb, email: cleanEmail, password, event });
+  try {
+    await pb.collection('users').create(newUser);
+    // 注册成功后自动调用登录服务，复用 authStore 状态
+    return await loginService({ pb, email: cleanEmail, password, event });
+  } catch (error: any) {
+    // 注册过程中任何一步失败，都要彻底清理现场
+    pb.authStore.clear();
+    await clearUserSession(event);
+
+    // 重新抛出错误，让 API Handler 捕获并返回给前端
+    throw error;
+  }
 }
 
 /**
@@ -75,6 +84,7 @@ export async function logoutService({ event, pb }: LogoutOptions & { event: H3Ev
     path: '/',
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
+    maxAge: 0,
   });
 }
 
@@ -99,15 +109,20 @@ export async function githubLoginService({
 
   // 使用 code 交换 PocketBase 的 AuthData
   // PocketBase 会自动处理：如果用户不存在则创建，如果存在则登录
-  const authData = await pb
-    .collection('users')
-    .authWithOAuth2Code<UsersResponse>('github', code, codeVerifier, redirectUrl);
+  try {
+    const authData = await pb
+      .collection('users')
+      .authWithOAuth2Code<UsersResponse>('github', code, codeVerifier, redirectUrl);
 
-  // 更新 Nuxt Session
-  await setUserSession(event, {
-    user: authData.record,
-    loggedInAt: new Date().toISOString(),
-  });
+    // 更新 Nuxt Session
+    await setUserSession(event, {
+      user: authData.record,
+      loggedInAt: new Date().toISOString(),
+    });
 
-  return authData.record;
+    return authData.record;
+  } catch (error) {
+    await clearUserSession(event);
+    throw error;
+  }
 }

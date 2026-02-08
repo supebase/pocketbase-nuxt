@@ -16,29 +16,35 @@ import type {
  * 切换点赞状态
  */
 export async function toggleLike({ pb, commentId, userId }: ToggleLikeOptions) {
-  const filter = pb.filter('comment = {:commentId} && user = {:userId}', { commentId, userId });
-
-  let existingLike: PBLikesResponse | null = null;
-
-  try {
-    existingLike = await pb.collection('likes').getFirstListItem(filter, {
-      requestKey: null,
-    });
-  } catch (e) {
-    // 找不到记录
-  }
-
   let liked = false;
 
-  if (existingLike) {
-    await pb.collection('likes').delete(existingLike.id);
-    liked = false;
-  } else {
+  try {
+    // 1. 尝试直接创建点赞记录
     const newLike: Create<'likes'> = { user: userId, comment: commentId };
-    await pb.collection('likes').create(newLike);
+    await pb.collection('likes').create(newLike, { requestKey: null });
     liked = true;
+  } catch (error: any) {
+    // 2. 如果报错是因为“唯一性约束冲突”（即已点过赞）
+    // PocketBase 的验证错误通常在 error.data 中，检查是否是唯一索引冲突
+    const isDuplicate = error.status === 400 || error.status === 409;
+
+    if (isDuplicate) {
+      try {
+        // 已存在，则执行取消点赞（删除）
+        const filter = pb.filter('comment = {:commentId} && user = {:userId}', { commentId, userId });
+        const existingLike = await pb.collection('likes').getFirstListItem(filter, { requestKey: null });
+        await pb.collection('likes').delete(existingLike.id, { requestKey: null });
+        liked = false;
+      } catch (deleteError) {
+        // 如果删除时记录又被别的请求删了，保持 liked = false 即可
+      }
+    } else {
+      // 其他真正的错误（如网络断开、权限不足）向上抛出
+      throw error;
+    }
   }
 
+  // 3. 获取最新点赞数（建议从视图获取，性能更好）
   const likes = await getCommentLikes({ pb, commentId });
   return { liked, likes, commentId };
 }

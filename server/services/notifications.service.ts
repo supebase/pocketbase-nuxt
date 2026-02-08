@@ -51,33 +51,52 @@ export async function createNotification({ pb, data }: CreateNotificationOptions
  * @description 核心业务逻辑：提取 -> 去重 -> 查找用户 -> 批量写入
  */
 export async function handleMentionsInText({ pb, text, fromUser, postId, commentId }: HandleMentionsOptions) {
-  // 修正：统一使用接口定义
-  // 1. 匹配 @用户名
   const mentionNames = text.match(/@([^\s@#$]+)/g)?.map((n) => n.slice(1)) || [];
   if (mentionNames.length === 0) return;
 
-  // 2. 去重并排除作者本人
   const uniqueNames = [...new Set(mentionNames)].filter((name) => name !== fromUser.name);
 
-  for (const name of uniqueNames) {
-    try {
-      const targetUser = await pb.collection('users').getFirstListItem(pb.filter('name = {:name}', { name }));
+  // 1. 批量查询目标用户
+  const userFilter = uniqueNames.map((name) => pb.filter('name = {:name}', { name })).join(' || ');
+  const targetUsers = await pb.collection('users').getFullList({ filter: userFilter, fields: 'id' });
+  if (targetUsers.length === 0) return;
 
-      if (targetUser && targetUser.id !== fromUser.id) {
-        await createNotification({
-          pb,
-          data: {
-            from_user: fromUser.id,
-            to_user: targetUser.id,
-            post: postId,
-            comment: commentId,
-            type: 'mention' as any, // 修正：强制类型适配 enum
-            is_read: false,
-          },
-        });
-      }
-    } catch (e) {
-      // 404 不处理
+  // 💡 2. 关键优化：一次性查出该评论下所有【已存在的提及通知】
+  const existingNotifications = await pb.collection('notifications').getFullList({
+    filter: pb.filter('post = {:postId} && comment = {:commentId} && type = "mention"', {
+      postId,
+      commentId,
+    }),
+    fields: 'id,to_user',
+  });
+  const notifiedUserIds = new Set(existingNotifications.map((n) => n.to_user));
+
+  // 3. 批量写入
+  const batch = pb.createBatch();
+  let hasOperation = false;
+
+  for (const user of targetUsers) {
+    if (user.id === fromUser.id) continue;
+
+    // 💡 只有不在已通知列表里的才加入 Batch
+    if (!notifiedUserIds.has(user.id)) {
+      batch.collection('notifications').create({
+        from_user: fromUser.id,
+        to_user: user.id,
+        post: postId,
+        comment: commentId,
+        type: 'mention',
+        is_read: false,
+      });
+      hasOperation = true;
+    }
+  }
+
+  if (hasOperation) {
+    try {
+      await batch.send();
+    } catch (err) {
+      console.error('[Mention Error] 批量通知失败:', err);
     }
   }
 }
@@ -112,5 +131,7 @@ export async function markAllNotificationsAsRead({ pb }: { pb: TypedPocketBase }
 
   if (unreads.length === 0) return [];
 
-  return await Promise.all(unreads.map((n) => pb.collection('notifications').update(n.id, { is_read: true })));
+  const batch = pb.createBatch();
+  unreads.forEach((n) => batch.collection('notifications').update(n.id, { is_read: true }));
+  return await batch.send();
 }

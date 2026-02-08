@@ -64,26 +64,28 @@ function manageCache(key: string, value: string, expiry: number) {
 export const getFirstImageUrl = (content: string): string | null => {
   if (typeof content !== 'string' || !content.trim()) return null;
 
-  // 1. 预处理：移除代码块
+  // 1. 预处理：移除代码块（防止匹配到示例代码中的图片链接）
   const cleanContent = content.replace(/```[\s\S]*?```/g, '').replace(/`[^`]*?`/g, '');
 
-  // 2. 匹配标准 Markdown 图片
-  const mdImageRegex = /!\[.*?\]\((?<url>[^\s)]+)(?:\s+["'].*?["'])?\)/;
+  // 2. 增强版 Markdown 图片正则
+  // 逻辑：匹配 ![...] 后面跟着 ( )。
+  // 括号内第一部分是非空白字符（URL），后面可选跟随空格和带引号的标题
+  const mdImageRegex = /!\[.*?\]\(\s*(?<url>[^\s)]+)(\s+["'].*?["'])?\s*\)/;
   const mdMatch = cleanContent.match(mdImageRegex);
 
   if (mdMatch?.groups?.url) {
     const url = mdMatch.groups.url;
-    // 过滤 data: 等非法或过大链接
-    if (url.startsWith('http') || url.startsWith('/')) return url;
+    // 💡 验证 URL 是否合理：允许 http, https, / 开头，排除数据流 data:
+    if (/^(https?:\/\/|\/|\.\/)/i.test(url)) return url;
   }
 
-  // 3. 备选：匹配 HTML img
-  const htmlImageRegex = /<img[^>]+src=["'](?<url>.*?)["']/i;
+  // 3. 备选：匹配 HTML img 标签
+  const htmlImageRegex = /<img[^>]+src\s*=\s*["'](?<url>[^"']+)["']/i;
   const htmlMatch = cleanContent.match(htmlImageRegex);
 
   if (htmlMatch?.groups?.url) {
     const url = htmlMatch.groups.url;
-    if (url.startsWith('http') || url.startsWith('/')) return url;
+    if (/^(https?:\/\/|\/|\.\/)/i.test(url)) return url;
   }
 
   return null;

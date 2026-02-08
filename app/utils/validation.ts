@@ -8,7 +8,17 @@
  * @returns 是否为有效的电子邮件格式
  */
 export function isValidEmail(email: string): boolean {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!email || email.length > 254) return false;
+
+  // 改进后的正则：
+  // 1. 用户名部分允许常见字符
+  // 2. 域名部分必须有点，且后缀至少 2 位
+  // 3. 不允许连续的点（正则中的 common mistake）
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
+  // 额外的简单检查：确保没有连续的点（正则有时很难处理这种情况）
+  if (email.includes('..')) return false;
+
   return emailRegex.test(email);
 }
 

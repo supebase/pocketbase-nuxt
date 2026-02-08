@@ -84,35 +84,38 @@ const props = defineProps<Props>();
 const isLoaded = ref(false);
 const isFirstTimeRender = ref(true);
 
-watch(
-  () => props.triggerAnimation,
-  (newVal) => {
-    // 💡 只有当信号真正发生变化（大于0）时才重置动画
-    if (newVal && newVal > 0) {
-      isFirstTimeRender.value = true;
-      setTimeout(() => {
-        isFirstTimeRender.value = false;
-      }, 1000);
-    }
-  },
-);
+let animationTimer: ReturnType<typeof setTimeout> | null = null;
+
+const startAnimationTimeout = () => {
+  if (animationTimer) clearTimeout(animationTimer);
+  isFirstTimeRender.value = true;
+  animationTimer = setTimeout(() => {
+    isFirstTimeRender.value = false;
+  }, 1000);
+};
 
 onMounted(() => {
-  nextTick(() => {
-    // 动画播放完后关闭标记
-    setTimeout(() => {
-      isFirstTimeRender.value = false;
-    }, 1000);
-  });
+  nextTick(() => startAnimationTimeout());
 });
 
-if (props.isPriority) {
-  const imagesToPreload = [];
-  if (props.item.firstImage) imagesToPreload.push(props.item.firstImage);
-  if (props.item.link_image) imagesToPreload.push(getLinkImage(props.item, props.item.link_image));
+onUnmounted(() => {
+  if (animationTimer) clearTimeout(animationTimer);
+});
 
-  useHead({
-    link: imagesToPreload.map((href) => ({ rel: 'preload', as: 'image', href })),
-  });
+// 只有当设置为高优先级（通常是列表的前 1-2 项）且在服务端渲染时才注入 preload
+if (props.isPriority && import.meta.server) {
+  const preloadHref = props.item.firstImage;
+
+  if (preloadHref) {
+    useHead({
+      link: [
+        {
+          rel: 'preload',
+          as: 'image',
+          href: preloadHref,
+        },
+      ],
+    });
+  }
 }
 </script>

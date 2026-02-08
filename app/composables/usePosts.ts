@@ -52,10 +52,15 @@ export const usePosts = () => {
   // 包装分页重置，加入动画状态控制
   const resetPagination = (items: PostWithUser[], total: number, transformFn?: any) => {
     isResetting.value = true;
+
+    // 仅将前 20 条数据同步到全局缓存，防止 Payload 溢出
+    const sliceItems = items.slice(0, 20);
+    cachedPosts.value = sliceItems;
+
     originalReset(items, total, transformFn);
     setTimeout(() => {
       isResetting.value = false;
-    }, 150); // 给 UI 留出平滑过渡的时间
+    }, 150);
   };
 
   const loadMore = (
@@ -78,34 +83,42 @@ export const usePosts = () => {
   });
 
   const isListening = ref(false);
+
   const setupRealtime = () => {
     if (import.meta.server || isListening.value) return;
     isListening.value = true;
 
     listen(({ collection, action, record }) => {
       if (collection !== 'posts') return;
-      const idx = allPosts.value.findIndex((p) => p.id === record.id);
+
+      const recordId = record.id;
+      const idx = allPosts.value.findIndex((p) => p.id === recordId);
       const processed = processPost(record as PostWithUser);
       const isVisible = processed.published || canViewDrafts.value;
 
       if (action === 'delete') {
         if (idx !== -1) {
-          allPosts.value.splice(idx, 1);
+          // 使用不可变方式移除
+          allPosts.value = allPosts.value.filter((p) => p.id !== recordId);
           totalItems.value = Math.max(0, totalItems.value - 1);
         }
       } else if (action === 'create' && isVisible && idx === -1) {
-        allPosts.value.unshift(processed);
+        // 使用解构赋值创建新数组，触发最高优先级的响应式更新
+        allPosts.value = [processed, ...allPosts.value];
         totalItems.value++;
       } else if (action === 'update') {
         if (idx !== -1) {
           if (!isVisible) {
-            allPosts.value.splice(idx, 1);
+            // 状态变为隐藏（撤稿），则移除
+            allPosts.value = allPosts.value.filter((p) => p.id !== recordId);
             totalItems.value--;
           } else {
-            allPosts.value[idx] = { ...allPosts.value[idx], ...processed };
+            // 状态更新，返回新数组实例
+            allPosts.value = allPosts.value.map((p) => (p.id === recordId ? { ...p, ...processed } : p));
           }
         } else if (isVisible) {
-          allPosts.value.unshift(processed);
+          // 之前不在列表里的（比如从草稿变为发布），则新增
+          allPosts.value = [processed, ...allPosts.value];
           totalItems.value++;
         }
       }

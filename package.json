@@ -1,6 +1,6 @@
 {
   "name": "pocketbase-nuxt",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "type": "module",
   "private": true,
   "scripts": {
@@ -20,7 +20,7 @@
     "@tiptap/extension-character-count": "^3.19.0",
     "eventsource": "^4.1.0",
     "ip2region.js": "^3.1.6",
-    "nuxt": "^4.3.0",
+    "nuxt": "^4.3.1",
     "nuxt-auth-utils": "0.5.28",
     "nuxt-emoji-picker": "^1.2.2",
     "open-graph-scraper": "^6.11.0",
@@ -37,10 +37,10 @@
   },
   "devDependencies": {
     "@iconify-json/hugeicons": "^1.2.23",
-    "@iconify-json/simple-icons": "^1.2.69",
+    "@iconify-json/simple-icons": "^1.2.70",
     "@iconify-json/vscode-icons": "^1.2.40",
     "@tailwindcss/typography": "^0.5.19",
-    "@types/node": "^25.2.1",
+    "@types/node": "^25.2.2",
     "@types/sanitize-html": "^2.16.0",
     "@vue/eslint-config-typescript": "^14.6.0",
     "eslint": "^9.39.2",
