@@ -6,11 +6,7 @@ export default defineNuxtConfig({
   runtimeConfig: {
     session: {
       name: 'pb-session',
-      password:
-        process.env.NUXT_SESSION_PASSWORD ||
-        (() => {
-          throw new Error('NUXT_SESSION_PASSWORD 环境变量必须设置且至少32字符');
-        })(),
+      password: process.env.NUXT_SESSION_PASSWORD || '',
       maxAge: 60 * 60 * 24 * 7,
     },
     pocketbaseBackend: process.env.NUXT_POCKETBASE_URL,
