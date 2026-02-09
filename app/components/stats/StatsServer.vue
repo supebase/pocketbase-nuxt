@@ -2,93 +2,87 @@
   <div class="w-full font-mono transition-all duration-300 select-none">
     <div v-if="isLoading && !metrics" class="py-12 flex flex-col items-center justify-center text-sm text-muted">
       <UIcon name="i-hugeicons:refresh" class="size-5 animate-spin mb-2" />
-      正在获取服务器信息
+      正在获取系统指标
     </div>
 
     <div v-else-if="error" class="py-12 flex flex-col items-center justify-center text-sm">
       <UIcon name="i-hugeicons:alert-circle" class="size-8 text-red-500 mb-3" />
-      <p class="text-red-400 font-medium">{{ error.message || '获取数据失败' }}</p>
-      <button @click="refresh()" class="mt-4 px-4 py-2 bg-neutral-700 hover:bg-neutral-600 rounded transition">
-        重试
-      </button>
+      <p class="text-red-400 font-medium">{{ error.message || '获取监控数据失败' }}</p>
+      <UButton variant="ghost" @click="refresh()" class="mt-4"> 重试 </UButton>
     </div>
 
     <div v-else-if="metrics">
-      <div class="flex justify-between items-start mb-6">
+      <div class="flex justify-between items-end mb-6">
         <div>
-          <div class="text-muted text-xs tracking-tighter">模式</div>
-          <div class="font-bold text-primary">{{ metrics.mode }}</div>
+          <div class="text-muted text-[10px] uppercase tracking-widest mb-1">Runtime Mode</div>
+          <div class="font-bold text-primary flex items-center gap-2">
+            <span class="relative flex h-2 w-2">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+            </span>
+            {{ metrics.mode }}
+          </div>
         </div>
-        <div class="flex gap-6 text-right">
-          <div>
-            <div class="text-neutral-500 text-xs tracking-tighter">在线设备</div>
-            <div class="font-black text-xl">
-              <CommonAnimateNumber :value="uniqueDevices" />
-            </div>
-          </div>
-          <div>
-            <div class="text-neutral-500 text-xs tracking-tighter">连接总数</div>
-            <div class="font-black text-xl">
-              <CommonAnimateNumber :value="totalConnections" />
-            </div>
-          </div>
+        <div class="text-right">
+          <div class="text-muted text-[10px] uppercase tracking-widest mb-1">Uptime</div>
+          <div class="font-bold">{{ displayUptime }}</div>
         </div>
       </div>
 
       <div class="grid grid-cols-2 gap-4">
-        <div class="bg-neutral-200 dark:bg-neutral-800 p-3 rounded-lg">
-          <div class="text-xs text-muted mb-1 tracking-wider">总内存 (RSS)</div>
-          <div class="text-lg font-semibold">{{ displayRSS }}</div>
-        </div>
-
-        <div class="bg-neutral-200 dark:bg-neutral-800 p-3 rounded-lg">
-          <div class="text-xs text-muted mb-1 tracking-wider">最后同步</div>
-          <div class="text-lg font-semibold">{{ lastSyncTime }}</div>
-        </div>
-      </div>
-
-      <div v-if="metrics.instances?.length" class="mt-6 space-y-2">
         <div
-          class="text-xs text-muted tracking-widest border-b border-neutral-200 dark:border-neutral-800 pb-1 flex justify-between"
+          class="bg-neutral-100 dark:bg-neutral-800/50 p-4 rounded-xl border border-neutral-200 dark:border-neutral-800"
         >
-          <span>集群实例详情</span>
-          <span>连接 / CPU / 内存</span>
-        </div>
-        <div
-          v-for="ins in metrics.instances"
-          :key="ins.pm_id"
-          class="flex items-center justify-between text-xs py-1 px-1 rounded hover:bg-neutral-100 dark:hover:bg-neutral-800/50 transition-colors"
-        >
-          <div class="flex items-center gap-2">
-            <span :class="getStatusColor(ins.status)">●</span>
-            <span class="text-muted">实例 {{ ins.pm_id }}</span>
+          <div class="text-xs text-muted mb-1 flex items-center gap-1">
+            <UIcon name="i-hugeicons:chip" /> 内存占用 (RSS)
           </div>
-          <span
-            class="flex-1 mx-4 border-b border-neutral-200 dark:border-neutral-800 border-dotted mb-1 opacity-20"
-          ></span>
-          <div class="flex gap-3">
-            <span class="font-bold w-16 text-right">
-              <CommonAnimateNumber :value="ins.connections" />
-            </span>
-            <span class="text-muted w-14 text-right">{{ ins.cpu }}</span>
-            <span class="text-muted w-24 text-right">{{ ins.memory }}</span>
+          <div class="text-xl font-bold tabular-nums">{{ displayRSS }}</div>
+        </div>
+
+        <div
+          class="bg-neutral-100 dark:bg-neutral-800/50 p-4 rounded-xl border border-neutral-200 dark:border-neutral-800"
+        >
+          <div class="text-xs text-muted mb-1 flex items-center gap-1">
+            <UIcon name="i-hugeicons:clock-01" /> 最后采样
+          </div>
+          <div class="text-xl font-bold tabular-nums">{{ lastSyncTime }}</div>
+        </div>
+      </div>
+
+      <div v-if="metrics.instances?.length" class="mt-8">
+        <div class="text-[10px] text-muted uppercase tracking-widest mb-3 px-1">Cluster Instances</div>
+        <div class="space-y-2">
+          <div
+            v-for="ins in metrics.instances"
+            :key="ins.pm_id"
+            class="flex items-center justify-between text-xs py-2 px-3 rounded-lg bg-neutral-50 dark:bg-neutral-900/30 border border-neutral-100 dark:border-neutral-800/50"
+          >
+            <div class="flex items-center gap-3">
+              <div :class="[getStatusColor(ins.status), 'size-2 rounded-full shadow-sm']"></div>
+              <span class="font-bold">#{{ ins.pm_id }}</span>
+            </div>
+
+            <div class="flex gap-4 items-center">
+              <div class="flex flex-col items-end">
+                <span class="text-[10px] text-muted scale-90">CPU</span>
+                <span class="font-medium">{{ ins.cpu }}</span>
+              </div>
+              <div class="flex flex-col items-end min-w-16">
+                <span class="text-[10px] text-muted scale-90">MEM</span>
+                <span class="font-medium">{{ ins.memory }}</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      <div
-        class="mt-6 text-[11px] text-dimmed font-mono tabular-nums flex justify-between border-t border-neutral-200 dark:border-neutral-800 pt-4"
-      >
-        <span>{{ metrics.status }}</span>
-        <span>{{ displayUptime }}</span>
-      </div>
+      <div class="mt-6 text-[10px] text-dimmed text-center italic">System monitor data synchronized via PM2 API</div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-const { metrics, isLoading, error, uniqueDevices, totalConnections, displayRSS, displayUptime, lastSyncTime, refresh } =
-  useServerMetrics(5000);
+const { metrics, isLoading, error, displayRSS, displayUptime, lastSyncTime, refresh } = useServerMetrics(5000);
 
-const getStatusColor = (status: string) => (status === 'online' ? 'text-green-500' : 'text-red-500');
+const getStatusColor = (status: string) => (status === 'online' ? 'bg-green-500' : 'bg-red-500');
 </script>

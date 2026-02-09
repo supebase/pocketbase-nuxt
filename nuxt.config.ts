@@ -90,14 +90,19 @@ export default defineNuxtConfig({
     imports: {
       dirs: ['./server/services'],
     },
+    devProxy: {
+      // 前端访问 /_pb/ 时，透明转发到本地 8090 端口
+      '/_pb': {
+        target: process.env.NUXT_POCKETBASE_URL,
+        changeOrigin: true,
+        prependPath: false,
+      },
+    },
+    // 2. 生产环境或通用路由转发
     routeRules: {
-      '/api/realtime': {
-        cache: false,
-        headers: {
-          'Content-Type': 'text/event-stream',
-          'Cache-Control': 'no-cache, no-transform',
-          Connection: 'keep-alive',
-        },
+      // 匹配所有以 /_pb 开头的请求
+      '/_pb/**': {
+        proxy: `${process.env.NUXT_POCKETBASE_URL}/**`,
       },
     },
   },

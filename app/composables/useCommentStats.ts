@@ -16,12 +16,16 @@ export function useCommentStats(postId: string) {
 
   onMounted(() => {
     if (import.meta.server) return;
-    listen(({ collection, record }) => {
-      if (collection === 'comments' && record.post === postId && isRendered.value) {
-        if (debounceTimer) clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(() => refresh(), 500);
-      }
-    });
+    listen(
+      'comments',
+      ({ record }) => {
+        if (record.post === postId && isRendered.value) {
+          if (debounceTimer) clearTimeout(debounceTimer);
+          debounceTimer = setTimeout(() => refresh(), 500);
+        }
+      },
+      { expand: 'user' },
+    );
   });
 
   onUnmounted(() => {

@@ -53,27 +53,31 @@ export const useNotifications = () => {
 
   // 实时监听逻辑
   const setupRealtime = () => {
-    listen(async ({ collection, action, record }) => {
-      if (collection !== 'notifications' || record.to_user !== user.value?.id) return;
+    listen(
+      'notifications',
+      async ({ action, record }) => {
+        if (record.to_user !== user.value?.id) return;
 
-      if (action === 'create') {
-        unreadCount.value++;
-        triggerEffect();
-        if (page.value === 1) {
-          try {
-            const res = await $fetch<any>(`/api/collections/notification/${record.id}`);
-            const newItem = res.data || res;
-            if (!notifications.value.find((n) => n.id === newItem.id)) {
-              notifications.value.unshift(newItem);
+        if (action === 'create') {
+          unreadCount.value++;
+          triggerEffect();
+          if (page.value === 1) {
+            try {
+              const res = await $fetch<any>(`/api/collections/notification/${record.id}`);
+              const newItem = res.data || res;
+              if (!notifications.value.find((n) => n.id === newItem.id)) {
+                notifications.value.unshift(newItem);
+              }
+            } catch (e) {
+              console.error(e);
             }
-          } catch (e) {
-            console.error(e);
           }
+        } else if (action === 'update' || action === 'delete') {
+          fetchUnreadCount();
         }
-      } else if (action === 'update' || action === 'delete') {
-        fetchUnreadCount();
-      }
-    });
+      },
+      { expand: 'from_user' },
+    );
   };
 
   // 操作方法

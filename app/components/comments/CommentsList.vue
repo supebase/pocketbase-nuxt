@@ -191,27 +191,31 @@ const parsedContent = (text: string) => {
 const setupRealtime = () => {
   if (import.meta.server) return;
 
-  listen(({ collection, action, record }) => {
-    // 评论逻辑
-    if (collection === 'comments' && record.post === props.postId) {
-      syncSingleComment(record as CommentRecord, action as any);
-    }
+  // 监听评论变动 (只处理属于当前文章的评论)
+  listen(
+    'comments',
+    ({ action, record }) => {
+      if (record.post === props.postId) {
+        syncSingleComment(record as CommentRecord, action as any);
+      }
+    },
+    { expand: 'user' },
+  );
 
-    // 点赞逻辑
-    if (collection === 'likes') {
-      const targetCommentId = record.comment;
-      // 使用 find 查找对象引用
-      const target = comments.value.find((c) => c.id === targetCommentId);
+  // 监听点赞变动
+  listen('likes', ({ action, record }) => {
+    const targetCommentId = record.comment;
+    // 技巧：先找到目标评论引用
+    const target = comments.value.find((c) => c.id === targetCommentId);
 
-      // 关键修正：增加防御性判断，只有找到目标评论才处理
-      if (!target) return;
+    // 如果点赞所属的评论不在当前列表里，直接无视（防御性编程）
+    if (!target) return;
 
-      const currentLikes = target.likes || 0;
-      const newLikes = action === 'create' ? currentLikes + 1 : Math.max(0, currentLikes - 1);
+    const currentLikes = target.likes || 0;
+    const newLikes = action === 'create' ? currentLikes + 1 : Math.max(0, currentLikes - 1);
 
-      // 此时调用 handleLikeChange，最后一个参数 true 表示这是来自服务器的同步，不需要再发 API
-      handleLikeChange(target.isLiked ?? false, newLikes, targetCommentId, true);
-    }
+    // handleLikeChange 第四个参数 true 代表同步模式，防止循环触发 API
+    handleLikeChange(target.isLiked ?? false, newLikes, targetCommentId, true);
   });
 };
 
@@ -222,7 +226,8 @@ if (import.meta.client) {
   });
 
   onUnmounted(() => {
-    close();
+    close('comments');
+    close('likes');
   });
 }
 

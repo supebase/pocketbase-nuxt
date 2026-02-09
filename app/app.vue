@@ -47,7 +47,6 @@ const appConfig = useAppConfig();
 const colorMode = useColorMode();
 const { showHeaderBack } = useHeader();
 const { loggedIn, fetch: fetchSession } = useUserSession();
-const { status: sseStatus, listen: sseListen } = usePocketRealtime();
 
 // 身份状态清理
 const pbAuth = useCookie('pb_auth', { path: '/' });
@@ -71,15 +70,6 @@ if (import.meta.client) {
       if (now - lastCheckTime.value > 60000) {
         fetchSession();
         lastCheckTime.value = now;
-      }
-
-      // 策略 B: 唤醒 SSE
-      // 如果 SSE 当前是 offline (可能是因为重连次数超限)，且用户已登录
-      // 只要调用一次 listen，内部逻辑就会重置计数器并尝试 connectPhysical
-      if (sseStatus.value === 'offline' && loggedIn.value) {
-        // console.log('[SSE] Tab visible, re-activating connection...');
-        // 传入一个空回调即可触发内部重连逻辑，或者直接导出 connectPhysical
-        sseListen(() => {});
       }
     }
   });

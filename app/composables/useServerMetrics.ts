@@ -13,15 +13,7 @@ export function useServerMetrics(interval: number = 5000) {
 
   const isLoading = computed(() => status.value === 'pending');
 
-  // --- 核心计算逻辑 ---
-  const totalConnections = computed(() => {
-    return metrics.value?.summary?.total_active_connections ?? metrics.value?.total_connections ?? 0;
-  });
-
-  const uniqueDevices = computed(() => {
-    return metrics.value?.summary?.total_unique_devices ?? metrics.value?.unique_devices ?? 0;
-  });
-
+  // 计算总内存占用
   const displayRSS = computed(() => {
     if (metrics.value?.system_resource?.rss) return metrics.value.system_resource.rss;
     if (metrics.value?.instances?.length) {
@@ -31,10 +23,9 @@ export function useServerMetrics(interval: number = 5000) {
     return 'N/A';
   });
 
-  // --- 格式化工具 ---
+  // 格式化运行时间
   const formatDuration = (seconds: number | string) => {
     const totalSeconds = typeof seconds === 'string' ? parseInt(seconds.replace(/[^\d.]/g, '')) : seconds;
-
     if (!totalSeconds || isNaN(totalSeconds)) return '00s';
 
     const d = Math.floor(totalSeconds / 86400);
@@ -62,7 +53,6 @@ export function useServerMetrics(interval: number = 5000) {
     return date.toLocaleTimeString('zh-CN', { hour12: false });
   });
 
-  // --- 定时器逻辑 ---
   let timer: NodeJS.Timeout | null = null;
 
   onMounted(() => {
@@ -79,8 +69,6 @@ export function useServerMetrics(interval: number = 5000) {
     isLoading,
     error,
     refresh,
-    totalConnections,
-    uniqueDevices,
     displayRSS,
     displayUptime,
     lastSyncTime,

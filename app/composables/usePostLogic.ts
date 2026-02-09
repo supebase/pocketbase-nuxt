@@ -24,44 +24,48 @@ export const usePostLogic = (id: string | string[]) => {
   const setupRealtime = () => {
     if (import.meta.server) return;
 
-    listen(async ({ collection, action, record }) => {
-      const targetId = idRef.value;
-      if (collection !== 'posts' || record.id !== targetId) return;
+    listen(
+      'posts',
+      async ({ action, record }) => {
+        const targetId = idRef.value;
+        if (record.id !== targetId) return;
 
-      if (action === 'update') {
-        if (data.value?.data) {
-          data.value = {
-            ...data.value,
-            data: {
-              ...data.value.data,
-              views: record.views,
-              poll: !!record.poll,
-              reactions: !!record.reactions,
-              allow_comment: !!record.allow_comment,
-            },
-          };
-          // 重量级数据：防抖刷新（Content 涉及 AST 重新解析）
-          if (record.content !== data.value.data.content) {
-            if (refreshDebounceTimer) clearTimeout(refreshDebounceTimer);
+        if (action === 'update') {
+          if (data.value?.data) {
+            data.value = {
+              ...data.value,
+              data: {
+                ...data.value.data,
+                views: record.views,
+                poll: !!record.poll,
+                reactions: !!record.reactions,
+                allow_comment: !!record.allow_comment,
+              },
+            };
+            // 重量级数据：防抖刷新（Content 涉及 AST 重新解析）
+            if (record.content !== data.value.data.content) {
+              if (refreshDebounceTimer) clearTimeout(refreshDebounceTimer);
 
-            refreshDebounceTimer = setTimeout(() => {
-              if (idRef.value === record.id) {
-                refresh();
-              }
-            }, 1000); // 1秒延迟
+              refreshDebounceTimer = setTimeout(() => {
+                if (idRef.value === record.id) {
+                  refresh();
+                }
+              }, 1000); // 1秒延迟
+            }
+          }
+        } else if (action === 'delete') {
+          await navigateTo('/', { replace: true });
+
+          if (import.meta.client) {
+            toast.add({
+              title: '很遗憾，你访问的内容已被删除。',
+              color: 'error',
+            });
           }
         }
-      } else if (action === 'delete') {
-        await navigateTo('/', { replace: true });
-
-        if (import.meta.client) {
-          toast.add({
-            title: '很遗憾，你访问的内容已被删除。',
-            color: 'error',
-          });
-        }
-      }
-    });
+      },
+      { expand: 'user' },
+    );
   };
 
   if (import.meta.client) {

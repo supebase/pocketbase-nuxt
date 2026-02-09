@@ -5,19 +5,17 @@
 import PocketBase from 'pocketbase';
 import type { TypedPocketBase } from '~/types';
 import type { H3Event } from 'h3';
-import { EventSource } from 'eventsource';
-
-// Node.js 环境兼容：为 PocketBase 的实时订阅 (SSE) 提供全局 EventSource
-if (import.meta.server && !global.EventSource) {
-  (global as any).EventSource = EventSource;
-}
 
 /**
  * 创建基础配置实例
  */
 function createBaseInstance() {
   const config = useRuntimeConfig();
-  const pb = new PocketBase(config.pocketbaseBackend) as TypedPocketBase;
+
+  // 客户端环境（浏览器）走代理路径，服务端走内部物理地址
+  const baseUrl = import.meta.client ? '/_pb' : config.pocketbaseBackend;
+
+  const pb = new PocketBase(baseUrl) as TypedPocketBase;
 
   // 必须禁用：服务端高并发环境下防止请求相互竞争取消
   pb.autoCancellation(false);

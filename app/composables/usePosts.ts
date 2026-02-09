@@ -88,41 +88,43 @@ export const usePosts = () => {
     if (import.meta.server || isListening.value) return;
     isListening.value = true;
 
-    listen(({ collection, action, record }) => {
-      if (collection !== 'posts') return;
+    listen(
+      'posts',
+      ({ action, record }) => {
+        const recordId = record.id;
+        const idx = allPosts.value.findIndex((p) => p.id === recordId);
+        const processed = processPost(record as PostWithUser);
+        const isVisible = processed.published || canViewDrafts.value;
 
-      const recordId = record.id;
-      const idx = allPosts.value.findIndex((p) => p.id === recordId);
-      const processed = processPost(record as PostWithUser);
-      const isVisible = processed.published || canViewDrafts.value;
-
-      if (action === 'delete') {
-        if (idx !== -1) {
-          // 使用不可变方式移除
-          allPosts.value = allPosts.value.filter((p) => p.id !== recordId);
-          totalItems.value = Math.max(0, totalItems.value - 1);
-        }
-      } else if (action === 'create' && isVisible && idx === -1) {
-        // 使用解构赋值创建新数组，触发最高优先级的响应式更新
-        allPosts.value = [processed, ...allPosts.value];
-        totalItems.value++;
-      } else if (action === 'update') {
-        if (idx !== -1) {
-          if (!isVisible) {
-            // 状态变为隐藏（撤稿），则移除
+        if (action === 'delete') {
+          if (idx !== -1) {
+            // 使用不可变方式移除
             allPosts.value = allPosts.value.filter((p) => p.id !== recordId);
-            totalItems.value--;
-          } else {
-            // 状态更新，返回新数组实例
-            allPosts.value = allPosts.value.map((p) => (p.id === recordId ? { ...p, ...processed } : p));
+            totalItems.value = Math.max(0, totalItems.value - 1);
           }
-        } else if (isVisible) {
-          // 之前不在列表里的（比如从草稿变为发布），则新增
+        } else if (action === 'create' && isVisible && idx === -1) {
+          // 使用解构赋值创建新数组，触发最高优先级的响应式更新
           allPosts.value = [processed, ...allPosts.value];
           totalItems.value++;
+        } else if (action === 'update') {
+          if (idx !== -1) {
+            if (!isVisible) {
+              // 状态变为隐藏（撤稿），则移除
+              allPosts.value = allPosts.value.filter((p) => p.id !== recordId);
+              totalItems.value--;
+            } else {
+              // 状态更新，返回新数组实例
+              allPosts.value = allPosts.value.map((p) => (p.id === recordId ? { ...p, ...processed } : p));
+            }
+          } else if (isVisible) {
+            // 之前不在列表里的（比如从草稿变为发布），则新增
+            allPosts.value = [processed, ...allPosts.value];
+            totalItems.value++;
+          }
         }
-      }
-    });
+      },
+      { expand: 'user' },
+    );
   };
 
   return {
@@ -139,7 +141,7 @@ export const usePosts = () => {
     setupRealtime,
     close: () => {
       isListening.value = false;
-      close();
+      close('posts');
     },
     loadMore,
     resetPagination,

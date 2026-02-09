@@ -27,7 +27,7 @@
     <UModal
       v-model:open="isOpen"
       title="系统状态"
-      description="显示当前系统的运行状态和统计信息。"
+      description="显示当前系统的运行状态等信息"
       :ui="{ overlay: 'backdrop-blur-xs', header: 'select-none' }"
     >
       <template #body>
