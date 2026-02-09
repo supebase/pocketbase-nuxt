@@ -19,9 +19,15 @@ export const usePocketRealtime = () => {
     if (!pb || import.meta.server) return;
 
     // 每次订阅前同步最新的 Cookie 状态（处理登录/登出切换）
-    pb.authStore.loadFromCookie(document.cookie);
+    pb.authStore.loadFromCookie(document.cookie, 'pb_auth');
 
     try {
+      // 先取消旧订阅防止重复
+      await pb
+        .collection(collection)
+        .unsubscribe('*')
+        .catch(() => {});
+
       // 官方 SDK 会自动管理多重订阅，如果已经订阅过同一个 collection，它会合并处理
       await pb.collection(collection).subscribe(
         '*',
@@ -48,12 +54,6 @@ export const usePocketRealtime = () => {
       // 如果不传参数，保守一点，只取消这个 Hook 实例最常用的几个，或者由开发者手动指定
     }
   };
-
-  // 注意：在 Composable 中使用 onUnmounted 是安全的，
-  // 它会自动绑定到调用这个 Hook 的组件生命周期上。
-  onUnmounted(() => {
-    // 自动清理当前组件的监听（可选，取决于你是否希望切页面后继续听）
-  });
 
   return { listen, close };
 };

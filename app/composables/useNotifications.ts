@@ -11,7 +11,7 @@ export const useNotifications = () => {
   const isRinging = ref(false);
 
   const { user } = useUserSession();
-  const { listen } = usePocketRealtime();
+  const { listen, close: pbClose } = usePocketRealtime();
 
   const triggerEffect = () => {
     isRinging.value = true;
@@ -53,6 +53,8 @@ export const useNotifications = () => {
 
   // 实时监听逻辑
   const setupRealtime = () => {
+    pbClose('notifications');
+
     listen(
       'notifications',
       async ({ action, record }) => {
@@ -61,10 +63,12 @@ export const useNotifications = () => {
         if (action === 'create') {
           unreadCount.value++;
           triggerEffect();
+
           if (page.value === 1) {
             try {
               const res = await $fetch<any>(`/api/collections/notification/${record.id}`);
               const newItem = res.data || res;
+
               if (!notifications.value.find((n) => n.id === newItem.id)) {
                 notifications.value.unshift(newItem);
               }
@@ -120,6 +124,8 @@ export const useNotifications = () => {
     }
   };
 
+  const close = () => pbClose('notifications');
+
   return {
     notifications,
     unreadCount,
@@ -134,5 +140,6 @@ export const useNotifications = () => {
     fetchUnreadCount,
     resetAndRefresh,
     setupRealtime,
+    close,
   };
 };

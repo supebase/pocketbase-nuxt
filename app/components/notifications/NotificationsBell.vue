@@ -15,10 +15,16 @@
 </template>
 
 <script setup lang="ts">
-const { unreadCount, isRinging, fetchUnreadCount, setupRealtime } = useNotifications();
+const { unreadCount, isRinging, fetchUnreadCount, setupRealtime, close } = useNotifications();
 
 onMounted(() => {
-  fetchUnreadCount();
-  setupRealtime();
+  if (import.meta.client) {
+    fetchUnreadCount();
+    setupRealtime();
+  }
+});
+
+onUnmounted(() => {
+  close();
 });
 </script>

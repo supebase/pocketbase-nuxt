@@ -43,7 +43,7 @@ export async function handleAuthSuccess(
   const MAX_AGE = MAX_COOKIE_AGE;
   const pbCookie = pb.authStore.exportToCookie(
     {
-      httpOnly: true,
+      httpOnly: false,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'Lax',
       path: '/',

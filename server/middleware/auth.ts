@@ -104,12 +104,15 @@ export default defineEventHandler(async (event) => {
         pb.authStore.save(latestAuth.token, latestAuth.record);
 
         // 同步最新的 Auth 状态到 Response Header (Cookie)
-        const newCookie = pb.authStore.exportToCookie({
-          httpOnly: true,
-          secure: process.env.NODE_ENV === 'production',
-          sameSite: 'lax',
-          path: '/',
-        });
+        const newCookie = pb.authStore.exportToCookie(
+          {
+            httpOnly: false,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            path: '/',
+          },
+          'pb_auth',
+        );
         appendResponseHeader(event, 'set-cookie', newCookie);
         // --- 并发锁控制结束 ---
       } catch (e: any) {
