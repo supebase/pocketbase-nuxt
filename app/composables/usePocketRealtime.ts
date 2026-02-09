@@ -1,32 +1,62 @@
-import PocketBase, { type RecordSubscription } from 'pocketbase';
-
-// 在外部定义，确保单例连接，避免每个组件都新建 SSE 链接
-let pbInstance: PocketBase | null = null;
-
-function getClientPB() {
-  if (import.meta.server) return null;
-  if (!pbInstance) {
-    pbInstance = new PocketBase('/_pb');
-    pbInstance.autoCancellation(false);
-  }
-  return pbInstance;
-}
+import { type RecordSubscription } from 'pocketbase';
 
 export const usePocketRealtime = () => {
   const pb = getClientPB();
+  const { user, session } = useUserSession();
 
-  const listen = async (collection: string, callback: (payload: any) => void, options: { expand?: string } = {}) => {
+  const activeSubscriptions = new Set<string>();
+
+  watch(
+    () => session.value?.pbToken,
+    async (newToken, oldToken) => {
+      if (!pb) return;
+
+      // 1. 如果是退出登录（Token 从有到无）
+      if (!newToken && oldToken) {
+        // 【核心改进】先彻底销毁 realtime 实例的连接，不再仅仅是 unsubscribe 某个集合
+        // 这会强制关闭底层的 EventSource 连接
+        try {
+          // 这里使用 catch 忽略可能已经关闭的连接错误
+          await pb.realtime.unsubscribe();
+          activeSubscriptions.clear();
+        } catch (e) {}
+
+        pb.authStore.clear();
+        return;
+      }
+
+      // 2. 正常的 Token 同步逻辑
+      if (newToken && pb.authStore.token !== newToken) {
+        // 如果之前有活跃连接，在更新 Token 前建议先断开，让 SDK 重新建立带新 Token 的连接
+        // 这样可以避免 "The current and the previous request authorization don't match"
+        if (activeSubscriptions.size > 0) {
+          await pb.realtime.unsubscribe().catch(() => {});
+        }
+
+        pb.authStore.save(newToken, user.value as any);
+
+        // 如果是中途换号（比如管理员切换），可能需要重新恢复之前的订阅
+        // 但通常组件卸载会处理，这里保持简单
+      }
+    },
+    { immediate: true },
+  );
+
+  const listen = async (
+    collection: string,
+    callback: (payload: any) => void,
+    options: { expand?: string; filter?: string } = {},
+  ) => {
     if (!pb || import.meta.server) return;
 
-    // 每次订阅前同步最新的 Cookie 状态（处理登录/登出切换）
-    pb.authStore.loadFromCookie(document.cookie, 'pb_auth');
-
     try {
-      // 先取消旧订阅防止重复
-      await pb
-        .collection(collection)
-        .unsubscribe('*')
-        .catch(() => {});
+      // 如果当前组件实例已经订阅过这个 collection，先清理掉旧的（仅限本实例）
+      if (activeSubscriptions.has(collection)) {
+        await pb
+          .collection(collection)
+          .unsubscribe('*')
+          .catch(() => {});
+      }
 
       // 官方 SDK 会自动管理多重订阅，如果已经订阅过同一个 collection，它会合并处理
       await pb.collection(collection).subscribe(
@@ -40,6 +70,8 @@ export const usePocketRealtime = () => {
         },
         options,
       );
+
+      activeSubscriptions.add(collection);
     } catch (err) {
       console.error(`[PB Realtime] 订阅失败: ${collection}`, err);
     }
@@ -47,13 +79,32 @@ export const usePocketRealtime = () => {
 
   const close = (collection?: string) => {
     if (!pb) return;
+
     if (collection) {
-      // 只取消当前组件关心的订阅
-      pb.collection(collection).unsubscribe('*');
+      pb.collection(collection)
+        .unsubscribe('*')
+        .catch(() => {});
+      activeSubscriptions.delete(collection);
     } else {
-      // 如果不传参数，保守一点，只取消这个 Hook 实例最常用的几个，或者由开发者手动指定
+      // 退出登录或组件销毁时，最安全的方法是直接 unsubscribe 整个 realtime 模块
+      activeSubscriptions.forEach((col) => {
+        pb.collection(col)
+          .unsubscribe('*')
+          .catch(() => {});
+      });
+      activeSubscriptions.clear();
+
+      // 彻底断开底层连接，防止 SDK 自动重连
+      if (import.meta.client) {
+        pb.realtime.unsubscribe().catch(() => {});
+      }
     }
   };
+
+  // 自动化：在组件销毁时自动调用清理，防止开发者忘记
+  onUnmounted(() => {
+    close();
+  });
 
   return { listen, close };
 };

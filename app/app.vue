@@ -48,32 +48,21 @@ const colorMode = useColorMode();
 const { showHeaderBack } = useHeader();
 const { loggedIn, fetch: fetchSession } = useUserSession();
 
-// 身份状态清理
-const pbAuth = useCookie('pb_auth', { path: '/' });
-
-watch(loggedIn, (isLogged) => {
-  if (isLogged === false) {
-    pbAuth.value = null;
-  }
-});
-
-// 标签页可见性监听
 if (import.meta.client) {
   const visibility = useDocumentVisibility();
-  const lastCheckTime = ref(0);
-
   watch(visibility, (state) => {
     if (state === 'visible') {
-      const now = Date.now();
-
-      // 策略 A: 校验 Session (频率控制：1分钟)
-      if (now - lastCheckTime.value > 60000) {
-        fetchSession();
-        lastCheckTime.value = now;
-      }
+      fetchSession();
     }
   });
 }
+
+watch(loggedIn, (val) => {
+  if (!val) {
+    const pb = getClientPB();
+    if (pb) pb.authStore.clear();
+  }
+});
 
 useHead({
   meta: [

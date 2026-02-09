@@ -53,7 +53,8 @@ export const useNotifications = () => {
 
   // 实时监听逻辑
   const setupRealtime = () => {
-    pbClose('notifications');
+    // 基础防御：如果没有用户信息，直接返回，不发起连接
+    if (!user.value?.id) return;
 
     listen(
       'notifications',
@@ -64,23 +65,52 @@ export const useNotifications = () => {
           unreadCount.value++;
           triggerEffect();
 
-          if (page.value === 1) {
-            try {
-              const res = await $fetch<any>(`/api/collections/notification/${record.id}`);
-              const newItem = res.data || res;
+          // 无论在哪一页，新数据的产生通常意味着分页数据发生了偏移
+          // 如果当前不在第一页，我们需要标记 hasMore 为 true，确保用户往回翻或加载时能感知到变化
+          if (page.value !== 1) {
+            hasMore.value = true;
+            return; // 只有不在第一页才直接跳过 unshift
+          }
 
-              if (!notifications.value.find((n) => n.id === newItem.id)) {
-                notifications.value.unshift(newItem);
-              }
-            } catch (e) {
-              console.error(e);
+          // 第一页的内存实时更新
+          if (!notifications.value.find((n) => n.id === record.id)) {
+            const newItem: NotificationRecord = {
+              ...record,
+              relativeTime: useRelativeTime(record.created),
+            } as any;
+
+            notifications.value.unshift(newItem);
+
+            if (notifications.value.length > 10) {
+              notifications.value.pop();
+              hasMore.value = true;
             }
           }
-        } else if (action === 'update' || action === 'delete') {
-          fetchUnreadCount();
+        } else if (action === 'update') {
+          // 查找本地列表是否有这条记录
+          const index = notifications.value.findIndex((n) => n.id === record.id);
+          if (index !== -1) {
+            const wasUnread = !notifications.value[index]?.is_read;
+            const isNowRead = record.is_read;
+
+            // 同步本地状态
+            notifications.value[index] = { ...notifications.value[index], ...record };
+
+            // 如果是从未读变为已读，直接减去计数，不用重新 fetch
+            if (wasUnread && isNowRead) {
+              unreadCount.value = Math.max(0, unreadCount.value - 1);
+            }
+          }
+        } else if (action === 'delete') {
+          // 同理，如果是删除未读项，减计数
+          const index = notifications.value.findIndex((n) => n.id === record.id);
+          if (index !== -1 && !notifications.value[index]?.is_read) {
+            unreadCount.value = Math.max(0, unreadCount.value - 1);
+          }
+          notifications.value = notifications.value.filter((n) => n.id !== record.id);
         }
       },
-      { expand: 'from_user' },
+      { expand: 'from_user', filter: `to_user = "${user.value.id}"` },
     );
   };
 

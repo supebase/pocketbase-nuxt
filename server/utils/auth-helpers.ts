@@ -31,21 +31,14 @@ export async function handleAuthSuccess(
     is_admin: pbUser.is_admin,
   };
 
-  // 更新服务端 Session (nuxt-auth-utils)
-  // 用于 SSR 期间快速通过 getUserSession() 获取当前用户
-  await setUserSession(event, {
-    user: userPayload,
-    loggedInAt: new Date().toISOString(),
-  });
-
   // 导出并同步 PocketBase 认证状态至客户端 Cookie
   // 该 Cookie 供 getPocketBase(event) 在后续请求中还原 authStore
   const MAX_AGE = MAX_COOKIE_AGE;
   const pbCookie = pb.authStore.exportToCookie(
     {
-      httpOnly: false,
+      httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'Lax',
+      sameSite: 'lax',
       path: '/',
       maxAge: MAX_AGE,
     },
@@ -53,6 +46,14 @@ export async function handleAuthSuccess(
   );
 
   appendResponseHeader(event, 'Set-Cookie', pbCookie);
+
+  // 更新服务端 Session (nuxt-auth-utils)
+  // 用于 SSR 期间快速通过 getUserSession() 获取当前用户
+  await setUserSession(event, {
+    user: userPayload,
+    pbToken: pb.authStore.token,
+    loggedInAt: new Date().toISOString(),
+  });
 
   // 返回前端所需的成功报文
   return {

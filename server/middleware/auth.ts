@@ -79,9 +79,11 @@ export default defineEventHandler(async (event) => {
     const userId = pb.authStore.record.id;
 
     if (shouldRefreshToken(pb.authStore.token)) {
+      let isLeader = false;
       let refreshTask = refreshRequests.get(userId);
 
       if (!refreshTask) {
+        isLeader = true;
         // 创建刷新任务
         refreshTask = pb
           .collection('users')
@@ -89,24 +91,26 @@ export default defineEventHandler(async (event) => {
           .then((authData) => ({
             token: authData.token,
             record: authData.record,
-          }))
-          .finally(() => {
-            // 核心优化：一旦 Promise 完成（无论成功失败），立即从 Map 中移除
-            // 这样下一波并发进来时，会重新触发刷新逻辑
-            refreshRequests.delete(userId);
-          });
+          }));
 
         refreshRequests.set(userId, refreshTask);
       }
 
       try {
         const latestAuth = await refreshTask; // 所有并发请求都会在这里等待同一个结果
+
+        if (isLeader) {
+          setTimeout(() => {
+            refreshRequests.delete(userId);
+          }, 2000);
+        }
+
         pb.authStore.save(latestAuth.token, latestAuth.record);
 
         // 同步最新的 Auth 状态到 Response Header (Cookie)
         const newCookie = pb.authStore.exportToCookie(
           {
-            httpOnly: false,
+            httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'lax',
             path: '/',
@@ -114,8 +118,18 @@ export default defineEventHandler(async (event) => {
           'pb_auth',
         );
         appendResponseHeader(event, 'set-cookie', newCookie);
+
+        if (event.context.user) {
+          await replaceUserSession(event, {
+            // 明确排除 null 的情况
+            user: event.context.user as any,
+            pbToken: latestAuth.token,
+            loggedInAt: new Date().toISOString(),
+          });
+        }
         // --- 并发锁控制结束 ---
       } catch (e: any) {
+        if (isLeader) refreshRequests.delete(userId);
         // 如果刷新接口明确返回认证失败
         if (e.status === 401 || e.status === 403) {
           pb.authStore.clear();

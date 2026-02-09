@@ -82,9 +82,9 @@ export async function logoutService({ event, pb }: LogoutOptions & { event: H3Ev
   // 移除浏览器 pb_auth Cookie
   deleteCookie(event, 'pb_auth', {
     path: '/',
+    httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
-    maxAge: 0,
   });
 }
 

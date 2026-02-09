@@ -33,3 +33,7 @@ export interface CommentCache {
   items: CommentRecord[];
   total: number;
 }
+
+export interface EnhancedCommentCache extends CommentCache {
+  timestamp: number;
+}

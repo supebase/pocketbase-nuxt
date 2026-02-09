@@ -1,11 +1,22 @@
-import type { CommentRecord, CommentCache } from '~/types';
+import type { CommentRecord, CommentCache, EnhancedCommentCache } from '~/types';
+import { CACHE_TTL, MAX_CACHE_SIZE } from '~/constants/markdown';
 
-const MAX_CACHE_SIZE = 15;
-const COMMENT_CACHE = new Map<string, CommentCache>();
+const COMMENT_CACHE = new Map<string, EnhancedCommentCache>();
 const POST_PARTICIPANTS = new Map<string, Map<string, any>>();
 
 const pruneCache = () => {
-  if (COMMENT_CACHE.size > MAX_CACHE_SIZE) {
+  const now = Date.now();
+
+  // 1. 首先清理过期数据
+  for (const [key, value] of COMMENT_CACHE.entries()) {
+    if (now - value.timestamp > CACHE_TTL) {
+      COMMENT_CACHE.delete(key);
+      POST_PARTICIPANTS.delete(key);
+    }
+  }
+
+  // 2. 如果清理后依然超过大小限制，删除最旧的（利用 Map 的插入顺序）
+  while (COMMENT_CACHE.size > MAX_CACHE_SIZE) {
     const firstKey = COMMENT_CACHE.keys().next().value;
     if (firstKey !== undefined) {
       COMMENT_CACHE.delete(firstKey);
@@ -38,10 +49,15 @@ export const useComments = (postId: string) => {
   };
 
   const updateCache = () => {
-    // 深度克隆数据以防止引用污染
+    // 模拟 LRU：删除旧 Key 再重新插入，确保它变成 Map 的最后一个元素（最新）
+    if (COMMENT_CACHE.has(postId)) {
+      COMMENT_CACHE.delete(postId);
+    }
+
     COMMENT_CACHE.set(postId, {
       items: [...comments.value],
       total: totalItems.value,
+      timestamp: Date.now(), // 记录存入时间
     });
     pruneCache();
   };
@@ -75,14 +91,28 @@ export const useComments = (postId: string) => {
     if (!forceRefresh && lastLoadedPostId.value === postId && comments.value.length > 0) return;
 
     const cached = COMMENT_CACHE.get(postId);
-    // 如果是切换回该帖子且有缓存，立即恢复
+
+    // 检查缓存是否存在且未过期
     if (cached && !isSilent && !forceRefresh) {
-      resetPagination(cached.items, cached.total);
-      lastLoadedPostId.value = postId;
-      return;
+      const isExpired = Date.now() - cached.timestamp > CACHE_TTL;
+
+      if (!isExpired) {
+        // 命中有效缓存，更新其位置（LRU）
+        COMMENT_CACHE.delete(postId);
+        COMMENT_CACHE.set(postId, cached);
+
+        resetPagination(cached.items, cached.total);
+        lastLoadedPostId.value = postId;
+        return;
+      } else {
+        // 缓存已过期，主动清理
+        COMMENT_CACHE.delete(postId);
+        POST_PARTICIPANTS.delete(postId);
+      }
     }
 
     if (!isSilent) loading.value = true;
+
     try {
       const result = await fetchCommentsApi(1);
       resetPagination(result.items, result.total);
