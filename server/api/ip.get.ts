@@ -25,7 +25,7 @@ const initSearchers = () => {
       const dbPathV4 = path.join(dataDir, 'ip2region_v4.xdb');
       if (fs.existsSync(dbPathV4)) {
         searcherV4 = newWithBuffer(IPv4, fs.readFileSync(dbPathV4));
-      } else if (process.dev) {
+      } else if (import.meta.dev) {
         console.error(`[ip2region] 未找到 V4 数据库文件: ${dbPathV4}`);
       }
     } catch (e) {

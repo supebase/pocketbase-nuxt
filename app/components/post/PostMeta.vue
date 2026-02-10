@@ -31,6 +31,8 @@
 </template>
 
 <script setup lang="ts">
+import { useReadingTime } from '~/composables/useReadingTime';
+
 interface Props {
   postMeta: {
     icon: string | null;

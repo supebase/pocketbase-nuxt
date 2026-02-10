@@ -29,11 +29,8 @@
               :is-resetting="isResetting"
             >
               <template #indicator="{ item }">
-                <div
-                  v-if="item.icon"
-                  class="flex items-center justify-center rounded-full bg-white dark:bg-neutral-900"
-                >
-                  <UIcon :name="item.icon" class="size-8 text-neutral-800 dark:text-neutral-100" />
+                <div v-if="item.icon" class="flex items-center justify-center bg-white dark:bg-neutral-900 p-1">
+                  <UIcon :name="item.icon" class="size-7 text-neutral-800 dark:text-neutral-100" />
                 </div>
                 <CommonAvatar
                   v-else
@@ -134,6 +131,7 @@
 
 <script setup lang="ts">
 import type { PostWithUser, PostsListResponse } from '~/types';
+import { formatIconName } from '~/utils';
 
 // 1. 获取核心状态
 const {

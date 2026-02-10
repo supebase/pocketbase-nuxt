@@ -24,6 +24,8 @@
 </template>
 
 <script setup lang="ts">
+import { useRelativeTime } from '~/composables/useRelativeTime';
+
 const appConfig = useAppConfig();
 const buildInfo = computed(() => appConfig.buildInfo);
 </script>

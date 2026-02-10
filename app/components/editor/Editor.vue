@@ -61,6 +61,7 @@ import { CustomLinkTarget } from '~/extensions/CustomLinkTarget';
 import { items } from '~/constants/editor';
 import { actionItems } from '~/constants';
 import type { EditorModel } from '~/types';
+import { useRouter } from 'vue-router';
 
 const props = defineProps<{
   maxLimit: number;

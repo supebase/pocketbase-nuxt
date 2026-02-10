@@ -98,6 +98,7 @@
 <script setup lang="ts">
 import type { CommentRecord } from '~/types';
 import { MENTION_REGEX } from '~/constants';
+import { formatLocation } from '~/utils';
 
 const props = defineProps<{ postId: string; allowComment: boolean }>();
 

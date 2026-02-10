@@ -74,6 +74,7 @@
 </template>
 
 <script setup lang="ts">
+import { useRelativeTime } from '~/composables/useRelativeTime';
 import type { NotificationRecord } from '~/types';
 
 const {
